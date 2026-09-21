@@ -137,21 +137,112 @@ class UndertoneVisuals {
   g.globalAlpha=a;
  }
  silk(g,w,h,t,p,a){
-  // A softly lit folded surface: closely spaced ribbons, multiple slow scales.
-  this.glow(g,w*.65,h*.3,w*.6,p[2],.19);
-  const count=w<650?95:150,step=w<650?9:10;
-  g.lineCap='round';
-  for(let j=0;j<count;j++){
-   const d=j/(count-1),phase=d*5.4;
-   g.beginPath();
-   for(let x=-20;x<=w+20;x+=step){
-    const u=x/w;
-    const fold=Math.sin(u*5.3+phase+t*.12)*.16+Math.sin(u*9.1-phase*1.4-t*.085)*.045+Math.sin(u*2.4+d*7+t*.07)*.14;
-    const y=h*(.13+d*.65+fold*Math.sin(Math.PI*(.1+d*.8)))+Math.sin(u*18+d*4+t*.16)*h*.006;
-    x===-20?g.moveTo(x,y):g.lineTo(x,y);
+  // Silk is built from a small number of broad translucent sheets and a
+  // quieter set of supporting strands. Geometry and all color/gradient work is
+  // cached by viewport, theme, and seed; only the typed point buffers move.
+  const c=this.canvasFrame,theme=c.palette||UT_THEMES.ocean;
+  const narrow=w<650,layers=narrow?7:9,samples=narrow?52:76,supports=narrow?18:28;
+  const key=[Math.round(w),Math.round(h),c.viewport.dpr,this.seed,theme.name].join(':');
+  let cache=this.silkCache;
+  if(!cache||cache.key!==key){
+   const glow=cache?.glow||document.createElement('canvas');
+   glow.width=Math.max(1,Math.ceil(w*.5));glow.height=Math.max(1,Math.ceil(h*.5));
+   const light=glow.getContext('2d');light.setTransform(.5,0,0,.5,0,0);
+   let k=this.seed>>>0;const random=()=>{k=(1664525*k+1013904223)>>>0;return k/4294967296;};
+   const baseY=new Float32Array(layers),tilt=new Float32Array(layers),amp=new Float32Array(layers);
+   const amp2=new Float32Array(layers),freq=new Float32Array(layers),phase=new Float32Array(layers);
+   const speed=new Float32Array(layers),widths=new Float32Array(layers),opacity=new Float32Array(layers);
+   const colors=[],gradients=[];
+   const rgbaColor=(color,alpha)=>color[0]==='r'?color.replace('rgb(','rgba(').replace(')',','+alpha+')'):this.rgba(color,alpha);
+   for(let j=0;j<layers;j++){
+    const d=j/(layers-1);
+    baseY[j]=.10+d*.78+(random()-.5)*.035;
+    tilt[j]=(random()-.5)*.12;
+    amp[j]=.040+random()*.055;
+    amp2[j]=.012+random()*.025;
+    freq[j]=1.45+random()*1.15;
+    phase[j]=random()*Math.PI*2;
+    speed[j]=.035+random()*.045;
+    widths[j]=.040+random()*.055*(j===1||j===layers-2?1.25:.8);
+    opacity[j]=.54+random()*.26;
+    const shade=.22+d*.26+(random()-.5)*.04;
+    const color=this.color(p,shade);colors[j]=color;
+    const gradient=g.createLinearGradient(0,h*(baseY[j]-.17),0,h*(baseY[j]+.17));
+    gradient.addColorStop(0,rgbaColor(this.color(p,Math.max(.12,shade-.16)),0));
+    gradient.addColorStop(.22,rgbaColor(this.color(p,Math.max(.16,shade-.04)),.20));
+    gradient.addColorStop(.50,rgbaColor(this.color(p,Math.min(.98,shade+.18)),.34));
+    gradient.addColorStop(.72,rgbaColor(this.color(p,Math.min(.98,shade+.06)),.16));
+    gradient.addColorStop(1,rgbaColor(this.color(p,Math.max(.12,shade-.14)),0));
+    gradients[j]=gradient;
    }
-   const ridge=Math.pow(Math.max(0,Math.sin(d*18+t*.13)),7),rim=Math.sin(Math.PI*d);
-   g.strokeStyle=this.color(p,.22+ridge*.53+rim*.08);g.globalAlpha=a*(.20+ridge*.45)*rim;g.lineWidth=h/count*.85;g.stroke();
+   const supportY=new Float32Array(supports),supportTilt=new Float32Array(supports);
+   const supportAmp=new Float32Array(supports),supportFreq=new Float32Array(supports);
+   const supportPhase=new Float32Array(supports),supportSpeed=new Float32Array(supports);
+   const supportWidth=new Float32Array(supports),supportOpacity=new Float32Array(supports),supportColors=[];
+   for(let j=0;j<supports;j++){
+    const parent=Math.floor(j*layers/supports),d=j/(supports-1);
+    supportY[j]=baseY[parent]+(random()-.5)*widths[parent]*2.2;
+    supportTilt[j]=tilt[parent]+(random()-.5)*.035;
+    supportAmp[j]=amp[parent]*(.48+random()*.36);
+    supportFreq[j]=freq[parent]*(.86+random()*.32);
+    supportPhase[j]=phase[parent]+(random()-.5)*1.4;
+    supportSpeed[j]=speed[parent]*(.82+random()*.42);
+    supportWidth[j]=.45+random()*.72;
+    supportOpacity[j]=.18+random()*.26;
+    supportColors[j]=this.color(p,.27+d*.46+(random()-.5)*.06);
+   }
+   const glowGradients=[];
+   const glowStops=[p[2],p[3],p[4]];
+   for(let j=0;j<3;j++){
+    const x=w*(.23+j*.27),y=h*(.30+(j%2)*.28),r=Math.min(w,h)*(.38+.08*(j%2));
+    const gradient=light.createRadialGradient(x,y,0,x,y,r);
+    gradient.addColorStop(0,this.rgba(glowStops[j],.16));gradient.addColorStop(.36,this.rgba(glowStops[j],.075));gradient.addColorStop(1,this.rgba(glowStops[j],0));
+    glowGradients[j]=gradient;
+   }
+   cache=this.silkCache={key,glow,light,baseY,tilt,amp,amp2,freq,phase,speed,widths,opacity,colors,gradients,
+    supportY,supportTilt,supportAmp,supportFreq,supportPhase,supportSpeed,supportWidth,supportOpacity,supportColors,
+    glowGradients,points:new Float32Array(layers*(samples+1)*4),supportPoints:new Float32Array(supports*(samples+1)*2),dark:this.blend(p[0],'#000000',.72),layers,samples,supports};
+  }
+  const {light,glow,glowGradients,points,supportPoints}=cache;
+  g.globalAlpha=a;g.fillStyle=cache.dark;g.fillRect(0,0,w,h);
+  // A half-resolution atmospheric pass keeps the dark field alive between the
+  // sheets without creating radial gradients during animation.
+  light.clearRect(0,0,w,h);light.globalAlpha=.68;light.fillStyle=glowGradients[0];light.fillRect(0,0,w,h);
+  light.globalAlpha=.46;light.fillStyle=glowGradients[1];light.fillRect(0,0,w,h);
+  light.globalAlpha=.32;light.fillStyle=glowGradients[2];light.fillRect(0,0,w,h);
+  light.globalAlpha=1;g.globalAlpha=a*.72;g.drawImage(glow,0,0,w,h);
+
+  g.lineJoin='round';g.lineCap='round';
+  const stride=(cache.samples+1)*4,span=1.16;
+  for(let j=0;j<cache.layers;j++){
+   const base=j*stride,phase=cache.phase[j]+t*cache.speed[j],d=j/(cache.layers-1);
+   for(let i=0;i<=cache.samples;i++){
+    const u=i/cache.samples*span-.08,x=u*w;
+    const wave=Math.sin(u*cache.freq[j]*Math.PI*2+phase)*cache.amp[j]+Math.sin(u*3.7-phase*1.31+d*5.2+t*.018)*cache.amp2[j];
+    const center=h*(cache.baseY[j]+cache.tilt[j]*(u-.5)+wave);
+    const half=h*cache.widths[j]*(.80+.16*Math.sin(u*2.2+phase*.57+d*4));
+    const index=base+i*4;points[index]=x;points[index+1]=center-half;points[index+2]=x;points[index+3]=center+half;
+   }
+   g.beginPath();
+   for(let i=0;i<=cache.samples;i++){const index=base+i*4;i?g.lineTo(points[index],points[index+1]):g.moveTo(points[index],points[index+1]);}
+   for(let i=cache.samples;i>=0;i--){const index=base+i*4;g.lineTo(points[index+2],points[index+3]);}
+   g.closePath();g.fillStyle=cache.gradients[j];g.globalAlpha=a*(.48+cache.opacity[j]*.34);g.fill();
+   // A soft center seam gives the sheet a fold direction without outlining it.
+   g.beginPath();
+   for(let i=0;i<=cache.samples;i++){const index=base+i*4;const y=(points[index+1]+points[index+3])*.5;i?g.lineTo(points[index],y):g.moveTo(points[index],y);}
+   g.strokeStyle=cache.colors[j];g.globalAlpha=a*(.075+cache.opacity[j]*.07);g.lineWidth=.65+((j===1||j===cache.layers-2) ? .45 : 0);g.stroke();
+  }
+  const supportStride=(cache.samples+1)*2;
+  for(let j=0;j<cache.supports;j++){
+   const base=j*supportStride,phase=cache.supportPhase[j]+t*cache.supportSpeed[j];
+   for(let i=0;i<=cache.samples;i++){
+    const u=i/cache.samples*span-.08,x=u*w;
+    const y=h*(cache.supportY[j]+cache.supportTilt[j]*(u-.5)+Math.sin(u*cache.supportFreq[j]*Math.PI*2+phase)*cache.supportAmp[j]+Math.sin(u*5.1-phase*.73+j)*.008);
+    supportPoints[base+i*2]=x;supportPoints[base+i*2+1]=y;
+   }
+   g.beginPath();
+   for(let i=0;i<=cache.samples;i++){const index=base+i*2;i?g.lineTo(supportPoints[index],supportPoints[index+1]):g.moveTo(supportPoints[index],supportPoints[index+1]);}
+   g.strokeStyle=cache.supportColors[j];g.globalAlpha=a*cache.supportOpacity[j];g.lineWidth=cache.supportWidth[j];g.stroke();
   }
   g.globalAlpha=a;
  }
@@ -187,7 +278,7 @@ class UndertoneVisuals {
  }
  glassBackground(w,h,p){
   const key=[Math.round(w),Math.round(h),this.seed,p.join('')].join(':');if(this.glassKey===key)return;
-  this.glassKey=key;const c=document.createElement('canvas');c.width=Math.ceil(w);c.height=Math.ceil(h);const g=c.getContext('2d');
+  this.glassKey=key;const c=this.glass||document.createElement('canvas');c.width=Math.ceil(w);c.height=Math.ceil(h);const g=c.getContext('2d');
   const bg=g.createLinearGradient(0,0,w,h);bg.addColorStop(0,p[0]);bg.addColorStop(.48,p[1]);bg.addColorStop(1,p[0]);g.fillStyle=bg;g.fillRect(0,0,w,h);
   const scale=Math.min(w,h);
   this.glow(g,w*.25,h*.38,scale*.65,p[2],.28);this.glow(g,w*.72,h*.57,scale*.55,p[3],.20);
@@ -195,38 +286,49 @@ class UndertoneVisuals {
   for(const light of this.lights){
    const x=light.x*w,y=light.y*h,r=scale*light.r;
    const color=light.warm?this.blend(p[3],'#ddc7a2',p===UT_THEMES.noir.art?0:.28):p[3];
-   g.save();g.translate(x,y);g.scale(1,1.15);const halo=g.createRadialGradient(0,0,r*.15,0,0,r*2.6);halo.addColorStop(0,color);halo.addColorStop(.30,this.rgba(p[3],.5));halo.addColorStop(1,this.rgba(p[3],0));g.globalAlpha=light.alpha*.43;g.fillStyle=halo;g.fillRect(-r*3,-r*3,r*6,r*6);g.restore();
+   g.save();g.translate(x,y);g.scale(1,1.15);const halo=g.createRadialGradient(0,0,r*.15,0,0,r*2.6);halo.addColorStop(0,color);halo.addColorStop(.18,this.rgba(p[4],.7));halo.addColorStop(.44,this.rgba(p[3],.28));halo.addColorStop(1,this.rgba(p[3],0));g.globalAlpha=light.alpha*.68;g.fillStyle=halo;g.fillRect(-r*3,-r*3,r*6,r*6);g.restore();
    g.save();g.translate(x,y+r*2);g.scale(1,4);this.glow(g,0,0,r*1.1,p[3],light.alpha*.045);g.restore();
   }
   this.glass=c;
   // Small drop sprites avoid rebuilding hundreds of gradients every frame.
-  const bead=document.createElement('canvas');bead.width=bead.height=48;const b=bead.getContext('2d');
+  const bead=this.bead||document.createElement('canvas');bead.width=bead.height=48;const b=bead.getContext('2d');
   const shadow=b.createRadialGradient(23,25,8,24,24,19);shadow.addColorStop(0,'#0000');shadow.addColorStop(.72,'#0002');shadow.addColorStop(.88,'#0008');shadow.addColorStop(1,'#0000');b.fillStyle=shadow;b.fillRect(0,0,48,48);
   b.beginPath();b.ellipse(24,24,15,18,0,0,Math.PI*2);const body=b.createLinearGradient(10,7,33,42);body.addColorStop(0,'#ffffff1a');body.addColorStop(.3,'#00000016');body.addColorStop(.75,'#ffffff05');body.addColorStop(1,'#ffffff6b');b.fillStyle=body;b.fill();
   b.beginPath();b.ellipse(24,24,14.3,17.3,0,.18,1.75);b.strokeStyle='#e6eef299';b.lineWidth=.9;b.stroke();b.beginPath();b.ellipse(21,18,8,10,-.2,3.65,4.7);b.strokeStyle='#ffffff5e';b.lineWidth=.75;b.stroke();this.bead=bead;
+  // Cache static condensation and tiny refracting beads into a foreground plate.
+  const plate=this.glassPlate||document.createElement('canvas');plate.width=c.width;plate.height=c.height;
+  const pg=plate.getContext('2d');
+  for(const m of this.mist){pg.globalAlpha=m.alpha*.34;pg.drawImage(bead,m.x*w-m.r,m.y*h-m.r,m.r*2,m.r*2.5);}
+  for(let i=0;i<this.drops.length;i++){const d=this.drops[i];if(!d.moving)this.glassDrop(pg,d,i,w,h,0,1);}
+  this.glassPlate=plate;
+  // Two reusable alpha-gradient sprites replace dozens of gradients per frame.
+  const streak=this.rainStreak||document.createElement('canvas');streak.width=8;streak.height=128;
+  const sg=streak.getContext('2d'),rain=sg.createLinearGradient(0,0,0,128);
+  rain.addColorStop(0,this.rgba(p[4],0));rain.addColorStop(.8,this.rgba(p[3],.15));rain.addColorStop(1,this.rgba(p[4],.27));sg.fillStyle=rain;sg.fillRect(3,0,1.5,128);this.rainStreak=streak;
+  const trail=this.dropTrail||document.createElement('canvas');trail.width=24;trail.height=128;
+  const tg=trail.getContext('2d'),wet=tg.createLinearGradient(0,0,0,128);
+  wet.addColorStop(0,this.rgba(p[3],0));wet.addColorStop(.60,this.rgba(p[3],.045));wet.addColorStop(1,this.rgba(p[4],.17));tg.strokeStyle=wet;tg.lineWidth=2;
+  tg.beginPath();for(let i=0;i<=32;i++){const y=i*4,x=12+Math.sin(i*.20)*2;i?tg.lineTo(x,y):tg.moveTo(x,y);}tg.stroke();this.dropTrail=trail;
+ }
+ glassDrop(g,d,index,w,h,t,a){
+  const travel=d.moving?(t*d.speed+.008*Math.sin(t*.8+d.phase)):0;
+  const y=((d.y+travel)%1.22)*h-h*.08,x=d.x*w+(d.moving?Math.sin(y*.018+d.phase)*1.8:0);
+  const r=d.r*(w<650?1:1.35)*(index%19===0?1.65:1),stretch=d.moving?1.55:1.12;
+  if(d.moving){g.globalAlpha=a*.8;g.drawImage(this.dropTrail,x-r*.7,y-(40+r*12),r*1.4,40+r*12);}
+  g.save();g.globalAlpha=a*.9;g.beginPath();g.ellipse(x,y,r*.68,r*.82*stretch,0,0,Math.PI*2);g.clip();
+  const sample=Math.max(1,Math.min(20,w,h));
+  const sx=Math.max(0,Math.min(w-sample,(w-x)*.78)),sy=Math.max(0,Math.min(h-sample,y*.72));
+  g.drawImage(this.glass,sx,sy,sample,sample,x-r,y-r*stretch,r*2,r*2*stretch);g.restore();
+  g.globalAlpha=a*(d.moving?.94:.78);g.drawImage(this.bead,x-r,y-r*stretch,r*2,r*2*stretch);
  }
  wetGlass(g,w,h,t,p,a){
   this.glassBackground(w,h,p);g.globalAlpha=a;g.drawImage(this.glass,0,0,w,h);
-  // Distant rainfall lives behind the glass and travels nearly vertically.
+  // Distant rain is restrained; the moving foreground beads carry the motion.
   for(const drop of this.farRain){const y=((drop.y+t*drop.speed)%1.2)*h-h*.1,x=drop.x*w+Math.sin(t*.09+drop.y)*4;
-   const len=drop.len*h,trail=g.createLinearGradient(x,y-len,x,y);trail.addColorStop(0,this.rgba(p[4],0));trail.addColorStop(1,this.rgba(p[4],.13));g.strokeStyle=trail;g.lineWidth=.6;g.beginPath();g.moveTo(x-2,y-len);g.lineTo(x,y);g.stroke();}
-  for(const m of this.mist){g.globalAlpha=a*m.alpha*.42;g.drawImage(this.bead,m.x*w-m.r,m.y*h-m.r,m.r*2,m.r*2.5);}
-  for(const d of this.drops){
-   const travel=d.moving?(t*d.speed+.013*Math.sin(t*1.3+d.phase)):0;
-   const y=((d.y+travel)%1.22)*h-h*.08;
-   const x=d.x*w+(d.moving?Math.sin(y*.018+d.phase)*1.8:0);
-   const r=d.r*(w<650?.85:1.15),stretch=d.moving?1.65:1.18;
-   if(d.moving){
-    const tail=35+r*12;const wet=g.createLinearGradient(x,y-tail,x,y);wet.addColorStop(0,'#ffffff00');wet.addColorStop(.55,'#c8d8e509');wet.addColorStop(1,'#d7e5f126');
-    g.strokeStyle=wet;g.globalAlpha=a*.7;g.lineWidth=Math.max(1,r*.54);g.beginPath();
-    for(let j=0;j<=14;j++){const yy=y-tail+j*tail/14,xx=d.x*w+Math.sin(yy*.018+d.phase)*1.8;j?g.lineTo(xx,yy):g.moveTo(xx,yy);}g.stroke();
-   }
-   // Each bead acts as a tiny lens, magnifying a displaced part of the light field.
-   g.save();g.globalAlpha=a*.85;g.beginPath();g.ellipse(x,y,r*.68,r*.82*stretch,0,0,Math.PI*2);g.clip();
-   const sx=Math.max(0,Math.min(w-20,(w-x)*.78)),sy=Math.max(0,Math.min(h-20,y*.72));
-   g.drawImage(this.glass,sx,sy,20,20,x-r,y-r*stretch,r*2,r*2*stretch);g.restore();
-   g.globalAlpha=a*(d.moving?.8:.72);g.drawImage(this.bead,x-r,y-r*stretch,r*2,r*2*stretch);
+   const len=drop.len*h;g.globalAlpha=a*.65;g.drawImage(this.rainStreak,x-2,y-len,4,len);
   }
+  g.globalAlpha=a;g.drawImage(this.glassPlate,0,0,w,h);
+  for(let i=0;i<this.drops.length;i++){const d=this.drops[i];if(d.moving)this.glassDrop(g,d,i,w,h,t,a);}
   g.globalAlpha=a;
  }
 }

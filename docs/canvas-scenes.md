@@ -1,4 +1,4 @@
-# Canvas scenes — first Living Contours pass
+# Canvas scenes
 
 Living Contours remains `tides`; Silk Drift remains `dunes`; Wet Glass remains `rain`. Energy Orbit's approved WebGPU renderer, bridge, shaders and fallback are unchanged. No rendering dependency was added.
 
@@ -43,3 +43,13 @@ The service-worker shell advances tov15 for the changed scripts. This is the fir
 ## Motion correction
 
 The first recording was not reviewed temporally before delivery. It had changing pixels but perceptually inadequate deformation. Increased the contour field's slow oscillation rates and deformation amplitudes while leaving the shared clock and reduced-motion gating unchanged. A geometry regression check now requires more than5px RMS coordinate displacement over five default-speed wall-clock seconds at the test size. All54 tests pass; the updated targeted visual tests also pass. Inspected decoded frames at0,5,10seconds in `artifacts/contours/motion-fix.mp4`: the left cyan saddle and central/upper contour elevations visibly shift. This is temporal frame inspection, not a claim of real-time video playback review. Service-worker shell advances tov16.
+
+## Completion pass — Silk Drift and Wet Glass
+
+The earlier sections record the contour-only milestones. Silk Drift now has broad layered translucent sheets and fine supporting curves. Wet Glass layers cached distant lights, moving distant rain, a cached foreground plate of refracting beads, and moving droplets with cached trails. Typed buffers, gradients and offscreen resources are reused; gradients are not allocated per frame after warmup. IDs, themes, controls, shared time and reduced motion remain intact. Energy Orbit is unchanged.
+
+`pnpm check` and all 58 tests pass. Browser WebMCP selected Ocean / seed 604 / motion 40 / brightness 80. Over 4.5 seconds, 16.91% of Silk pixels and 0.45% of Wet Glass pixels changed by more than 3 channel levels. Wet Glass movement is localized to rain/droplets. Both scenes freeze at motion zero and with OS reduced motion. Current-page error capture remained empty through those checks and narrow high-DPI resizing. Independent review found no material issues.
+
+Artifacts are in `artifacts/canvas-final/`. Recording frames at 2, 7, 30 and 34 seconds were inspected temporally; this is not a claim of real-time video playback or a hardware performance benchmark.
+
+The desktop preview had retained older contour code via its service worker. The new `pnpm preview` server sends no-store responses and injects the existing development-preview flag to disable service-worker registration. Production offline behavior remains enabled; shell cache is v17. A fresh origin, http://localhost:4192/, was opened in the desktop browser and native WebMCP successfully selected Wet Glass there.

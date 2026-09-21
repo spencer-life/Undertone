@@ -7,11 +7,14 @@ services, accounts, or API keys are required. The four bundled FLAC files total 
 ## Run and verify
 
 ```sh
-python3 -m http.server 4178 --bind 127.0.0.1
+pnpm preview
 # Open http://localhost:4178
+# Or: pnpm preview --port 4192
 pnpm run check
 pnpm test
 ```
+
+The development server sends `Cache-Control: no-store` and disables new service-worker registration. Use a fresh port if a previous production preview already controls the origin; production files retain their normal offline behavior.
 
 Open `/tests/audio-browser.html` from a fresh origin (for example
 `http://127.0.0.1:4178/tests/audio-browser.html`) and press **Run audio checks**.

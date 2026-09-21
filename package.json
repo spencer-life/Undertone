@@ -6,7 +6,7 @@
   "scripts": {
     "check": "node --check app.js && node --check visuals.js && node --check audio.js && node --check audio-worklet.js && node --check sw.js && node --check tracks.js && node --check music-library.js && node --check webmcp.js && node --check orbit-bridge.js && node --check gpu/orbit.js && node --check gpu/palettes.js",
     "test": "node --test audio.test.js tests/*.test.js",
-    "preview": "python3 -m http.server 4178 --bind 127.0.0.1",
+    "preview": "python3 scripts/preview.py",
     "build:orbit": "node scripts/build-orbit.mjs",
     "check:orbit": "vgpu check gpu/orbit.wgsl --require-validation && vgpu check gpu/orbit-bright.wgsl --require-validation && vgpu check gpu/orbit-blur.wgsl --require-validation && vgpu check gpu/orbit-post.wgsl --require-validation",
     "render:orbit": "node scripts/render-orbit.mjs"
