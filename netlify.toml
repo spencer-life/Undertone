@@ -1,0 +1,7 @@
+[build]
+  command = "pnpm check && pnpm test && pnpm build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "24.18.0"
+  PNPM_FLAGS = "--frozen-lockfile"

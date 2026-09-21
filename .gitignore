@@ -2,3 +2,7 @@
 .DS_Store
 artifacts/
 node_modules/
+dist/
+.netlify/
+.env
+.env.*

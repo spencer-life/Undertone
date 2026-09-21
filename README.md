@@ -36,7 +36,7 @@ Git checkout was found in the local development or Downloads directories.
 
 Verified production baseline: Netlify site `024413a7-613e-4a9c-9240-02ef9be77984`,
 manual production deploy `6ab1192844f2652114e323b5`, published
-2026-09-21T11:46:53Z. This local project has no configured remote.
+2026-09-21T11:46:53Z. Source is now maintained in [spencer-life/Undertone](https://github.com/spencer-life/Undertone).
 The original ZIP remains available for rollback.
 
 ## Structure
@@ -56,10 +56,9 @@ new music-forward balance.
 
 ## Deployment and updates
 
-The release ZIP contains runtime files, icons, FLAC assets and credits, the README, and the music integration guide. Upload its
-contents to the existing Netlify site when publication is authorized. There is
-no build command. Keep the directory structure intact so the AudioWorklet and
-service worker can load.
+Run `pnpm install --frozen-lockfile` and `pnpm build` to rebuild the approved Energy Orbit bundle and assemble `dist/`. The explicit runtime allowlist includes the lossless music, credits, icons and vendor license, and excludes developer tests and handoffs.
+
+The existing Netlify site is configured with `netlify.toml`: validate syntax and tests, build, and publish `dist/`. GitHub Actions validates through the shared github-workflows baseline; Netlify owns deployment. See [CI](docs/ci.md).
 
 When changing runtime files, increment `CACHE` in `sw.js`. New service workers
 wait for existing tabs to close so a playing session is not replaced midway.

@@ -9,10 +9,12 @@
     "preview": "python3 scripts/preview.py",
     "build:orbit": "node scripts/build-orbit.mjs",
     "check:orbit": "vgpu check gpu/orbit.wgsl --require-validation && vgpu check gpu/orbit-bright.wgsl --require-validation && vgpu check gpu/orbit-blur.wgsl --require-validation && vgpu check gpu/orbit-post.wgsl --require-validation",
-    "render:orbit": "node scripts/render-orbit.mjs"
+    "render:orbit": "node scripts/render-orbit.mjs",
+    "build": "pnpm build:orbit && node scripts/build-site.mjs"
   },
   "devDependencies": {
     "esbuild": "0.25.12",
     "vgpu": "0.5.0"
-  }
+  },
+  "packageManager": "pnpm@12.5.1"
 }
