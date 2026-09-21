@@ -44,3 +44,12 @@ test('a renderer that cannot submit a frame is removed before Canvas fallback',a
  let disposals=0;const h=harness(async()=>({createOrbitRenderer:async()=>({draw(){return false;},dispose(){disposals++;}})}));h.bridge.prepare('orbit');await flush();
  assert.equal(h.bridge.draw({}),false);assert.equal(h.bridge.renderer,null);assert.equal(h.layers[0].removed,true);assert.equal(disposals,1);assert.equal(h.canvas.dataset.renderer,'canvas2d');
 });
+
+test('normal URLs enable WebGPU when supported; explicit Canvas and unsupported browsers retain fallback',()=>{
+ for(const [gpu,search,expected] of [[{},'',true],[{},'?renderer=webgpu',true],[{},'?renderer=canvas',false],[undefined,'',false],[undefined,'?renderer=webgpu',false]]){
+  const scope={URLSearchParams,navigator:{gpu},location:{search}};
+  vm.runInNewContext(source+'\nglobalThis.Bridge=UndertoneOrbitBridge;',scope);
+  const bridge=new scope.Bridge({dataset:{}},()=>{});
+  assert.equal(bridge.enabled,expected,`gpu=${!!gpu}, search=${search}`);
+ }
+});

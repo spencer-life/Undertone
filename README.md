@@ -69,8 +69,7 @@ Offline assets use one coherent cached version; activation deletes only old
 
 See [design decisions](docs/design-decisions.md), [audio research](docs/audio-research.md), [lossless music integration](docs/music-library.md),
 and [verification](docs/verification.md). React Bits was read as a motion and
-lighting reference. The default renderer is original Canvas code; the optional
-Energy Orbit experiment bundles vgpu under its MIT license.
+lighting reference. The default renderer is original Canvas code; Energy Orbit bundles vgpu under its MIT license.
 
 Physical phone/TV, Bluetooth, device DAC, and headphones affect the listening
 experience. Browser/OS background suspension remains outside the app's control;
@@ -85,12 +84,11 @@ music. They use the same application state transitions as the visible controls.
 Unsupported browsers keep the normal UI. No arbitrary URLs, code execution,
 file access, saved history, or external publication tools are exposed.
 
-## Energy Orbit experiment
+## Energy Orbit
 
-Open `/?renderer=webgpu` and choose Energy orbit to try the opt-in procedural
+Choose Energy orbit to use the approved procedural
 shader with deformed fabric layers, depth shading, traveling highlights, and
-selective HDR bloom. The normal URL retains Canvas. A usable WebGPU adapter is
-required; otherwise the existing Canvas scene remains visible.
+selective HDR bloom. WebGPU is enabled by default on supported browsers. If adapter acquisition or rendering fails, the existing Canvas scene remains visible. Use `/?renderer=canvas` only to force the fallback for diagnostics.
 
 The checked-in vendor bundle needs no build to run. To edit the shader, use the
 [official project skill](.agents/skills/vgpu/SKILL.md), install the pinned tools

@@ -1,10 +1,10 @@
-/* Optional Energy Orbit GPU surface. Owns resources, never owns animation/state/audio. */
+/* Default Energy Orbit GPU surface with Canvas fallback. Owns resources, never owns animation/state/audio. */
 class UndertoneOrbitBridge {
  constructor(canvas, invalidate, options={}) {
   this.base=canvas;this.invalidate=invalidate;this.renderer=null;this.layer=null;
   this.pending=false;this.failed=false;this.generation=0;this.disposed=false;
   this.load=options.load||(()=>import('./vendor/energy-orbit.js'));
-  this.enabled=options.enabled??(!!globalThis.navigator?.gpu&&new URLSearchParams(globalThis.location?.search||'').get('renderer')==='webgpu');
+  this.enabled=options.enabled??(!!globalThis.navigator?.gpu&&new URLSearchParams(globalThis.location?.search||'').get('renderer')!=='canvas');
   this.status(this.enabled?'idle':'canvas');
  }
  status(value,error){
