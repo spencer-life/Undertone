@@ -152,3 +152,7 @@ The supplied patch was applied unchanged and matched the proposed WGSL bytes. Al
 ## Energy Orbit supplied pass four
 
 Applied supplied shaders byte-for-byte, validated all four WGSL files, rebuilt, rendered actual pixels and passed51 tests. Captured12.17-second Ocean recording at the same settings. Violet probe still fails the target: maximum0.203328,zero qualifying scene pixels,zero violet bloom pixels across times0/5/10/25. See `energy-orbit-pass4.md` for definitions, visuals and depth/emission findings.
+
+## Energy Orbit supplied pass five
+
+Supplied shader applied byte-for-byte; all four shader checks, build, actual-pixel render and51 tests pass. Same-settings12.17-second Ocean recording inspected. Violet peak hybrid brightness2.183066; at time0,7245 scene pixels qualify above0.40 and4534 final bloom pixels qualify by the existing violet hue/peak test. Full time0/5/10/25 results and depth/visual limits: `energy-orbit-pass5.md`.

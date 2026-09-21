@@ -187,8 +187,10 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
 
     let v = across / max(half_width, 0.001);
 
-    // Use projected spherical depth so front/rear relationships are tied to the
-    // orb volume rather than only to an arbitrary pseudo-depth waveform.
+    // Preserve projected spherical depth instead of dividing it back out.
+    // projected_z naturally collapses toward the silhouette, so front/back
+    // separation becomes strongest through the orb interior and converges at
+    // the limb like an actual spherical volume.
     let sphere_z =
       sqrt(
         max(
@@ -198,31 +200,75 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
         )
       );
 
-    let sheet_z =
-      sphere_z *
-      (
-        0.72 *
-        sin(
-          nx * 2.15 +
-          slow * 0.83 +
-          fj * 1.57
-        )
+    let sphere_depth =
+      clamp(
+        sphere_z / max(body_radius, 0.001),
+        0.0,
+        1.0
       );
 
-    let normalized_z =
+    let z_wave =
+      0.67 *
+      sin(
+        nx * 2.05 +
+        slow * 0.81 +
+        fj * 1.57
+      ) +
+      0.23 *
+      sin(
+        nx * 4.35 -
+        slow * 0.47 +
+        fj * 0.91
+      );
+
+    let sheet_z =
+      sphere_z *
+      clamp(
+        z_wave,
+        -0.92,
+        0.92
+      );
+
+    // Crucially normalize by body_radius, not sphere_z. This retains the
+    // spatial depth term instead of algebraically cancelling it.
+    let projected_z =
       sheet_z /
-      max(sphere_z, 0.001);
+      max(body_radius, 0.001);
 
     let front =
       smoothstep(
-        -0.72,
-        0.72,
-        normalized_z
+        -0.30,
+        0.30,
+        projected_z
       );
 
-    let depth = mix(0.20, 1.0, front);
-    let edge_depth = smoothstep(0.015, 0.085, body_radius - radial);
-    let depth_fade = mix(0.52, 1.0, edge_depth);
+    // Rear sheets remain visible, but lose radiance and opacity. Interior
+    // regions receive more volume than the limb so the folds read as passing
+    // through a sphere rather than lying on a flat disc.
+    let front_back =
+      mix(
+        0.30,
+        1.0,
+        front
+      );
+
+    let volume_depth =
+      mix(
+        0.58,
+        1.0,
+        pow(sphere_depth, 0.72)
+      );
+
+    let depth =
+      front_back *
+      volume_depth;
+
+    let depth_fade =
+      mix(
+        0.54,
+        1.0,
+        smoothstep(0.05, 0.32, sphere_depth)
+      );
 
     // Derivative-aware filament masks fade when too dense to resolve cleanly.
     let filament_coord = v + 0.055 * sin(nx * 4.7 + slow * 0.51 + fj);
@@ -288,26 +334,83 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
     let traveling = max(travel_a, travel_b) * front;
     let intersection = medium * smoothstep(0.55, 0.96, front);
 
-    // Deliberately create localized HDR secondary/violet emission. This is
-    // independent from the cyan highlight color so violet can qualify for bloom.
+    // Give violet its own spatial ownership instead of adding it underneath
+    // stronger cyan highlights. A separate moving lobe selects regions where
+    // secondary color becomes the dominant emissive hue.
     let violet_zone =
       smoothstep(
-        0.50,
-        0.88,
+        0.36,
+        0.82,
         0.5 +
         0.5 *
         sin(
-          nx * 2.35 +
-          fj * 2.41 -
-          time * 0.058
+          nx * 1.92 +
+          fj * 2.33 -
+          time * 0.052
         )
       );
 
-    let violet_hot =
-      ridge *
-      traveling *
-      violet_zone *
-      front;
+    let violet_center =
+      0.52 *
+      sin(
+        time * (0.118 + fj * 0.008) +
+        fj * 1.77 +
+        seed * 0.004
+      );
+
+    let violet_travel =
+      gaussian(
+        nx - violet_center,
+        0.23
+      );
+
+    let violet_ownership =
+      clamp(
+        violet_zone *
+        violet_travel *
+        mix(0.48, 1.0, front),
+        0.0,
+        1.0
+      );
+
+    // Suppress cyan/highlight contributions specifically where violet owns the
+    // fold. This prevents additive cyan from washing the HDR violet back toward
+    // blue/cyan before the bloom extractor sees it.
+    let cyan_keep =
+      1.0 -
+      0.90 *
+      violet_ownership;
+
+    let violet_detail =
+      max(
+        ridge,
+        max(
+          fine * 0.34,
+          selvage * 0.24
+        )
+      );
+
+    let violet_emit =
+      band *
+      violet_ownership *
+      (
+        0.30 +
+        1.20 * violet_detail
+      );
+
+    let violet_color =
+      params.secondary.rgb *
+      vec3f(1.08, 0.78, 1.14);
+
+    // Shift the base membrane toward secondary color in owned regions too, so
+    // the luminous violet fold has visible area instead of existing only as a
+    // razor-thin highlight.
+    sheet_color =
+      mix(
+        sheet_color,
+        params.secondary.rgb,
+        0.70 * violet_ownership
+      );
 
     let breath = 0.80 + 0.20 * sin(nx * 2.8 - slow * 0.44 + fj * 0.83);
 
@@ -317,7 +420,7 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
       depth *
       depth_fade *
       breath *
-      (0.050 + front * 0.070);
+      (0.048 + front * 0.090 + sphere_depth * 0.028);
 
     filaments +=
       sheet_color *
@@ -329,30 +432,38 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
       mix(sheet_color, params.highlight.rgb, 0.46) *
       selvage *
       depth *
-      (0.050 + front * 0.090);
+      (0.050 + front * 0.090) *
+      cyan_keep;
 
     filaments +=
       mix(sheet_color, params.highlight.rgb, 0.68) *
       ridge *
       depth *
-      (0.075 + traveling * 0.62);
+      (0.075 + traveling * 0.62) *
+      cyan_keep;
 
     filaments +=
       mix(sheet_color, params.highlight.rgb, 0.76) *
       fine *
       traveling *
-      (0.24 + audio_energy * 0.10);
+      (0.24 + audio_energy * 0.10) *
+      cyan_keep;
 
     filaments +=
       params.highlight.rgb *
       intersection *
       traveling *
-      0.22;
+      0.22 *
+      cyan_keep;
 
+    // Dedicated HDR violet emission. This is intentionally not multiplied by
+    // `traveling` or `ridge` a second time; those compounded gates were why the
+    // previous pass never crossed the bloom knee.
     filaments +=
-      params.secondary.rgb *
-      violet_hot *
-      (0.72 + audio_energy * 0.10);
+      violet_color *
+      violet_emit *
+      depth *
+      (1.08 + audio_energy * 0.10);
   }
 
   color += fabric + filaments;
