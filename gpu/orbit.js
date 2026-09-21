@@ -110,6 +110,11 @@ export async function createOrbitRenderer(canvas, { onFailure } = {}) {
       }));
     };
 
+    // vgpu merges partial uniform structs. Keep static fields out of the hot path;
+    // target/resource identities and the seven-pass submission remain unchanged.
+    let previousViewport = [];
+    let previousDynamics = [];
+    let previousPalette;
     const draw = ({ width, height, dpr = 1, time = 0, seed = 604, theme = 'ocean', brightness = 80, energy = 0 } = {}) => {
       if (disposed) return false;
       const started = performance.now();
@@ -123,12 +128,19 @@ export async function createOrbitRenderer(canvas, { onFailure } = {}) {
         resize(pixelWidth, pixelHeight);
 
         const palette = orbitPalette(theme);
-        orbitEffect.set({ params: {
-          viewport: [pixelWidth, pixelHeight, pixelWidth / pixelHeight, renderScale],
-          dynamics: [Number(time) || 0, Number(seed) || 0, clamp(brightness, 10, 100) / 100, clamp(energy, 0, 1)],
+        const viewport = [pixelWidth, pixelHeight, pixelWidth / pixelHeight, renderScale];
+        const dynamics = [Number(time) || 0, Number(seed) || 0, clamp(brightness, 10, 100) / 100, clamp(energy, 0, 1)];
+        const params = {};
+        if (viewport.some((value, index) => value !== previousViewport[index])) params.viewport = viewport;
+        if (dynamics.some((value, index) => value !== previousDynamics[index])) params.dynamics = dynamics;
+        if (palette !== previousPalette) Object.assign(params, {
           background: rgba(palette.background), low: rgba(palette.low),
           primary: rgba(palette.primary), secondary: rgba(palette.secondary), highlight: rgba(palette.highlight),
-        } });
+        });
+        if (Object.keys(params).length) orbitEffect.set({ params });
+        previousViewport = viewport;
+        previousDynamics = dynamics;
+        previousPalette = palette;
 
         frame(gpu, (currentFrame) => {
           currentFrame.pass(sceneTarget, orbitEffect);
