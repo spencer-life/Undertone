@@ -39,3 +39,7 @@ Native live invocation succeeded in headed Chrome149 via Agent Browser. That bro
 Browser: WebMCP selected tides/Ocean/seed604/motion40/brightness80 and seed605. Motion0 yielded identical canvas pixels across700ms; OS reduced-motion emulation also yielded identical pixels across700ms. Browser error log empty. Screenshot and motion clip are retained under `artifacts/contours/pass1.png` and `pass1.mp4`. These are visual evidence, not hardware performance benchmarks.
 
 The service-worker shell advances tov15 for the changed scripts. This is the first Living Contours pass for user review. Silk Drift and Wet Glass have not been refined.
+
+## Motion correction
+
+The first recording was not reviewed temporally before delivery. It had changing pixels but perceptually inadequate deformation. Increased the contour field's slow oscillation rates and deformation amplitudes while leaving the shared clock and reduced-motion gating unchanged. A geometry regression check now requires more than5px RMS coordinate displacement over five default-speed wall-clock seconds at the test size. All54 tests pass; the updated targeted visual tests also pass. Inspected decoded frames at0,5,10seconds in `artifacts/contours/motion-fix.mp4`: the left cyan saddle and central/upper contour elevations visibly shift. This is temporal frame inspection, not a claim of real-time video playback review. Service-worker shell advances tov16.

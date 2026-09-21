@@ -106,15 +106,15 @@ class UndertoneVisuals {
   const rx=w*.48,ry=h*.43,cx=w*.50,cy=h*.46;
   // Shared smooth elevation field: broad saddles and drifting asymmetric lobes.
   // Irrationally related slow periods avoid a single repeating rotation.
-  const drift=Math.sin(t*.071+phase[0]),breath=Math.sin(t*.103+phase[1]);
+  const drift=Math.sin(t*.23+phase[0]),breath=Math.sin(t*.317+phase[1]);
   for(let j=0;j<count;j++){
    const d=j/(count-1),r=.12+d*1.20,base=j*(segments+1)*2;
    for(let i=0;i<=segments;i++){
     const q=i/segments*Math.PI*2;
-    const fold=1+.19*Math.sin(q*3+phase[2]+d*1.8+drift*.17)+.10*Math.cos(q*2-phase[3]+d*2.5)+.035*Math.sin(q*5+phase[4]+breath*.20);
+    const fold=1+.19*Math.sin(q*3+phase[2]+d*1.8+drift*.65)+.10*Math.cos(q*2-phase[3]+d*2.5)+.035*Math.sin(q*5+phase[4]+breath*.65);
     const x=cos[i]*r*fold,y=sin[i]*r;
-    points[base+i*2]=cx+rx*(x+.17*Math.sin(y*2.8+phase[5]+drift*.12)+.06*Math.sin(d*4+phase[0]));
-    points[base+i*2+1]=cy+ry*(y*(.82+.14*Math.cos(q*2+d*2+phase[1]))+.17*Math.sin(x*2.7+phase[3]+breath*.12));
+    points[base+i*2]=cx+rx*(x+.17*Math.sin(y*2.8+phase[5]+drift*.55)+.06*Math.sin(d*4+phase[0]));
+    points[base+i*2+1]=cy+ry*(y*(.82+.14*Math.cos(q*2+d*2+phase[1]))+.17*Math.sin(x*2.7+phase[3]+breath*.48));
    }
   }
   g.globalAlpha=a;g.fillStyle=cache.dark;g.fillRect(0,0,w,h);

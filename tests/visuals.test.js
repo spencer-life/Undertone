@@ -58,6 +58,7 @@ test('contours are seeded, finite, animated and reuse buffers and glow surface',
  const a=sample(604,3),buffer=v.contourCache.points,glow=v.contourCache.glow;
  assert.deepEqual(sample(604,3),a);assert.equal(v.contourCache.points,buffer);assert.equal(v.contourCache.glow,glow);assert.equal(canvases,1);
  assert.notDeepEqual(sample(605,3),a);assert.notDeepEqual(sample(604,10),a);
+ const moving=sample(604,5.7);const rms=Math.sqrt(moving.reduce((sum,x,i)=>sum+(x-a[i])**2,0)/a.length);assert(rms>5,'default motion should visibly deform contours over five wall-clock seconds');
  for(const [w,h] of [[320,700],[1920,500]]){const points=sample(604,3,w,h);assert(points.every(Number.isFinite));assert(points.length<=88*161*2);}
  alphas.length=0;v.contours(g,1920,500,3,p,0);assert(alphas.every(a=>a===0),'zero crossfade opacity must suppress every main-canvas layer');
 });
