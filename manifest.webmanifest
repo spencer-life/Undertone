@@ -1,0 +1,28 @@
+{
+  "name": "Undertone \u2014 your own kind of quiet",
+  "short_name": "Undertone",
+  "description": "Locally generated ambient music, optional binaural beats, and slow-moving scenery.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#131315",
+  "theme_color": "#131315",
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "./icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
