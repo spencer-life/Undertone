@@ -144,3 +144,7 @@ ZIP and published site have not been updated with this experiment.
 ## Energy Orbit refinement review snapshot
 
 The second material/geometry pass and seven-pass HDR bloom chain are frozen for external review. All four shaders validate, the bundle is synchronized, the Node full-chain check passes, and the headed browser visibly renders. See `energy-orbit-review-handoff.md` for exact evidence and remaining visual issues. New bloom-chain mobile/resize acceptance remains pending.
+
+## Energy Orbit experimental third refinement
+
+The supplied patch was applied unchanged and matched the proposed WGSL bytes. All four device-backed shader checks, build, actual-pixel render check, and51 tests passed. A12.17-second Ocean headed recording was captured and inspected. See `energy-orbit-pass3.md` for the six-criterion assessment and measured limitations, including unsolved violet bloom.
