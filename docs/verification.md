@@ -138,5 +138,9 @@ commands, measurements, support limits, and live dashboard URL.
   environment-specific software measurements, not hardware GPU benchmarks.
 
 The experiment is opt-in at `?renderer=webgpu`. No other scenes are migrated.
-Bloom and further material/palette refinement are deferred. The earlier release
+At that milestone, bloom and further material/palette refinement were deferred. The earlier release
 ZIP and published site have not been updated with this experiment.
+
+## Energy Orbit refinement review snapshot
+
+The second material/geometry pass and seven-pass HDR bloom chain are frozen for external review. All four shaders validate, the bundle is synchronized, the Node full-chain check passes, and the headed browser visibly renders. See `energy-orbit-review-handoff.md` for exact evidence and remaining visual issues. New bloom-chain mobile/resize acceptance remains pending.

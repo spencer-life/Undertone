@@ -1,5 +1,5 @@
-/* Scene radiance colors. Values above 1.0 are tone-mapped inside the
-   single procedural fragment pass; this prototype has no bloom pass. */
+/* Scene radiance colors. Values above 1.0 survive in the HDR scene target;
+   the bloom chain and final composite tone-map them for display. */
 export const ORBIT_PALETTES = Object.freeze({
   noir: {
     background: [0.003, 0.004, 0.007], low: [0.035, 0.045, 0.070],
@@ -18,8 +18,8 @@ export const ORBIT_PALETTES = Object.freeze({
     primary: [1.15, 0.16, 0.62], secondary: [0.72, 0.20, 1.15], highlight: [1.52, 0.66, 1.12],
   },
   ocean: {
-    background: [0.002, 0.009, 0.015], low: [0.010, 0.100, 0.180],
-    primary: [0.00, 0.70, 1.28], secondary: [0.00, 1.16, 1.08], highlight: [0.68, 1.55, 1.48],
+    background: [0.001, 0.006, 0.014], low: [0.008, 0.080, 0.175],
+    primary: [0.00, 0.83, 1.55], secondary: [0.54, 0.18, 1.58], highlight: [0.40, 1.70, 1.72],
   },
   moss: {
     background: [0.004, 0.012, 0.008], low: [0.020, 0.135, 0.075],

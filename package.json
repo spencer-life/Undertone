@@ -8,7 +8,7 @@
     "test": "node --test audio.test.js tests/*.test.js",
     "preview": "python3 -m http.server 4178 --bind 127.0.0.1",
     "build:orbit": "node scripts/build-orbit.mjs",
-    "check:orbit": "vgpu check gpu/orbit.wgsl --require-validation",
+    "check:orbit": "vgpu check gpu/orbit.wgsl --require-validation && vgpu check gpu/orbit-bright.wgsl --require-validation && vgpu check gpu/orbit-blur.wgsl --require-validation && vgpu check gpu/orbit-post.wgsl --require-validation",
     "render:orbit": "node scripts/render-orbit.mjs"
   },
   "devDependencies": {

@@ -1,6 +1,6 @@
 # Energy Orbit WebGPU experiment
 
-Status: first single-pass prototype visibly rendering; not a production renderer approval. This is scoped to Energy Orbit; Living Contours, Silk Drift, and Wet Glass continue to use Canvas 2D.
+Status: Energy Orbit art-direction pass with selective HDR bloom; still opt-in for visual review. This is scoped to Energy Orbit; Living Contours, Silk Drift, and Wet Glass continue to use Canvas 2D.
 
 ## Baseline and architecture
 
@@ -10,7 +10,7 @@ The experimental renderer is isolated in `gpu/`. `orbit-bridge.js` lazily loads 
 
 The normal URL and `/?renderer=canvas` use the original renderer for comparison without changing saved settings. Unsupported adapters, initialization failures, rendering errors, and device loss retain or restore Canvas. Changing away from Energy Orbit disposes GPU resources; stale asynchronous initialization is disposed before it can become visible. Page exit releases the device; a BFCache restore lazily recreates it.
 
-The palette table written during initial setup retains existing theme IDs with semantic scene colors: background, low accent, primary accent, secondary accent, and highlight. This first visible prototype is being evaluated in Deep ocean; further palette tuning and bloom are deferred.
+The palette table written during initial setup retains existing theme IDs with semantic scene colors: background, low accent, primary accent, secondary accent, and highlight. Deep ocean now spans blue, indigo, violet, teal, and cyan across the structure. Night violet retains an Aurora emphasis.
 
 ## Official agent tooling
 
@@ -33,7 +33,7 @@ pnpm exec vgpu doctor --pretty
 pnpm exec vgpu check gpu/orbit.wgsl --require-validation
 ```
 
-Examples were pulled through the official CLI catalog at revision `b2ead042bd585babc1555dfdba2f31d5b23d5dd7a0c11360f0075b4aebd5ab03`, not by fetching individual GitHub files. Particle Orbit supplies relevant procedural backdrop and lifecycle patterns; its compute simulation, radiance cascades, CRT, and bloom chain are outside this first prototype. Earth supplies a reference for selective edge lighting. The bundled simplex-noise guide was also reviewed; independent trigonometric deformation is sufficient for this bounded first pass.
+Examples were pulled through the official CLI catalog at revision `b2ead042bd585babc1555dfdba2f31d5b23d5dd7a0c11360f0075b4aebd5ab03`, not by fetching individual GitHub files. Particle Orbit supplies relevant procedural backdrop and lifecycle patterns; its HDR-target and reduced-resolution bloom patterns inform this refinement. Its compute simulation, radiance cascades, and CRT remain out of scope. Earth supplies a reference for selective edge lighting. The bundled simplex-noise guide was also reviewed; independent trigonometric deformation is sufficient for this bounded first pass.
 
 `vgpu doctor` returned **healthy**, rendering and reading back a 16×16 target on llvmpipe. `vgpu check` already supplies WGSL validation, so a separate direct `@vgpu/wgsl` dependency is unnecessary.
 
@@ -48,7 +48,7 @@ pnpm check
 pnpm test
 ```
 
-Development dependencies are pinned to vgpu 0.5.0 and esbuild 0.25.12. Only the tree-shaken browser bundle is served (158,384 bytes, about 51.5 KB gzip in this build). Native Node adapter installation scripts are disabled; the production browser does not load the CLI, MCP server, Node adapter, React, or Anime.js. The vgpu MIT license is retained beside the bundle.
+Development dependencies are pinned to vgpu 0.5.0 and esbuild 0.25.12. Only the tree-shaken browser bundle is served. Native Node adapter installation scripts are disabled; the production browser does not load the CLI, MCP server, Node adapter, React, or Anime.js. The vgpu MIT license is retained beside the bundle.
 
 ## Test environment
 
@@ -70,9 +70,9 @@ The standalone `tests/gpu-probe.html` performs adapter/device acquisition, repor
 
 ## Evaluation record
 
-The active GPU path is one fullscreen effect drawn directly to the surface, with inline tone mapping. There are no HDR intermediate targets, bloom passes, compute simulations, or third-party raster assets. Four warped ribbon bands, parallel filaments, thin outer paths, and sparse motes are all procedural. Motion comes from the existing application clock and independent shader periods. The browser path uses the documented `frame(gpu, callback)` / `frame.pass(surface, effect)` form. In vgpu 0.5.0, the one-shot surface draw/prewarm examples did not work in this test; compiling a format signature and submitting through an explicit frame did.
+The active GPU path renders procedural fabric layers into an rgba16float HDR target. A soft-threshold bright pass and four separable blur passes run on reduced-resolution targets; the final pass combines that light with the crisp scene and tone maps into the surface. There are seven passes in one frame submission, no compute simulation, and no third-party raster assets. Motion comes from the existing application clock and independent shader periods. The browser path uses the documented `frame(gpu, callback)` / `frame.pass(surface, effect)` form. In vgpu 0.5.0, the one-shot surface draw/prewarm examples did not work in this test; compiling a format signature and submitting through an explicit frame did.
 
-Evidence recorded during this task:
+Evidence from the initial single-pass prototype (historical, before the refinement below):
 
 - Official `vgpu check gpu/orbit.wgsl --require-validation`: device-backed validation attempted and passed, zero diagnostics.
 - Node render at 720×480 on llvmpipe: identical time/seed gives byte-identical frames. Advancing scene time by 25 seconds changes RGB values by a mean 2.51/255; 3.43% of pixels exceed 60/255 in at least one channel. This proves visible geometry and movement, not cross-device pixel identity.
@@ -84,4 +84,8 @@ Evidence recorded during this task:
 
 The local headed browser is left available through [the dashboard](http://localhost:4848). The direct prototype URL is [Undertone with WebGPU opted in](http://127.0.0.1:4180/?renderer=webgpu); browsers without an adapter show Canvas instead.
 
-This is a minimal geometry prototype. It remains darker and more diagrammatic than the supplied luminous fabric references. Bloom and further palette/material tuning are deferred under the user's revised staging. Hardware GPU FPS, GPU utilization, and real phone/TV behavior are unmeasured. There is no basis yet to recommend migrating Living Contours, Silk Drift, or Wet Glass; those remain unchanged.
+The current refinement is described below. Hardware GPU FPS, GPU utilization, and real phone/TV behavior are unmeasured. There is no basis yet to recommend migrating Living Contours, Silk Drift, or Wet Glass; those remain unchanged.
+
+## Current refinement snapshot
+
+The second refinement is frozen for external review. See [the review handoff](energy-orbit-review-handoff.md) for current rendering details, shortcomings, exact file ownership and validation. Earlier single-pass measurements above are historical and do not describe the seven-pass pipeline.

@@ -85,9 +85,9 @@ file access, saved history, or external publication tools are exposed.
 
 ## Energy Orbit experiment
 
-Open `/?renderer=webgpu` and choose Energy orbit to try the opt-in single-pass
-procedural shader. The normal URL retains Canvas. The current experiment adds no
-bloom, framework, or changes to the other scenes. A usable WebGPU adapter is
+Open `/?renderer=webgpu` and choose Energy orbit to try the opt-in procedural
+shader with deformed fabric layers, depth shading, traveling highlights, and
+selective HDR bloom. The normal URL retains Canvas. A usable WebGPU adapter is
 required; otherwise the existing Canvas scene remains visible.
 
 The checked-in vendor bundle needs no build to run. To edit the shader, use the
