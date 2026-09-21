@@ -35,7 +35,7 @@ timer. Track changes load before replacing the active source, then crossfade.
 ## Lossless source versus output
 
 The distributed music files are the artist-supplied FLAC files, without lossy
-transcoding. FLAC preserves the samples encoded into it. Both starter files are
+transcoding. FLAC preserves the samples encoded into it. All four starter files are
 24-bit, 48 kHz, stereo; these are verified encoding properties, not a claim about
 the artist's entire production history.
 
@@ -93,3 +93,18 @@ future long-form library, with different gapless-looping tradeoffs.
 See [full attribution](../assets/music/ATTRIBUTION.md). Broken Glimmers is the
 main lo-fi selection. Safe Space is a more ambient alternative. The source pages
 and local file hashes are retained with the project.
+
+## Automatic library rotation
+
+Enable **Auto mix** in Sound to rotate through the registered library.
+The next track starts loading near the current loop's end and enters with an
+eight-second crossfade. If loading is late or unavailable, the current native
+loop continues. Pausing also pauses the audio clock used by the rotation.
+A **Next track** button makes an immediate manual selection with a short fade.
+New catalog entries join the rotation automatically. This is a crossfaded
+playlist, not tempo/key matching or stem-based DJ mixing. Browser suspension
+can delay track changes; it does not turn the native loop into a silent gap.
+
+The library now contains Broken Glimmers, Echoes of Yesterday, Pale Season,
+and the ambient companion Safe Space. All four are original artist-supplied
+24-bit / 48 kHz stereo FLAC; licenses and hashes are in `assets/music`.

@@ -112,9 +112,9 @@ class UndertoneVisuals {
   // Dark core and luminous atmospheric limb give the orbit actual volume.
   const sphere=g.createRadialGradient(cx-r*.22,cy-r*.3,r*.04,cx,cy,r);
   sphere.addColorStop(0,this.rgba(p[2],.1));sphere.addColorStop(.65,this.rgba(p[1],.25));sphere.addColorStop(.92,this.rgba(p[3],.17));sphere.addColorStop(1,this.rgba(p[0],0));g.fillStyle=sphere;g.fillRect(cx-r,cy-r,r*2,r*2);
-  g.translate(cx,cy);g.rotate(-.4+Math.sin(t*.04)*.1);
+  g.translate(cx,cy);g.rotate(-.4+t*.075);
   for(let j=0;j<68;j++){
-   const d=j/67,inclination=d*Math.PI,phase=t*.095+d*4.5;
+   const d=j/67,inclination=d*Math.PI+t*.18,phase=t*.32+d*4.5;
    g.beginPath();
    for(let i=0;i<=180;i++){
     const q=i/180*Math.PI*2,warp=1+.045*Math.sin(q*3+phase)+.018*Math.cos(q*7-phase);
@@ -126,9 +126,9 @@ class UndertoneVisuals {
   }
   // A few close elliptical paths carry broad, softly graduated highlights.
   for(let j=0;j<4;j++){
-   g.save();g.rotate(.25+j*.31);
+   g.save();g.rotate(.25+j*.31+Math.sin(t*.12+j)*.16);
    for(let k=0;k<80;k++){
-    const q=k/80*Math.PI*2,head=t*(.065+j*.009)+j*1.8;
+    const q=k/80*Math.PI*2,head=t*(.32+j*.04)+j*1.8;
     const light=Math.pow(Math.max(0,Math.cos(q-head)),14);
     g.beginPath();g.ellipse(0,0,r*(1.13+j*.025),r*(.39+j*.12),0,q,q+Math.PI*2/80+.003);
     g.strokeStyle=p[3];g.globalAlpha=a*(.025+light*.38);g.lineWidth=.8+light*.65;g.stroke();

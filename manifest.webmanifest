@@ -1,7 +1,7 @@
 {
   "name": "Undertone \u2014 your own kind of quiet",
   "short_name": "Undertone",
-  "description": "Locally generated ambient music, optional binaural beats, and slow-moving scenery.",
+  "description": "Lossless-source lo-fi music, optional live binaural beats, and slow-moving scenery.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

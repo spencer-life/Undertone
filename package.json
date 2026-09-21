@@ -1,10 +1,10 @@
 {
   "name": "undertone",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A no-build ambient audio and generative scene PWA",
   "scripts": {
-    "check": "node --check app.js && node --check visuals.js && node --check audio.js && node --check audio-worklet.js && node --check sw.js && node --check tracks.js && node --check music-library.js",
+    "check": "node --check app.js && node --check visuals.js && node --check audio.js && node --check audio-worklet.js && node --check sw.js && node --check tracks.js && node --check music-library.js && node --check webmcp.js",
     "test": "node --test audio.test.js tests/*.test.js",
     "preview": "python3 -m http.server 4178 --bind 127.0.0.1"
   }

@@ -46,6 +46,33 @@ test('continuous textures remain bounded through old 10/13/15-second loop bounda
   }
 });
 
+test('ocean texture has an audible swell and broadband surf wash',()=>{
+  const rate=8000,seconds=32,processor=makeProcessor('brown',rate),sampleCount=seconds*rate,blockSize=128,samples=new Float32Array(sampleCount);
+  let offset=0;
+  while(offset<sampleCount){
+    const data=processBlock(processor,blockSize)[2][0];
+    samples.set(data.subarray(0,Math.min(data.length,sampleCount-offset)),offset);
+    offset+=data.length;
+  }
+  let energy=0,highEnergy=0,peak=0;
+  for(let i=1;i<samples.length;i++){
+    const sample=samples[i],delta=sample-samples[i-1];
+    energy+=sample*sample;highEnergy+=delta*delta;peak=Math.max(peak,Math.abs(sample));
+  }
+  const rms=Math.sqrt(energy/(samples.length-1)),highRatio=highEnergy/energy;
+  const windows=[];
+  for(let second=4;second<seconds;second++){
+    let sum=0;
+    for(let i=second*rate;i<(second+1)*rate;i++)sum+=samples[i]*samples[i];
+    windows.push(Math.sqrt(sum/rate));
+  }
+  const minimum=Math.min(...windows),maximum=Math.max(...windows);
+  assert(rms>.01,`ocean output is effectively muted at RMS ${rms}`);
+  assert(rms<.15&&peak<.5,`ocean output is too hot (RMS ${rms}, peak ${peak})`);
+  assert(highRatio>.04,`ocean surf has no audible broadband content (difference ratio ${highRatio})`);
+  assert(maximum>minimum*1.6,`ocean swell is not dynamic (window RMS ${minimum}..${maximum})`);
+});
+
 test('render output is block-size invariant and noise type changes crossfade',()=>{
   const a=renderSamples('pink',2,128),b=renderSamples('pink',2,256);let difference=0;for(let i=0;i<a.length;i++)difference=Math.max(difference,Math.abs(a[i]-b[i]));assert(difference<1e-6,`block size changed output by ${difference}`);
   const processor=makeProcessor('pink');let previous=processBlock(processor,128)[0][0][127];processor.port.onmessage({data:{type:'settings',noiseType:'white'}});let maximumJump=0;for(let n=0;n<200;n++){const data=processBlock(processor,128)[0][0];for(const sample of data){maximumJump=Math.max(maximumJump,Math.abs(sample-previous));previous=sample;}}assert(maximumJump<.5,`noise type transition clicked at ${maximumJump}`);

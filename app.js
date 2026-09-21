@@ -3,7 +3,7 @@
 (function(){
  const $=id=>document.getElementById(id),$$=q=>Array.from(document.querySelectorAll(q));
  const STORE='undertone.v1';
- const DEFAULTS={musicSource:'library',track:'broken-glimmers',music:70,preset:'soft',route:'speakers',hz:10,carrier:220,beats:true,beatVolume:14,master:35,pad:74,melody:26,rain:10,ocean:0,noise:10,noiseType:'brown',score:'velvet',theme:'rose',scene:'tides',motion:40,brightness:80,eco:false,breathing:false,keepAwake:true,blackout:false,timer:0,seed:604};
+ const DEFAULTS={musicSource:'library',track:'broken-glimmers',music:70,autoMix:false,preset:'soft',route:'speakers',hz:10,carrier:220,beats:true,beatVolume:14,master:35,pad:74,melody:26,rain:10,ocean:0,noise:10,noiseType:'brown',score:'velvet',theme:'rose',scene:'tides',motion:40,brightness:80,eco:false,breathing:false,keepAwake:true,blackout:false,timer:0,seed:604};
  const PRESETS={
  focus:{title:'Make room for one thing.',description:'An open soundscape for your next stretch of work.',label:'Focus',hz:40,carrier:340,beats:true,beatVolume:14,pad:76,melody:20,rain:0,ocean:0,noise:8,noiseType:'pink',score:'horizon'},
  soft:{title:'Find your easy focus.',description:'A little less noise. A little more room to think.',label:'Relaxed focus',hz:10,carrier:220,beats:true,beatVolume:14,pad:74,melody:26,rain:10,ocean:0,noise:10,noiseType:'brown',score:'velvet'},
@@ -13,7 +13,7 @@
  const SCENES={tides:'Living contours',dunes:'Silk drift',orbit:'Energy orbit',rain:'Wet glass'};
  const NUMBERS={music:[0,100],hz:[1,40],carrier:[80,600],beatVolume:[0,100],master:[0,100],pad:[0,100],melody:[0,100],rain:[0,100],ocean:[0,100],noise:[0,100],motion:[0,100],brightness:[10,100],timer:[0,180],seed:[1,9999]};
  const ENUMS={musicSource:['library','generated'],track:Object.keys(UT_TRACKS),preset:Object.keys(PRESETS),route:['speakers','headphones'],noiseType:['brown','pink','white'],score:Object.keys(UT_SCORES),theme:Object.keys(UT_THEMES),scene:Object.keys(SCENES)};
- const BOOLS=['beats','eco','breathing','keepAwake','blackout'];
+ const BOOLS=['autoMix','beats','eco','breathing','keepAwake','blackout'];
  const clamp=(x,min,max)=>Math.max(min,Math.min(max,x));
  const cleanSettings=obj=>{const s={...DEFAULTS};if(!obj||typeof obj!=='object'||Array.isArray(obj))return s;if(!Object.prototype.hasOwnProperty.call(obj,'musicSource')&&Object.prototype.hasOwnProperty.call(obj,'score'))s.musicSource='generated';for(const [k,[min,max]]of Object.entries(NUMBERS)){if(typeof obj[k]==='number'&&Number.isFinite(obj[k]))s[k]=clamp(obj[k],min,max);}for(const[k,v]of Object.entries(ENUMS))if(v.includes(obj[k]))s[k]=obj[k];for(const k of BOOLS)if(typeof obj[k]==='boolean')s[k]=obj[k];s.hz=Math.round(s.hz*2)/2;s.carrier=Math.round(s.carrier);s.seed=Math.round(s.seed);return s;};
  const cleanMixes=arr=>Array.isArray(arr)?arr.slice(0,12).filter(x=>x&&typeof x.name==='string').map(x=>({id:typeof x.id==='string'?x.id.slice(0,80):String(Date.now()+Math.random()),name:x.name.slice(0,48),settings:cleanSettings(x.settings)})):[];
@@ -24,16 +24,23 @@
  let shared=false;try{if(location.hash.startsWith('#mix=')){const raw=location.hash.slice(5);if(raw.length>20000)throw new Error('Oversized link');state=cleanSettings(JSON.parse(decodeURIComponent(raw)));shared=true;}}catch(_){setTimeout(()=>toast('That mix link could not be read. Your saved settings were kept.'),300);}
  let playing=false,busy=false,sessionStart=null,sessionSnapshot=null,sessionMixed=false,cinema=false,idleTimer=null,wakeLock=null,wakePending=false,installPrompt=null,prevFocus=null,tab='sound',muted=false,lastMaster=state.master||35,toastTimeout=null,heroTimer=null,autoEnding=false,saveTimeout=null;
  const audio=new UndertoneAudio();audio.liveSettings=state;
- let trackPlayer=null,audioReady=null,musicRequest=0,musicLoading=false,musicMessage='Ready to load when you press Play.';
+ let trackPlayer=null,audioReady=null,musicRequest=0,autoMixRevision=0,musicLoading=false,musicMessage='Ready to load when you press Play.';
  const effectiveAudioSettings=()=>({...state,musicSource:state.musicSource==='library'&&trackPlayer?.currentTrack?'library':'generated'});
  async function ensureAudio(){if(!audioReady)audioReady=audio.init(effectiveAudioSettings()).catch(async error=>{await audio.destroy();audioReady=null;throw error;});await audioReady;}
  function musicTitle(){return state.musicSource==='library'?(trackPlayer?.currentTrack?.title||UT_TRACKS[state.track].title):UT_SCORES[state.score].name;}
  async function prepareMusic(){
   if(state.musicSource!=='library')return;
+  const target=UT_TRACKS[state.track],request=++musicRequest;
   await ensureAudio();
-  if(!trackPlayer)trackPlayer=new UndertoneTrackPlayer(audio.ctx,audio.limiter);
+  if(request!==musicRequest||state.musicSource!=='library')return;
+  if(!trackPlayer)trackPlayer=new UndertoneTrackPlayer(audio.ctx,audio.limiter,{onStatus:event=>{
+   if(event.trackChanged&&event.currentTrack&&state.musicSource==='library'&&!event.loading){
+    state.track=event.currentTrack.id;musicLoading=false;musicMessage=event.error?'Track unavailable; keeping the current music.':event.offlineAvailable?'Stereo FLAC · saved for offline listening':'Stereo FLAC · ready in this session';persist();sync();setupMedia();
+   }
+  }});
+  trackPlayer.setAutoMix(Object.values(UT_TRACKS),state.autoMix);
   trackPlayer.setVolume(state.music);
-  const target=UT_TRACKS[state.track],request=++musicRequest;musicLoading=trackPlayer.currentTrack?.id!==target.id;if(musicLoading)musicMessage='Loading lossless music…';sync();
+  musicLoading=trackPlayer.currentTrack?.id!==target.id;if(musicLoading)musicMessage='Loading lossless music…';sync();
   try{
    await trackPlayer.load(target);
    if(request!==musicRequest||state.musicSource!=='library')return;
@@ -73,7 +80,7 @@
   for(const id of ['masterVolume','masterPanel']){$(id).value=state.master;$(id).setAttribute('aria-valuetext',state.master+' percent');}$('masterPanelOut').textContent=state.master+'%';$('volumeIcon').setAttribute('href',state.master===0?'#i-mute':'#i-volume');$('muteButton').setAttribute('aria-label',state.master===0?'Unmute audio':'Mute audio');
   ['score','noiseType','musicSource','track'].forEach(k=>$(k).value=state[k]);
   const recorded=state.musicSource==='library',track=UT_TRACKS[state.track];
-  $('trackLabel').hidden=!recorded;$('trackDetails').hidden=!recorded;$('musicVolumeRow').hidden=!recorded;$('score').hidden=recorded;$('scoreLabel').hidden=recorded;
+  $('trackLabel').hidden=!recorded;$('trackDetails').hidden=!recorded;$('musicVolumeRow').hidden=!recorded;$('autoMixRow').hidden=!recorded;$('autoMix').checked=state.autoMix;$('nextTrack').disabled=musicLoading;$('score').hidden=recorded;$('scoreLabel').hidden=recorded;
   $$('[data-generated]').forEach(row=>row.hidden=recorded);
   $('trackDescription').textContent=track.description;$('musicStatus').textContent=musicMessage;
   $('trackCredit').replaceChildren(document.createTextNode(track.title+' by '+track.artist+' · '));
@@ -85,13 +92,13 @@
   if(visual.reduced.matches)$('motionNote').textContent='Your system’s reduced-motion setting is on. The scene remains still.';else $('motionNote').textContent=state.motion===0?'Still image. Sound keeps playing.':'Slow by design. Set to zero for a still image.';
   updatePlayback();updateTimer();applyTheme();
  }
- function change(patch,notice){const previous={...state};state=cleanSettings({...state,...patch});audio.liveSettings=effectiveAudioSettings();if(audio.ready)audio.apply(effectiveAudioSettings());trackPlayer?.setVolume(state.music);
+ function change(patch,notice){const previous={...state};state=cleanSettings({...state,...patch});if(previous.autoMix!==state.autoMix)autoMixRevision++;audio.liveSettings=effectiveAudioSettings();if(audio.ready)audio.apply(effectiveAudioSettings());trackPlayer?.setVolume(state.music);if(previous.autoMix!==state.autoMix||previous.musicSource!==state.musicSource)trackPlayer?.setAutoMix(Object.values(UT_TRACKS),state.autoMix&&state.musicSource==='library');let musicWork=Promise.resolve();
   if(previous.musicSource!==state.musicSource||previous.track!==state.track){
    musicRequest++;
    if(state.musicSource==='generated'){musicLoading=false;trackPlayer?.stop(.7);musicMessage='Generated music selected.';}
-   else if(audio.ready)prepareMusic().catch(e=>toast(e.message+' Choose another track or Generated music.'));
+   else if(audio.ready){musicWork=prepareMusic();musicWork.catch(e=>toast(e.message+' Choose another track or Generated music.'));}
    else musicMessage='Ready to load when you press Play.';
-  }if(sessionStart!==null&&Object.keys(patch).some(k=>!['theme','scene','seed','motion','brightness','eco','keepAwake','blackout','breathing','timer'].includes(k)))sessionMixed=true;if(previous.seed!==state.seed)visual.reseed(state.seed);if(previous.keepAwake!==state.keepAwake){if(state.keepAwake&&playing)acquireWake();else releaseWake();}sync();persist();if(notice)toast(notice);}
+  }if(sessionStart!==null&&Object.keys(patch).some(k=>!['theme','scene','seed','motion','brightness','eco','keepAwake','blackout','breathing','timer'].includes(k)))sessionMixed=true;if(previous.seed!==state.seed)visual.reseed(state.seed);if(previous.keepAwake!==state.keepAwake){if(state.keepAwake&&playing)acquireWake();else releaseWake();}sync();persist();if(notice)toast(notice);return musicWork;}
  function setPreset(key){const p=PRESETS[key],patch={preset:key};for(const k of ['hz','carrier','beats','beatVolume','pad','melody','rain','ocean','noise','noiseType','score'])patch[k]=p[k];change(patch);announce(`${p.label}. ${p.beats?p.hz+' hertz, '+(state.route==='headphones'?'binaural':'speaker pulse'):'Beat layer off'}.`);revealHero();}
  function updatePlayback(){document.body.classList.toggle('playing',playing);$('playIcon').setAttribute('href',playing?'#i-pause':'#i-play');$('playButton').setAttribute('aria-label',playing?'Pause listening':sessionStart!==null?'Resume listening':'Start listening');$('playButton').title=playing?'Pause (Space)':'Play (Space)';$('stagePlay').hidden=playing;$('stagePlay').innerHTML=icon('play')+(sessionStart!==null?'Resume listening':'Start listening');$('nowSub').textContent=musicLoading?'Loading lossless music…':playing?(state.beats?`${fmtHz(state.hz)} Hz · ${state.route==='headphones'?'Binaural':'Speaker pulse'}`:'Ambient only · beat layer off'):sessionStart!==null?'Paused. Your space is still here.':'Ready when you are';if(navigator.mediaSession)try{navigator.mediaSession.playbackState=playing?'playing':'paused';}catch(_){}$('breathOverlay').hidden=!state.breathing||!playing;$('stageCenter').style.visibility=state.breathing&&playing?'hidden':'';}
  async function togglePlay(){if(busy||audio.testBusy)return;busy=true;$('playButton').disabled=true;try{if(playing){await audio.pause();trackPlayer?.pause();playing=false;releaseWake();revealHero();}else{await ensureAudio();await prepareMusic();await audio.play(effectiveAudioSettings());if(state.musicSource==='library')await trackPlayer?.play();playing=true;if(sessionStart===null){sessionStart=audio.ctx.currentTime;sessionSnapshot={...state};sessionMixed=false;audio.armTimer(state.timer?state.timer*60:0);}acquireWake();revealHero();setupMedia();}updatePlayback();resetIdle();}catch(e){playing=false;toast(e.message||'Audio could not start. Tap Play again, or open this page in your browser.');console.error(e);}finally{busy=false;$('playButton').disabled=false;}}
@@ -122,7 +129,7 @@
  $$('[data-tab]').forEach(b=>b.onclick=()=>activateTab(b.dataset.tab,true));$$('[data-preset]').forEach(b=>b.onclick=()=>setPreset(b.dataset.preset));$$('[data-route]').forEach(b=>b.onclick=()=>change({route:b.dataset.route}));$$('[data-theme]').forEach(b=>b.onclick=()=>change({theme:b.dataset.theme}));$$('[data-scene]').forEach(b=>b.onclick=()=>change({scene:b.dataset.scene}));$$('[data-hz]').forEach(b=>b.onclick=()=>change({hz:+b.dataset.hz,beats:true}));$$('[data-timer]').forEach(b=>b.onclick=()=>setTimer(+b.dataset.timer));
  $$('[data-setting]').forEach(el=>el.oninput=()=>change({[el.dataset.setting]:+el.value}));$('beatsEnabled').onchange=()=>change({beats:$('beatsEnabled').checked});$('beatHz').oninput=()=>change({hz:+$('beatHz').value});$('exactHz').onchange=()=>change({hz:parseFloat($('exactHz').value)||state.hz});$('carrier').onchange=()=>change({carrier:parseFloat($('carrier').value)||state.carrier});
  for(const id of ['masterVolume','masterPanel'])$(id).oninput=()=>{muted=false;change({master:+$(id).value});};$('muteButton').onclick=()=>{if(state.master>0){lastMaster=state.master;muted=true;change({master:0});}else{muted=false;change({master:lastMaster||35});}};
- ['score','noiseType','musicSource','track'].forEach(k=>$(k).onchange=()=>change({[k]:$(k).value}));['eco','breathing','keepAwake','blackout'].forEach(k=>$(k).onchange=()=>change({[k]:$(k).checked}));$('resetMix').onclick=()=>setPreset(state.preset);
+ ['score','noiseType','musicSource','track'].forEach(k=>$(k).onchange=()=>change({[k]:$(k).value}));['autoMix','eco','breathing','keepAwake','blackout'].forEach(k=>$(k).onchange=()=>change({[k]:$(k).checked}));$('resetMix').onclick=()=>setPreset(state.preset);$('nextTrack').onclick=()=>{const ids=Object.keys(UT_TRACKS);change({track:ids[(ids.indexOf(state.track)+1)%ids.length]});};
  for(const side of ['Left','Right'])$('test'+side).onclick=async()=>{if(busy||audio.testBusy)return;busy=true;try{await ensureAudio();audio.liveSettings=effectiveAudioSettings();toast(side+' ear test · a quiet tone for less than one second');await audio.testChannel(side.toLowerCase());}catch(e){toast(e.message||'The channel test could not start.');}finally{busy=false;}};
  $('newScene').onclick=randomView;$('reseedPanel').onclick=randomView;$('tvButton').onclick=()=>setCinema(!cinema);$('cinemaExit').onclick=()=>setCinema(false);$('enterTv').onclick=()=>{closePanel();setCinema(true);};$('fullscreenButton').onclick=()=>{closePanel();if(!cinema)setCinema(true);fullscreen();};$('endSession').onclick=()=>finishSession(false);$('saveMix').onclick=saveMix;$('mixName').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();saveMix();}};$('shareMix').onclick=shareMix;$('exportSettings').onclick=()=>downloadable('undertone-backup.json',JSON.stringify({version:1,settings:state,saved,history},null,2),'application/json');$('importSettings').onclick=()=>$('importFile').click();$('importFile').onchange=()=>importBackup($('importFile').files[0]);$('installApp').onclick=install;
  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;$('installDescription').textContent='Install Undertone for a dedicated app window and quick access. Your mixes stay on this device.';});window.addEventListener('appinstalled',()=>toast('Undertone installed.'));
@@ -142,6 +149,28 @@
  function updateConnection(){if(!navigator.onLine)$('connectionStatus').textContent='Offline · your quiet stays here';else $('connectionStatus').textContent='Music & sound, on your device';}window.addEventListener('online',updateConnection);window.addEventListener('offline',updateConnection);
  async function initPWA(){if(window.UNDERTONE_PREVIEW||location.protocol==='file:'||!window.isSecureContext||!('serviceWorker'in navigator)){$('offlineStatus').textContent='Preview mode. Audio and scenes work here. For installation and offline reloads, host the full PWA folder over HTTPS.';return;}try{const registration=await navigator.serviceWorker.register('./sw.js',{scope:'./'});await navigator.serviceWorker.ready;$('offlineStatus').textContent='Offline app cache is ready. Built-in scenes and generated audio need no connection. Music tracks are available offline after their first successful load.';if(registration.waiting)$('offlineStatus').textContent+=' Close other Undertone tabs and reopen to apply the newest version.';}catch(_){$('offlineStatus').textContent='Offline setup was not available. The app still works online; check that sw.js and the manifest are deployed beside index.html.';}}
  window.addEventListener('pagehide',()=>{try{localStorage.setItem(STORE,JSON.stringify({version:1,settings:state,saved,history}));}catch(_){}releaseWake();});
+ // Browser-agent controls reuse the same state transitions as the human UI.
+ const toolApi={
+  getState:()=>({settings:{...state},playing,loading:musicLoading,currentTrack:trackPlayer?.currentTrack?.id||null,motionStatus:visual.reduced.matches?'system-reduced-motion':state.motion===0?'still':'animated'}),
+  getOptions:()=>({scenes:SCENES,themes:Object.fromEntries(Object.entries(UT_THEMES).map(([id,t])=>[id,t.name])),presets:Object.fromEntries(Object.entries(PRESETS).map(([id,p])=>[id,p.label])),tracks:Object.fromEntries(Object.entries(UT_TRACKS).map(([id,t])=>[id,t.title]))}),
+  change,setPreset,
+  applyMusic:async(patch,signal)=>{
+   if(signal?.aborted)throw new DOMException('Music selection canceled.','AbortError');
+   if(busy)throw new Error('Playback is changing. Try again when the player is ready.');
+   const previous={musicSource:state.musicSource,track:state.track,autoMix:state.autoMix};
+   const work=change(patch),request=musicRequest,mixRevision=autoMixRevision;
+   const cancel=()=>{if(request!==musicRequest)return;musicRequest++;trackPlayer?.cancelLoad();musicLoading=false;
+    state.musicSource=previous.musicSource;state.track=trackPlayer?.currentTrack?.id||previous.track;if(autoMixRevision===mixRevision)state.autoMix=previous.autoMix;
+    trackPlayer?.setAutoMix(Object.values(UT_TRACKS),state.autoMix&&state.musicSource==='library');
+    if(audio.ready)audio.apply(effectiveAudioSettings());musicMessage='Music selection canceled.';sync();persist();};
+   signal?.addEventListener('abort',cancel,{once:true});
+   try{await work;if(signal?.aborted)throw new DOMException('Music selection canceled.','AbortError');if(request!==musicRequest)throw new Error('Music selection was superseded. Read current state before retrying.');}
+   finally{signal?.removeEventListener('abort',cancel);}
+  }
+ };
+ let removeTools=()=>{};
+ function registerTools(){try{removeTools();removeTools=registerUndertoneTools(toolApi);}catch(error){removeTools=()=>{};console.warn('Undertone browser tools unavailable:',error);}}
+ registerTools();window.addEventListener('pagehide',()=>removeTools());window.addEventListener('pageshow',event=>{if(event.persisted)registerTools();});
  // Local QA diagnostics. Settings and history remain on this device; there is no remote transport.
  Object.defineProperty(window,'undertoneDebug',{value:{get state(){return{...state};},get audio(){return audio;},get tracks(){return trackPlayer;},get playing(){return playing;},get savedCount(){return saved.length;},get history(){return history.map(x=>({...x}));},get cinema(){return cinema;}},writable:false});
  sync();renderSaved();renderHistory();updateConnection();initPWA();if(!('wakeLock'in navigator))$('wakeDescription').textContent='Not supported by this browser; device sleep settings take priority.';if(shared)setTimeout(()=>toast('Shared mix loaded. Check volume and choose speakers or headphones before playing.'),450);

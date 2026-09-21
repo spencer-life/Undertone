@@ -26,6 +26,10 @@ document.getElementById('run').onclick=async()=>{
    assert(left.some((v,i)=>Math.abs(v-right[i])>1e-5),label+' collapsed to mono');
    log(`PASS ${label}: peak ${s.peak.toFixed(5)}, RMS ${s.rms.toFixed(5)}, quietest/loudest second ${(min/max).toFixed(3)}, ${mode}`);
   }
+  const oceanOnly=await render({master:100,pad:0,melody:0,rain:0,ocean:100,noise:0,beats:false,beatVolume:0},20);
+  const oceanStats=stats(oceanOnly.buffer.getChannelData(0),48000*3);
+  assert(oceanStats.rms>.005,'Ocean is too quiet after output filtering');
+  log(`PASS isolated ocean through full output: peak ${oceanStats.peak.toFixed(5)}, RMS ${oceanStats.rms.toFixed(5)}`);
   const quiet={master:100,pad:0,melody:0,rain:0,ocean:0,noise:0,beatVolume:100};
   const {buffer}=await render(quiet,3),left=buffer.getChannelData(0),right=buffer.getChannelData(1);
   const leftCarrier=at(left,320,48000),leftLeak=at(left,360,48000),rightCarrier=at(right,360,48000),rightLeak=at(right,320,48000);

@@ -17,6 +17,7 @@ class UndertoneTextureProcessor extends AudioWorkletProcessor {
     this.rain = [{drops:[]},{drops:[]}];
     this.ocean = [0, 0];
     this.oceanFast = [0, 0];
+    this.oceanFoam = [0, 0];
     this.wave = [0, 0];
     this.phase = [0, Math.PI * .7];
     this.noiseTarget = 'brown';
@@ -52,9 +53,13 @@ class UndertoneTextureProcessor extends AudioWorkletProcessor {
         let droplets=0;for(let d=r.drops.length-1;d>=0;d--){const drop=r.drops[d];droplets+=Math.sin(drop.phase)*drop.level;drop.phase+=2*Math.PI*drop.frequency/this.sampleRate;drop.level*=drop.decay;if(drop.level<.001)r.drops.splice(d,1);}
         if(rain[ch])rain[ch][i]=(rainColor*.22+droplets)*.46;
         const low=this.colored(ch,'brown',this.oceanBrown,this.oceanPink);this.oceanFast[ch]+=(low-this.oceanFast[ch])*.008;this.ocean[ch]+=(this.oceanFast[ch]-this.ocean[ch])*.0008;this.wave[ch]+=(this.ocean[ch]-this.wave[ch])*.00065;
+        const foamWhite=this.white();this.oceanFoam[ch]+=(foamWhite-this.oceanFoam[ch])*.12;
         this.phase[ch]=(this.phase[ch]+2*Math.PI*.075/this.sampleRate)%(2*Math.PI);
-        const swell=.66+.34*Math.sin(this.phase[ch]);
-        if(ocean[ch])ocean[ch][i]=(this.oceanFast[ch]*.2+this.ocean[ch]*.42)*swell;
+        const crest=Math.max(0,Math.sin(this.phase[ch]+.55));
+        const swell=.32+.68*(.5+.5*Math.sin(this.phase[ch]));
+        const wash=.18+.82*Math.pow(crest,1.8);
+        const surf=(foamWhite*.08+this.oceanFoam[ch]*.16)*wash;
+        if(ocean[ch])ocean[ch][i]=(this.oceanFast[ch]*.2+this.ocean[ch]*.42)*swell+surf;
       }
     }
     return true;

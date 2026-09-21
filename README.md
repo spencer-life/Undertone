@@ -2,7 +2,7 @@
 
 A no-build ambient audio PWA with stereo FLAC music, live binaural beats, and four generative scenes. Serve this directory over
 HTTPS or localhost; no compilation, external fonts, runtime packages, third-party streaming
-services, accounts, or API keys are required. The two bundled FLAC files total about 40 MB.
+services, accounts, or API keys are required. The four bundled FLAC files total about 105 MB.
 
 ## Run and verify
 
@@ -74,3 +74,11 @@ Physical phone/TV, Bluetooth, device DAC, and headphones affect the listening
 experience. Browser/OS background suspension remains outside the app's control;
 this app does not promise dependable locked-screen playback. The supplied
 SoundCloud reference was identified from metadata, not audibly evaluated.
+
+## Agent controls
+
+`webmcp.js` progressively enhances supporting browsers with same-origin tools
+for reading current settings and changing scenes, sound levels, presets, and
+music. They use the same application state transitions as the visible controls.
+Unsupported browsers keep the normal UI. No arbitrary URLs, code execution,
+file access, saved history, or external publication tools are exposed.

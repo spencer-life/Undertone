@@ -62,3 +62,23 @@ The supplied SoundCloud URL resolved to “Dancing Thing” by VisionV in the
 “Flow State” playlist (released 14 April 2023). Browser inspection exposed page
 metadata, but did not provide an audibly verifiable listening path in this
 research session. No sonic or production claim about that track is made here.
+
+## Preset interpretation (2026-09-21 follow-up)
+
+The 40 Hz Focus, 10 Hz Relaxed focus, and 6 Hz Relax choices are exploratory
+listening starting points, not scientifically established category optima.
+A randomized within-subject study of 31 people comparing 10/16/40 Hz found
+limited, task-dependent results: some visuospatial measures improved at 10 Hz,
+while some auditory-verbal measures worsened. This cannot establish a universal
+frequency or justify maximizing volume.
+
+- Primary trial: https://pubmed.ncbi.nlm.nih.gov/35655482/
+- Theta/music anxiety trial: https://pubmed.ncbi.nlm.nih.gov/35263341/
+- Review of EEG entrainment: https://pmc.ncbi.nlm.nih.gov/articles/PMC10198548/
+
+EEG response, task performance, and subjective relaxation are distinct outcomes.
+Audiovisual flicker results cannot be assumed to apply to quiet binaural tones
+under music, and headphone studies do not establish benefits for speaker pulses.
+The UI now states this limitation beside the sound controls. Presets remain
+adjustable; users may disable beats entirely. Music rotation changes tracks,
+not the user's selected beat frequency.

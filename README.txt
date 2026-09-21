@@ -23,3 +23,6 @@ Mobile browsers/operating systems can still suspend audio in the background.
 
 Developer source, tests, source provenance and future-track instructions are
 in the accompanying repository README.md and docs/music-library.md.
+
+Auto mix rotates the four-track library with eight-second crossfades.
+WebMCP tools enhance supporting browsers; normal controls remain available.

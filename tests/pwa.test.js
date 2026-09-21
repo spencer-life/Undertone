@@ -4,7 +4,7 @@ const root=path.resolve(__dirname,'..');
 function serviceWorker(){
  const handlers={},deleted=[],added=[],reads=[],network=[];
  const cache={addAll:async assets=>added.push(...assets),match:async key=>{reads.push(key);return key==='./index.html'?'cached-html':undefined;}};
- const context={URL,caches:{open:async()=>cache,keys:async()=>['undertone-v3','undertone-v8','unrelated-cache','undertone-library-v1'],delete:async key=>deleted.push(key)},fetch:async req=>{network.push(req);return 'network';},self:{location:{origin:'https://undertone.test'},clients:{claim:async()=>{}},addEventListener:(type,fn)=>handlers[type]=fn}};
+ const context={URL,caches:{open:async()=>cache,keys:async()=>['undertone-v3','undertone-v10','unrelated-cache','undertone-library-v1'],delete:async key=>deleted.push(key)},fetch:async req=>{network.push(req);return 'network';},self:{location:{origin:'https://undertone.test'},clients:{claim:async()=>{}},addEventListener:(type,fn)=>handlers[type]=fn}};
  vm.runInNewContext(fs.readFileSync(path.join(root,'sw.js'),'utf8'),context);return {handlers,deleted,added,reads,network};
 }
 test('PWA shell caches every app script/style and worklet before activation',async()=>{

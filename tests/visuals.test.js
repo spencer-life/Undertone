@@ -18,3 +18,9 @@ test('zero movement and system reduced motion render a still scene',()=>{
 test('blackout and hidden document stop rendering work',()=>{
  const h=visualHarness();h.settings.blackout=true;h.visual.frame(1000);assert.equal(h.paints(),0);h.settings.blackout=false;h.scope.document.hidden=true;h.visual.frame(2000);assert.equal(h.paints(),0);h.scope.document.hidden=false;h.visual.frame(3000);assert.equal(h.paints(),1);
 });
+
+test('orb geometry visibly changes with elapsed time',()=>{
+ const {visual}=visualHarness();
+ const sample=t=>{const points=[];const gradient={addColorStop(){}};const g={createRadialGradient:()=>gradient,fillRect(){},translate(){},rotate(v){points.push(v)},beginPath(){},lineTo(x,y){points.push(x,y)},moveTo(x,y){points.push(x,y)},stroke(){},save(){},restore(){},ellipse(...args){points.push(...args)}};visual.orbit(g,1000,600,t,['#000000','#222222','#555555','#999999','#ffffff'],1);return points;};
+ const a=sample(0),b=sample(5);let square=0;for(let i=0;i<a.length;i++)square+=(a[i]-b[i])**2;assert(Math.sqrt(square/a.length)>10,'orb should move noticeably within five scene seconds');
+});

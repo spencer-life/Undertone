@@ -89,3 +89,26 @@ loops and live tones run natively without a JavaScript scheduling horizon.
 The release ZIP includes unchanged artist FLAC files, attribution, runtime files,
 icons, and the future-track guide. It excludes tests, local handoffs and development
 metadata. Production has not been redeployed.
+
+## v0.3 follow-up
+
+- Orb now rotates its field and ring inclinations; geometry regression verifies
+  visible change over five scene seconds while still/reduced-motion tests remain.
+- Ocean-only production output at 48 kHz: RMS 0.01159, peak 0.06929.
+- Four FLAC + max-live-layer renders passed: peaks 0.32170 (Broken Glimmers),
+  0.59500 (Echoes of Yesterday), 0.20007 (Pale Season), 0.27985 (Safe Space).
+- Native-browser auto-mix harness (muted, short stereo WAV fixtures) passed
+  A→B→A transitions, context suspend/pause/resume, and disabling rotation.
+- Source files for Echoes of Yesterday and Pale Season were downloaded unchanged
+  from artist uploads; ffprobe verified 24-bit, 48 kHz, two channels.
+
+- Final syntax checks and **41 automated tests passed**. Focused review findings
+  about preserving newer auto-mix edits and optional registration failure were
+  fixed and covered by regressions.
+- Codex in-app browser discovered all five top-level imperative WebMCP tools.
+  Invoked each tool successfully: getter, scene, sound, preset and music.
+  Music selection while playing awaited actual FLAC decode/transition and
+  returned matching current track; the visible dock and controls agreed.
+- No Chrome LLM-eval CLI or cross-browser WebMCP compatibility test was run.
+  The deterministic test suite and actual in-app-browser invocations are the
+  evidence for this consumer, not a guarantee for every browser.
