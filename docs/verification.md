@@ -156,3 +156,7 @@ Applied supplied shaders byte-for-byte, validated all four WGSL files, rebuilt, 
 ## Energy Orbit supplied pass five
 
 Supplied shader applied byte-for-byte; all four shader checks, build, actual-pixel render and51 tests pass. Same-settings12.17-second Ocean recording inspected. Violet peak hybrid brightness2.183066; at time0,7245 scene pixels qualify above0.40 and4534 final bloom pixels qualify by the existing violet hue/peak test. Full time0/5/10/25 results and depth/visual limits: `energy-orbit-pass5.md`.
+
+## Energy Orbit supplied pass six
+
+Exact supplied shader match; four device-backed WGSL checks, build, pixel render and51 tests pass. Same-settings12.17-second Ocean recording inspected. Broader surfaces and quieter perimeter improve volume, though crossing lines still compete with fabric. Violet blooms at all four sampled times; peak hybrid2.184785, time0 scene9228/bloom5563 qualifying pixels. See `energy-orbit-pass6.md` for full metrics and limits.

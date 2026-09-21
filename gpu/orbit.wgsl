@@ -168,24 +168,36 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
       );
 
     let across = q.y - center;
-    let taper = 1.0 - smoothstep(0.72, 1.03, abs(nx));
+
+    // Hero sheets now occupy much more of the spherical volume. The previous
+    // pass proved the geometry/depth/color direction, but these widths still
+    // made every surface read as a luminous ribbon.
+    let taper = 1.0 - smoothstep(0.82, 1.12, abs(nx));
 
     let major = 1.0 - step(2.0, fj);
     let half_width =
-      mix(0.050, 0.090, major) +
-      0.014 *
+      mix(0.078, 0.148, major) +
+      0.024 *
       (
         0.5 +
         0.5 *
-        sin(nx * 2.7 - slow * 0.61 + fj * 1.11)
+        sin(nx * 2.15 - slow * 0.49 + fj * 1.11)
       );
 
-    let band =
-      (1.0 - smoothstep(half_width * 0.72, half_width, abs(across))) *
+    let v = across / max(half_width, 0.001);
+
+    // `veil` is the broad translucent fabric surface. `band` is a narrower
+    // structural region used for crisp strands/ridges. Separating them prevents
+    // line work from defining the whole object.
+    let veil =
+      (1.0 - smoothstep(0.72, 1.24, abs(v))) *
       taper *
       body;
 
-    let v = across / max(half_width, 0.001);
+    let band =
+      (1.0 - smoothstep(0.58, 0.94, abs(v))) *
+      taper *
+      body;
 
     // Preserve projected spherical depth instead of dividing it back out.
     // projected_z naturally collapses toward the silhouette, so front/back
@@ -414,56 +426,110 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
 
     let breath = 0.80 + 0.20 * sin(nx * 2.8 - slow * 0.44 + fj * 0.83);
 
+    // Broad surface lighting: a soft moving fold crest plus a center-weighted
+    // translucent body. This is deliberately much wider than the filament
+    // highlights so the eye sees fabric first and line work second.
+    let fold_center =
+      0.30 *
+      sin(
+        nx * 1.34 -
+        slow * 0.73 +
+        fj * 1.29
+      );
+
+    let fold_light =
+      gaussian(
+        v - fold_center,
+        mix(0.46, 0.62, major)
+      );
+
+    let cross_light =
+      0.5 +
+      0.5 *
+      sin(
+        nx * 1.58 +
+        time * (0.038 + fj * 0.004) +
+        fj * 1.71
+      );
+
+    let surface_luminance =
+      0.44 +
+      0.44 * fold_light +
+      0.12 * cross_light;
+
+    let surface_glint =
+      fold_light *
+      traveling *
+      (0.20 + 0.80 * front);
+
+    let surface_color =
+      mix(
+        sheet_color,
+        params.highlight.rgb,
+        0.10 * surface_glint * cyan_keep
+      );
+
+    // Broad translucent fabric carries most of the visual mass now.
     fabric +=
-      sheet_color *
-      band *
+      surface_color *
+      veil *
       depth *
       depth_fade *
       breath *
-      (0.048 + front * 0.090 + sphere_depth * 0.028);
+      surface_luminance *
+      (0.105 + front * 0.105 + sphere_depth * 0.055);
 
+    // A faint secondary-colored underlayer suggests light passing through the
+    // membrane instead of an opaque painted strip.
+    fabric +=
+      mix(params.low.rgb, params.secondary.rgb, 0.62) *
+      veil *
+      (1.0 - front) *
+      sphere_depth *
+      0.028;
+
+    // Crisp detail is intentionally quieter than Pass 5 so it sits *inside*
+    // the broad surfaces instead of turning those surfaces back into ribbons.
     filaments +=
       sheet_color *
       fine *
       depth *
-      (0.021 + front * 0.050);
+      (0.014 + front * 0.035);
 
     filaments +=
-      mix(sheet_color, params.highlight.rgb, 0.46) *
+      mix(sheet_color, params.highlight.rgb, 0.42) *
       selvage *
       depth *
-      (0.050 + front * 0.090) *
+      (0.034 + front * 0.060) *
       cyan_keep;
 
     filaments +=
-      mix(sheet_color, params.highlight.rgb, 0.68) *
+      mix(sheet_color, params.highlight.rgb, 0.62) *
       ridge *
       depth *
-      (0.075 + traveling * 0.62) *
+      (0.052 + traveling * 0.40) *
       cyan_keep;
 
     filaments +=
-      mix(sheet_color, params.highlight.rgb, 0.76) *
+      mix(sheet_color, params.highlight.rgb, 0.70) *
       fine *
       traveling *
-      (0.24 + audio_energy * 0.10) *
+      (0.16 + audio_energy * 0.08) *
       cyan_keep;
 
     filaments +=
       params.highlight.rgb *
       intersection *
       traveling *
-      0.22 *
+      0.13 *
       cyan_keep;
 
-    // Dedicated HDR violet emission. This is intentionally not multiplied by
-    // `traveling` or `ridge` a second time; those compounded gates were why the
-    // previous pass never crossed the bloom knee.
+    // Keep the successful Pass-5 violet ownership/emission mechanism.
     filaments +=
       violet_color *
       violet_emit *
       depth *
-      (1.08 + audio_energy * 0.10);
+      (1.00 + audio_energy * 0.10);
   }
 
   color += fabric + filaments;
@@ -477,9 +543,26 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
   let seam = aa_line(radial - seam_radius, 0.0015) * body;
   let seam_front = smoothstep(-0.72, 0.72, sin(polar + time * 0.043));
   let seam_hot = pulse(polar, time * 0.23 + seed * 0.007, 46.0) * seam_front;
+
+  // Break the perimeter into quiet fragments. The references imply their
+  // silhouette through luminous folds; a continuous circular outline makes the
+  // procedural result feel flatter and more diagrammatic.
+  let seam_presence =
+    smoothstep(
+      0.22,
+      0.80,
+      0.5 +
+      0.5 *
+      sin(
+        polar * 2.17 -
+        time * 0.024 +
+        seed * 0.009
+      )
+    );
+
   let seam_color = mix(params.primary.rgb, params.secondary.rgb, 0.42 + 0.25 * sin(polar * 1.7));
-  color += seam_color * seam * mix(0.018, 0.060, seam_front);
-  color += params.highlight.rgb * seam * seam_hot * 0.58;
+  color += seam_color * seam * seam_presence * mix(0.006, 0.024, seam_front);
+  color += params.highlight.rgb * seam * seam_hot * seam_presence * 0.24;
 
   // Sparse motes stay outside the core so they add atmosphere, not noise.
   let moving_point = p + vec2f(seed * 0.0007, time * 0.0015);
