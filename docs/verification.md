@@ -148,3 +148,7 @@ The second material/geometry pass and seven-pass HDR bloom chain are frozen for 
 ## Energy Orbit experimental third refinement
 
 The supplied patch was applied unchanged and matched the proposed WGSL bytes. All four device-backed shader checks, build, actual-pixel render check, and51 tests passed. A12.17-second Ocean headed recording was captured and inspected. See `energy-orbit-pass3.md` for the six-criterion assessment and measured limitations, including unsolved violet bloom.
+
+## Energy Orbit supplied pass four
+
+Applied supplied shaders byte-for-byte, validated all four WGSL files, rebuilt, rendered actual pixels and passed51 tests. Captured12.17-second Ocean recording at the same settings. Violet probe still fails the target: maximum0.203328,zero qualifying scene pixels,zero violet bloom pixels across times0/5/10/25. See `energy-orbit-pass4.md` for definitions, visuals and depth/emission findings.

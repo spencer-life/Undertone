@@ -6,9 +6,23 @@
   let luminance = dot(color, vec3f(0.2126, 0.7152, 0.0722));
   let peak = max(color.r, max(color.g, color.b));
 
-  // Pure Rec.709 luminance under-values saturated blue/violet. Keep perceptual
-  // luminance, but let a strong peak channel qualify for selective bloom too.
-  let brightness = max(luminance, peak * 0.54);
+  // Pure Rec.709 luminance under-values saturated blue/violet. Increase the
+  // peak-channel contribution as saturation rises so localized violet emission
+  // can cross the existing knee without lowering the global threshold.
+  let minimum = min(color.r, min(color.g, color.b));
+  let saturation =
+    (peak - minimum) /
+    max(peak, 0.0001);
+
+  let chroma_weight =
+    0.58 +
+    0.12 * saturation;
+
+  let brightness =
+    max(
+      luminance,
+      peak * chroma_weight
+    );
   let threshold = 0.62;
   let knee = 0.22;
   let soft = clamp((brightness - threshold + knee) / (2.0 * knee), 0.0, 1.0);
