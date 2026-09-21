@@ -162,7 +162,8 @@ class UndertoneVisuals {
     amp2[j]=.012+random()*.025;
     freq[j]=1.45+random()*1.15;
     phase[j]=random()*Math.PI*2;
-    speed[j]=.035+random()*.045;
+    // Visible fold travel at the default motion setting, not minute-long drift.
+    speed[j]=.16+random()*.16;
     widths[j]=.040+random()*.055*(j===1||j===layers-2?1.25:.8);
     opacity[j]=.54+random()*.26;
     const shade=.22+d*.26+(random()-.5)*.04;
@@ -218,7 +219,7 @@ class UndertoneVisuals {
    const base=j*stride,phase=cache.phase[j]+t*cache.speed[j],d=j/(cache.layers-1);
    for(let i=0;i<=cache.samples;i++){
     const u=i/cache.samples*span-.08,x=u*w;
-    const wave=Math.sin(u*cache.freq[j]*Math.PI*2+phase)*cache.amp[j]+Math.sin(u*3.7-phase*1.31+d*5.2+t*.018)*cache.amp2[j];
+    const wave=Math.sin(u*cache.freq[j]*Math.PI*2+phase)*cache.amp[j]+Math.sin(u*3.7-phase*1.31+d*5.2+t*.075)*cache.amp2[j];
     const center=h*(cache.baseY[j]+cache.tilt[j]*(u-.5)+wave);
     const half=h*cache.widths[j]*(.80+.16*Math.sin(u*2.2+phase*.57+d*4));
     const index=base+i*4;points[index]=x;points[index+1]=center-half;points[index+2]=x;points[index+3]=center+half;

@@ -28,3 +28,14 @@ test('silk zero crossfade suppresses every main-canvas layer',()=>{
  const h=harness(),v=h.visual,g=h.context();v.reseed(604);h.alphas.length=0;v.silk(g,1000,600,3,h.palette,0);
  assert(h.alphas.length>0);assert(h.alphas.every(alpha=>alpha===0));
 });
+
+test('broad silk folds travel perceptibly over three real seconds at default motion',()=>{
+ for(const seed of [391,604,605])for(const start of [0,10,30]){
+  const h=harness(),v=h.visual,g=h.context();v.reseed(seed);
+  v.silk(g,1000,600,start,h.palette,1);const before=Array.from(v.silkCache.points);
+  v.silk(g,1000,600,start+3*(.18+.4*.9),h.palette,1);
+  let squared=0,count=0;
+  for(let i=1;i<before.length;i+=2){squared+=(v.silkCache.points[i]-before[i])**2;count++;}
+  const rms=Math.sqrt(squared/count);assert(rms>8,`seed ${seed}, time ${start}: only ${rms}px movement`);
+ }
+});
