@@ -1,0 +1,13 @@
+<!doctype html><meta charset="utf-8"><title>Undertone GPU capability check</title><style>body{background:#101216;color:#eee;font:15px system-ui;padding:30px}pre{white-space:pre-wrap}</style><h1>WebGPU capability</h1><pre id="result">Checking…</pre><script type="module">
+const results=[];
+for (const options of [{},{powerPreference:'low-power'},{powerPreference:'high-performance'},{forceFallbackAdapter:true}]) {
+ try {
+  if(!navigator.gpu) throw new Error('WebGPU API unavailable');
+  const adapter=await navigator.gpu.requestAdapter(options);
+  if(!adapter) throw new Error('No WebGPU adapter');
+  const device=await adapter.requestDevice();
+  results.push({options,supported:true,info:adapter.info?.description,maxTextureDimension2D:device.limits.maxTextureDimension2D}); device.destroy();
+ } catch(error) {results.push({options,supported:false,error:error.message});}
+ document.querySelector('#result').textContent=JSON.stringify(results,null,2);
+}
+</script>

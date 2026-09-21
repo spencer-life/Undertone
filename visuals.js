@@ -18,6 +18,10 @@ class UndertoneVisuals {
   this.canvas=canvas; this.g=canvas.getContext('2d',{alpha:false});
   this.settings=getSettings; this.audio=getAudio; this.time=0; this.last=0;
   this.lastPaint=0; this.energy=0; this.dirty=true; this.activeScene=null;
+  this.orbitGPU=typeof UndertoneOrbitBridge==='function'?new UndertoneOrbitBridge(canvas,()=>{this.dirty=true;}):null;
+  // BFCache releases the GPU device; a restored page lazily acquires a new one.
+  window.addEventListener('pagehide',()=>{this.orbitGPU?.dispose();});
+  window.addEventListener('pageshow',()=>{if(this.orbitGPU?.disposed){this.orbitGPU=new UndertoneOrbitBridge(canvas,()=>{this.dirty=true;});this.dirty=true;}});
   this.reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
   this.reduced.addEventListener?.('change',()=>{this.dirty=true;});
   this.resize=()=>{
@@ -45,7 +49,9 @@ class UndertoneVisuals {
  color(p,x){const n=Math.max(0,Math.min(.999,x))*(p.length-1),i=Math.floor(n);return this.blend(p[i],p[i+1],n-i);}
  frame(ms){
   requestAnimationFrame(this.frame);const s=this.settings(),dt=this.last?Math.min((ms-this.last)/1000,.1):0;this.last=ms;
+  if(s.scene!=='orbit')this.orbitGPU?.prepare(s.scene);
   if(document.hidden||s.blackout)return;
+  this.orbitGPU?.prepare(s.scene);
   const still=s.motion===0||this.reduced.matches;
   if(!still)this.time+=dt*(.18+s.motion/100*.9);
   if(!this.dirty&&(still||ms-this.lastPaint<1000/(s.eco?20:30)))return;
@@ -56,6 +62,8 @@ class UndertoneVisuals {
  }
  render(s){
   const g=this.g,w=this.width,h=this.height;if(!g||!w||!h)return;
+  if(s.scene==='orbit'&&this.transition>=1&&this.orbitGPU?.draw({width:w,height:h,dpr:Math.min(window.devicePixelRatio||1,1.5),time:this.time,seed:this.seed,theme:s.theme,brightness:s.brightness,eco:s.eco,energy:this.energy}))return;
+  this.orbitGPU?.hide();
   const p=UT_THEMES[s.theme].art,t=this.time+this.offset;g.globalAlpha=1;g.fillStyle=p[0];g.fillRect(0,0,w,h);
   if(this.previousScene&&this.transition<1){this.renderScene(this.previousScene,g,w,h,t,p,1-this.transition);this.renderScene(this.activeScene,g,w,h,t,p,this.transition);}
   else{this.renderScene(this.activeScene,g,w,h,t,p,1);this.previousScene=null;}

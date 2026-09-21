@@ -1,0 +1,5 @@
+# The browser bundle requires no native Node adapter or lifecycle scripts.
+allowBuilds:
+  '@vgpu/adapter-node': false
+  esbuild: false
+  webgpu: false

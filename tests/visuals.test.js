@@ -24,3 +24,22 @@ test('orb geometry visibly changes with elapsed time',()=>{
  const sample=t=>{const points=[];const gradient={addColorStop(){}};const g={createRadialGradient:()=>gradient,fillRect(){},translate(){},rotate(v){points.push(v)},beginPath(){},lineTo(x,y){points.push(x,y)},moveTo(x,y){points.push(x,y)},stroke(){},save(){},restore(){},ellipse(...args){points.push(...args)}};visual.orbit(g,1000,600,t,['#000000','#222222','#555555','#999999','#ffffff'],1);return points;};
  const a=sample(0),b=sample(5);let square=0;for(let i=0;i<a.length;i++)square+=(a[i]-b[i])**2;assert(Math.sqrt(square/a.length)>10,'orb should move noticeably within five scene seconds');
 });
+
+function gpuVisualHarness(){
+ const handlers={},instances=[],settings={motion:0,blackout:false,eco:false,scene:'orbit',theme:'ocean',brightness:80};
+ const media={matches:false,addEventListener(){}};
+ class Bridge{constructor(){this.draws=[];this.disposed=false;instances.push(this);}prepare(){}draw(p){this.draws.push(p);return true;}hide(){}dispose(){this.disposed=true;}}
+ const canvas={getContext:()=>({setTransform(){}}),getBoundingClientRect:()=>({width:1000,height:600})};
+ const scope={UndertoneOrbitBridge:Bridge,window:{devicePixelRatio:3,matchMedia:()=>media,addEventListener:(event,fn)=>handlers[event]=fn},document:{hidden:false},requestAnimationFrame(){}};
+ vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../visuals.js'),'utf8')+'\nglobalThis.Visual=UndertoneVisuals;',scope);
+ const visual=new scope.Visual(canvas,()=>settings,()=>0);return{visual,instances,settings,scope,handlers,media};
+}
+test('GPU shares the still, hidden, blackout, and DPR boundaries of the visual clock',()=>{
+ const h=gpuVisualHarness();h.visual.frame(1000);h.visual.frame(2000);assert.equal(h.instances[0].draws.length,1);assert.equal(h.instances[0].draws[0].dpr,1.5);
+ h.settings.motion=50;h.media.matches=true;h.visual.dirty=true;h.visual.frame(3000);h.visual.frame(4000);assert.equal(h.instances[0].draws.length,2);assert.equal(h.visual.time,0);
+ h.scope.document.hidden=true;h.visual.dirty=true;h.visual.frame(5000);h.scope.document.hidden=false;h.settings.blackout=true;h.visual.frame(6000);assert.equal(h.instances[0].draws.length,2);
+ h.settings.blackout=false;h.visual.frame(7000);assert.equal(h.instances[0].draws.length,3);
+});
+test('BFCache page lifecycle releases and recreates the GPU bridge without another visual clock',()=>{
+ const h=gpuVisualHarness();h.visual.frame(1000);h.handlers.pagehide();assert.equal(h.instances[0].disposed,true);h.handlers.pageshow();assert.equal(h.instances.length,2);h.visual.frame(2000);assert.equal(h.instances[1].draws.length,1);
+});

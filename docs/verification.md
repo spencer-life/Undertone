@@ -112,3 +112,31 @@ metadata. Production has not been redeployed.
 - No Chrome LLM-eval CLI or cross-browser WebMCP compatibility test was run.
   The deterministic test suite and actual in-app-browser invocations are the
   evidence for this consumer, not a guarantee for every browser.
+
+## Energy Orbit single-pass experiment — 2026-09-21
+
+The official project skill is installed in `.agents/skills/vgpu/SKILL.md` and the
+vgpu 0.5.0 CLI is pinned through mise. CLI-bundled docs and CLI-pulled examples
+are the reference for this prototype. See `docs/energy-orbit-webgpu.md` for the
+commands, measurements, support limits, and live dashboard URL.
+
+- `pnpm check`: passed, including the optional renderer and bridge.
+- `pnpm exec vgpu check gpu/orbit.wgsl --require-validation`: passed; validation
+  was attempted on a real software adapter, with zero diagnostics.
+- `node scripts/render-orbit.mjs`: deterministic identical-input frames and
+  nonzero time-dependent pixel change passed on llvmpipe.
+- The full existing suite plus the first GPU bridge tests passed (50 tests).
+  After the final integration fixes, all 17 focused bridge/visual/PWA tests
+  passed, including one additional failed-submission case.
+- Headed Agent Browser/SwiftShader visibly rendered the procedural orbit, and
+  the current document reports `renderer=webgpu`, `orbitStatus=ready`.
+- Reduced-motion submission count stayed fixed; high-DPI resize, a 320px portrait
+  viewport, actual BFCache cleanup/recovery, and Canvas fallback in the in-app
+  browser were checked. WebMCP `set_scene` continued working.
+- Software browser cadence was approximately 12.1 fps for the single-pass GPU
+  prototype versus 4.3 fps for the existing Canvas baseline. These are short,
+  environment-specific software measurements, not hardware GPU benchmarks.
+
+The experiment is opt-in at `?renderer=webgpu`. No other scenes are migrated.
+Bloom and further material/palette refinement are deferred. The earlier release
+ZIP and published site have not been updated with this experiment.
