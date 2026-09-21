@@ -407,7 +407,7 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
       violet_ownership *
       (
         0.30 +
-        1.20 * violet_detail
+        1.20 * violet_detail * mix(0.70, 0.82, smoothstep(0.04, 0.24, radial))
       );
 
     let violet_color =
@@ -440,7 +440,7 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
     let fold_light =
       gaussian(
         v - fold_center,
-        mix(0.46, 0.62, major)
+        mix(0.43, 0.57, major)
       );
 
     let cross_light =
@@ -452,10 +452,15 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
         fj * 1.71
       );
 
-    let surface_luminance =
-      0.44 +
-      0.44 * fold_light +
-      0.12 * cross_light;
+    // One broad trough beside the crest reveals a turning translucent sheet.
+    // Rear sheets retain soft fill; front sheets have clearer local relief.
+    let fold_trough = gaussian(v - fold_center - 0.64, 0.44);
+    let surface_luminance = max(0.12,
+      0.30 + 0.82 * fold_light + 0.08 * cross_light
+      - 0.16 * fold_trough * mix(0.45, 1.0, front));
+    let surface_clarity = mix(0.88, 1.12, front);
+    // Preserve line masks/antialiasing; reduce radiance, especially at the center.
+    let detail_weight = mix(0.70, 0.82, smoothstep(0.04, 0.24, radial));
 
     let surface_glint =
       fold_light *
@@ -477,6 +482,7 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
       depth_fade *
       breath *
       surface_luminance *
+      surface_clarity *
       (0.105 + front * 0.105 + sphere_depth * 0.055);
 
     // A faint secondary-colored underlayer suggests light passing through the
@@ -494,35 +500,35 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
       sheet_color *
       fine *
       depth *
-      (0.014 + front * 0.035);
+      (0.014 + front * 0.035) * detail_weight;
 
     filaments +=
       mix(sheet_color, params.highlight.rgb, 0.42) *
       selvage *
       depth *
       (0.034 + front * 0.060) *
-      cyan_keep;
+      cyan_keep * detail_weight;
 
     filaments +=
       mix(sheet_color, params.highlight.rgb, 0.62) *
       ridge *
       depth *
       (0.052 + traveling * 0.40) *
-      cyan_keep;
+      cyan_keep * detail_weight;
 
     filaments +=
       mix(sheet_color, params.highlight.rgb, 0.70) *
       fine *
       traveling *
       (0.16 + audio_energy * 0.08) *
-      cyan_keep;
+      cyan_keep * detail_weight;
 
     filaments +=
       params.highlight.rgb *
       intersection *
       traveling *
       0.13 *
-      cyan_keep;
+      cyan_keep * detail_weight;
 
     // Keep the successful Pass-5 violet ownership/emission mechanism.
     filaments +=

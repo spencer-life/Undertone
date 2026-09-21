@@ -160,3 +160,7 @@ Supplied shader applied byte-for-byte; all four shader checks, build, actual-pix
 ## Energy Orbit supplied pass six
 
 Exact supplied shader match; four device-backed WGSL checks, build, pixel render and51 tests pass. Same-settings12.17-second Ocean recording inspected. Broader surfaces and quieter perimeter improve volume, though crossing lines still compete with fabric. Violet blooms at all four sampled times; peak hybrid2.184785, time0 scene9228/bloom5563 qualifying pixels. See `energy-orbit-pass6.md` for full metrics and limits.
+
+## Energy Orbit final pass seven
+
+Focused hierarchy refinement:18–30% less strand radiance, broad crest/trough surface contrast and clearer front/rear surface weighting. Four shader validations, build, actual-pixel render and51 tests pass; violet remains in bloom at all four sampled times. Headed Ocean capture inspected. Approved under the user's explicit conditional stop criterion; no further art-direction passes or other-scene work. See `energy-orbit-pass7.md`.
