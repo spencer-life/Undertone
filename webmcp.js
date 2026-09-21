@@ -28,10 +28,10 @@
   const STATE_KEYS = [
     'musicSource', 'track', 'autoMix', 'music', 'beats', 'beatVolume', 'master',
     'hz', 'carrier', 'route', 'rain', 'ocean', 'noise', 'noiseType', 'theme',
-    'scene', 'motion', 'brightness', 'eco', 'blackout', 'preset'
+    'scene', 'seed', 'motion', 'brightness', 'eco', 'blackout', 'preset'
   ];
 
-  const SCENE_KEYS = ['scene', 'theme', 'motion', 'brightness', 'eco', 'blackout'];
+  const SCENE_KEYS = ['scene', 'theme', 'seed', 'motion', 'brightness', 'eco', 'blackout'];
   const SOUND_KEYS = [
     'music', 'beatVolume', 'rain', 'ocean', 'noise', 'master', 'hz', 'carrier',
     'beats', 'route', 'noiseType'
@@ -304,6 +304,7 @@
     const sceneSchema = {
       scene: { type: 'string', values: current => current.scenes },
       theme: { type: 'string', values: current => current.themes },
+      seed: { type: 'number', min: 1, max: 9999 },
       motion: { type: 'number', min: 0, max: 100 },
       brightness: { type: 'number', min: 10, max: 100 },
       eco: { type: 'boolean' },
@@ -333,11 +334,12 @@
       },
       {
         name: 'set_scene',
-        description: 'Change Undertone scene, theme, movement, brightness, or display power settings.',
+        description: 'Change Undertone scene, theme, variation seed, movement, brightness, or display power settings.',
         inputSchema: {
           type: 'object', properties: {
             scene: { type: 'string', enum: options.scenes },
             theme: { type: 'string', enum: options.themes },
+            seed: { type: 'number', minimum: 1, maximum: 9999, description: 'Reproduce a visual variation; rounded to an integer by the app.' },
             motion: { type: 'number', minimum: 0, maximum: 100 },
             brightness: { type: 'number', minimum: 10, maximum: 100 },
             eco: { type: 'boolean' }, blackout: { type: 'boolean' }

@@ -43,3 +43,21 @@ test('GPU shares the still, hidden, blackout, and DPR boundaries of the visual c
 test('BFCache page lifecycle releases and recreates the GPU bridge without another visual clock',()=>{
  const h=gpuVisualHarness();h.visual.frame(1000);h.handlers.pagehide();assert.equal(h.instances[0].disposed,true);h.handlers.pageshow();assert.equal(h.instances.length,2);h.visual.frame(2000);assert.equal(h.instances[1].draws.length,1);
 });
+
+test('Canvas frame contract reuses storage and preserves theme, time and controls',()=>{
+ const h=visualHarness(),v=h.visual;v.time=7;v.reseed(42);
+ const a=v.canvasContract(h.settings),viewport=a.viewport;h.settings.motion=0;h.settings.brightness=30;h.media.matches=true;
+ const b=v.canvasContract(h.settings);assert.equal(a,b);assert.equal(b.viewport,viewport);assert.equal(b.seed,42);assert.equal(b.time,7+42*.0037);assert.equal(b.motion,0);assert.equal(b.brightness,.3);assert.equal(b.reducedMotion,true);assert.equal(b.palette.name,'Noir');assert.equal(b.viewport.dpr,1.5);
+});
+test('contours are seeded, finite, animated and reuse buffers and glow surface',()=>{
+ const h=visualHarness(),v=h.visual;let canvases=0;const alphas=[];
+ const context=(record=true)=>({setTransform(){},createRadialGradient:()=>({addColorStop(){}}),clearRect(){},fillRect(){if(record)alphas.push(this.globalAlpha)},beginPath(){},moveTo(){},lineTo(){},closePath(){},stroke(){if(record)alphas.push(this.globalAlpha)},drawImage(){if(record)alphas.push(this.globalAlpha)}});
+ h.scope.document.createElement=()=>{canvases++;return {getContext:()=>context(false)}};
+ const g=context();v.canvasContract(h.settings);const p=v.canvasFrame.palette.art;
+ const sample=(seed,time,w=1000,h=600)=>{v.reseed(seed);v.contours(g,w,h,time,p,1);return Array.from(v.contourCache.points)};
+ const a=sample(604,3),buffer=v.contourCache.points,glow=v.contourCache.glow;
+ assert.deepEqual(sample(604,3),a);assert.equal(v.contourCache.points,buffer);assert.equal(v.contourCache.glow,glow);assert.equal(canvases,1);
+ assert.notDeepEqual(sample(605,3),a);assert.notDeepEqual(sample(604,10),a);
+ for(const [w,h] of [[320,700],[1920,500]]){const points=sample(604,3,w,h);assert(points.every(Number.isFinite));assert(points.length<=88*161*2);}
+ alphas.length=0;v.contours(g,1920,500,3,p,0);assert(alphas.every(a=>a===0),'zero crossfade opacity must suppress every main-canvas layer');
+});

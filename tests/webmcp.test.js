@@ -200,3 +200,9 @@ test('a synchronous registration failure does not escape app startup', () => {
     console.warn = originalWarn;
   }
 });
+
+test('scene tool accepts reproducible seeds and rejects out-of-range values',async()=>{
+ const h=harness();await tool(h,'set_scene').execute({seed:604});assert.equal(h.settings.seed,604);
+ const state=await tool(h,'get_undertone_state').execute({});assert.equal(state.settings.seed,604);
+ assert.throws(()=>tool(h,'set_scene').execute({seed:10000}),/seed/);assert.throws(()=>tool(h,'set_scene').execute({seed:NaN}),/seed/);
+});

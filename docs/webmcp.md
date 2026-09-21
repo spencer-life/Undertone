@@ -7,7 +7,7 @@ without it retain all ordinary controls. No framework or polyfill is required.
 | Tool | Effect |
 | --- | --- |
 | `get_undertone_state` | Read current settings, playback/loading state and available choices |
-| `set_scene` | Set scene, palette, movement, brightness, low-power mode or blackout |
+| `set_scene` | Set scene, palette, reproducible variation seed, movement, brightness, low-power mode or blackout |
 | `set_sound` | Set music/beat/texture/master levels, frequency, carrier, route and noise type |
 | `apply_preset` | Apply one of the four existing listening presets |
 | `select_music` | Select a catalog track/source and configure automatic rotation |

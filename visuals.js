@@ -5,7 +5,7 @@ const UT_THEMES={
  slate:{name:'Midnight slate',bg:'#0b1119',bg2:'#101925',surface:'#152030',raised:'#1e2d3e',text:'#f0f4fa',secondary:'#bbcbdc',muted:'#91a5bb',line:'#34475e',accent:'#abc7e8',strong:'#d0e4fa',ink:'#121e2c',art:['#0c131f','#202f47','#456082','#7794b6','#c0d6ee']},
  frost:{name:'Frost',bg:'#101617',bg2:'#151e20',surface:'#1b282b',raised:'#243438',text:'#f1f8f7',secondary:'#bfd2d2',muted:'#91aaad',line:'#354e53',accent:'#c2e3df',strong:'#e3f5f3',ink:'#152729',art:['#0f191c','#243b41','#4d7379','#8bb5b6','#d1e9e5']},
  rose:{name:'Rose Dark',bg:'#131315',bg2:'#141416',surface:'#1c1c1f',raised:'#232326',text:'#faf8f5',secondary:'#dac0c9',muted:'#a28a93',line:'#42383e',accent:'#ffafd3',strong:'#f472b6',ink:'#23171e',art:['#141416','#30232b','#765365','#b97d96','#efb4cc']},
- ocean:{name:'Deep ocean',bg:'#11161b',bg2:'#121a20',surface:'#19242c',raised:'#22313a',text:'#f3f7f8',secondary:'#b9d0df',muted:'#92aab9',line:'#384c5b',accent:'#a6d6f2',strong:'#73b9e3',ink:'#152631',art:['#11191f','#233e4c','#406b81','#7aa4b7','#b7dce8']},
+ ocean:{contourAccents:['#32cedc','#477cfa','#9974ef'],name:'Deep ocean',bg:'#11161b',bg2:'#121a20',surface:'#19242c',raised:'#22313a',text:'#f3f7f8',secondary:'#b9d0df',muted:'#92aab9',line:'#384c5b',accent:'#a6d6f2',strong:'#73b9e3',ink:'#152631',art:['#11191f','#233e4c','#406b81','#7aa4b7','#b7dce8']},
  moss:{name:'Moss',bg:'#141815',bg2:'#151c17',surface:'#1e2821',raised:'#28342b',text:'#f4f6ee',secondary:'#c5d2bd',muted:'#a1b09b',line:'#414e3d',accent:'#bdddab',strong:'#94c37d',ink:'#1e2a18',art:['#141b17','#2c3d32','#51654a','#859774','#c6d8b0']},
  ember:{name:'Ember',bg:'#191513',bg2:'#201915',surface:'#2a211b',raised:'#35291f',text:'#fff5ea',secondary:'#dfc9b1',muted:'#b59d83',line:'#524233',accent:'#f4c194',strong:'#eba76e',ink:'#2c1d13',art:['#1d1713','#493226','#7e5139','#b27a51','#e6b887']},
  violet:{name:'Night violet',bg:'#17141c',bg2:'#1c1723',surface:'#251e2e',raised:'#30273b',text:'#f7f1fb',secondary:'#d3c2e4',muted:'#ad98bd',line:'#4a3c59',accent:'#d5b4ed',strong:'#ba91db',ink:'#271c32',art:['#19151f','#372b46','#62507c','#9982b2','#d8bde9']},
@@ -17,6 +17,7 @@ class UndertoneVisuals {
  constructor(canvas,getSettings,getAudio) {
   this.canvas=canvas; this.g=canvas.getContext('2d',{alpha:false});
   this.settings=getSettings; this.audio=getAudio; this.time=0; this.last=0;
+  this.canvasFrame={time:0,viewport:{width:0,height:0,dpr:1},seed:604,palette:null,motion:0,brightness:1,reducedMotion:false};
   this.lastPaint=0; this.energy=0; this.dirty=true; this.activeScene=null;
   this.orbitGPU=typeof UndertoneOrbitBridge==='function'?new UndertoneOrbitBridge(canvas,()=>{this.dirty=true;}):null;
   // BFCache releases the GPU device; a restored page lazily acquires a new one.
@@ -64,34 +65,74 @@ class UndertoneVisuals {
   const g=this.g,w=this.width,h=this.height;if(!g||!w||!h)return;
   if(s.scene==='orbit'&&this.transition>=1&&this.orbitGPU?.draw({width:w,height:h,dpr:Math.min(window.devicePixelRatio||1,1.5),time:this.time,seed:this.seed,theme:s.theme,brightness:s.brightness,eco:s.eco,energy:this.energy}))return;
   this.orbitGPU?.hide();
-  const p=UT_THEMES[s.theme].art,t=this.time+this.offset;g.globalAlpha=1;g.fillStyle=p[0];g.fillRect(0,0,w,h);
+  const contract=this.canvasContract(s),p=contract.palette.art,t=contract.time;g.globalAlpha=1;g.fillStyle=p[0];g.fillRect(0,0,w,h);
   if(this.previousScene&&this.transition<1){this.renderScene(this.previousScene,g,w,h,t,p,1-this.transition);this.renderScene(this.activeScene,g,w,h,t,p,this.transition);}
   else{this.renderScene(this.activeScene,g,w,h,t,p,1);this.previousScene=null;}
   // Dark corners keep controls legible, without masking the central art.
-  const vignette=g.createRadialGradient(w*.5,h*.42,h*.12,w*.5,h*.45,Math.max(w*.62,h*.74));
-  vignette.addColorStop(0,'#0000');vignette.addColorStop(1,'#0009');g.fillStyle=vignette;g.fillRect(0,0,w,h);
+  const vignetteKey=[w,h,contract.viewport.dpr].join(':');
+  if(this.vignetteKey!==vignetteKey){this.vignette=g.createRadialGradient(w*.5,h*.42,h*.12,w*.5,h*.45,Math.max(w*.62,h*.74));this.vignette.addColorStop(0,'#0000');this.vignette.addColorStop(1,'#0009');this.vignetteKey=vignetteKey;}
+  g.fillStyle=this.vignette;g.fillRect(0,0,w,h);
   g.globalAlpha=1-s.brightness/100;g.fillStyle=p[0];g.fillRect(0,0,w,h);g.globalAlpha=1;
+ }
+ canvasContract(s){
+  const c=this.canvasFrame;c.time=this.time+this.offset;c.viewport.width=this.width;c.viewport.height=this.height;c.viewport.dpr=Math.min(window.devicePixelRatio||1,1.5);c.seed=this.seed;c.palette=UT_THEMES[s.theme];c.motion=s.motion/100;c.brightness=s.brightness/100;c.reducedMotion=this.reduced.matches;return c;
  }
  renderScene(scene,g,w,h,t,p,a){g.save();g.globalAlpha=a;if(scene==='rain')this.wetGlass(g,w,h,t,p,a);else if(scene==='dunes')this.silk(g,w,h,t,p,a);else if(scene==='orbit')this.orbit(g,w,h,t,p,a);else this.contours(g,w,h,t,p,a);g.restore();}
  glow(g,x,y,r,color,opacity){const v=g.createRadialGradient(x,y,0,x,y,r);v.addColorStop(0,this.rgba(color,opacity));v.addColorStop(.45,this.rgba(color,opacity*.4));v.addColorStop(1,this.rgba(color,0));g.fillStyle=v;g.fillRect(x-r,y-r,r*2,r*2);}
  contours(g,w,h,t,p,a){
-  const cx=w*.5,cy=h*.43,rx=Math.min(w*.34,h*.74),ry=Math.min(h*.30,w*.34),count=w<650?68:92;
-  this.glow(g,cx-rx*.45,cy+ry*.15,rx*1.15,p[2],.16);
-  g.lineJoin='round';g.lineCap='round';
-  // Nested contours share one warped field, with elevation-dependent drift.
-  for(let j=count-1;j>=0;j--){
-   const d=j/(count-1),r=.21+d*.91;
-   g.beginPath();
-   for(let i=0;i<=190;i++){
-    const q=i/190*Math.PI*2;
-    const warp=1+.15*Math.sin(q*3+t*.16+d*2.8)+.055*Math.cos(q*5-t*.13+d*4.3)+.025*Math.sin(q*8+t*.09);
-    const x=cx+Math.cos(q)*rx*r*warp+Math.sin(d*4.5+t*.14)*rx*.11;
-    const y=cy+Math.sin(q)*ry*r*(1+.13*Math.cos(q*2-t*.12+d*2))+Math.cos(q*3+t*.1+d*6)*ry*.045;
-    i?g.lineTo(x,y):g.moveTo(x,y);
+  const c=this.canvasFrame,theme=c.palette||UT_THEMES.ocean;
+  const count=w<650?64:88,segments=160;
+  const key=[w,h,c.viewport.dpr,this.seed,theme.name].join(':');
+  let cache=this.contourCache;
+  if(!cache||cache.key!==key){
+   // Allocate only on viewport/theme/seed changes. No Path2D or gradient churn.
+   const glow=cache?.glow||document.createElement('canvas');
+   glow.width=Math.max(1,Math.ceil(w*.5));glow.height=Math.max(1,Math.ceil(h*.5));
+   const light=glow.getContext('2d');light.setTransform(.5,0,0,.5,0,0);
+   let k=this.seed>>>0;const random=()=>{k=(1664525*k+1013904223)>>>0;return k/4294967296;};
+   const phase=Array.from({length:6},()=>random()*Math.PI*2);
+   const accents=theme.contourAccents||[p[3],p[2],p[4]];
+   const makeGradients=context=>accents.map((color,j)=>{
+    const x=w*(.20+j*.29),y=h*(j===1?.30:.57);
+    const gradient=context.createRadialGradient(x,y,0,x,y,Math.min(w,h)*.36);
+    gradient.addColorStop(0,color);gradient.addColorStop(.30,this.rgba(color,.86));gradient.addColorStop(.72,this.rgba(color,.24));gradient.addColorStop(1,this.rgba(color,0));return gradient;
+   });
+   const gradients=makeGradients(g),glowGradients=makeGradients(light);
+   const cos=new Float32Array(segments+1),sin=new Float32Array(segments+1);
+   for(let i=0;i<=segments;i++){cos[i]=Math.cos(i/segments*Math.PI*2);sin[i]=Math.sin(i/segments*Math.PI*2);}
+   cache=this.contourCache={key,glow,light,phase,gradients,glowGradients,accents,cos,sin,points:new Float32Array(count*(segments+1)*2),colors:Array.from({length:count},(_,j)=>this.color(p,.29+.24*(1-j/count))),dark:this.blend(p[0],'#000000',.77)};
+  }
+  const {points,phase,cos,sin,light,glow,gradients}=cache;
+  const rx=w*.48,ry=h*.43,cx=w*.50,cy=h*.46;
+  // Shared smooth elevation field: broad saddles and drifting asymmetric lobes.
+  // Irrationally related slow periods avoid a single repeating rotation.
+  const drift=Math.sin(t*.071+phase[0]),breath=Math.sin(t*.103+phase[1]);
+  for(let j=0;j<count;j++){
+   const d=j/(count-1),r=.12+d*1.20,base=j*(segments+1)*2;
+   for(let i=0;i<=segments;i++){
+    const q=i/segments*Math.PI*2;
+    const fold=1+.19*Math.sin(q*3+phase[2]+d*1.8+drift*.17)+.10*Math.cos(q*2-phase[3]+d*2.5)+.035*Math.sin(q*5+phase[4]+breath*.20);
+    const x=cos[i]*r*fold,y=sin[i]*r;
+    points[base+i*2]=cx+rx*(x+.17*Math.sin(y*2.8+phase[5]+drift*.12)+.06*Math.sin(d*4+phase[0]));
+    points[base+i*2+1]=cy+ry*(y*(.82+.14*Math.cos(q*2+d*2+phase[1]))+.17*Math.sin(x*2.7+phase[3]+breath*.12));
    }
-   g.closePath();
-   const ridge=Math.pow(.5+.5*Math.sin(d*13-t*.26),5);
-   g.strokeStyle=this.color(p,.31+.5*(1-d)+.1*ridge);g.globalAlpha=a*(.22+ridge*.28)*(1-Math.pow(d,8)*.7);g.lineWidth=.65+ridge*.48;g.stroke();
+  }
+  g.globalAlpha=a;g.fillStyle=cache.dark;g.fillRect(0,0,w,h);
+  light.clearRect(0,0,w,h);light.lineJoin='round';light.lineCap='round';
+  // Only six elevation lines contribute glow, spatially masked by cached gradients.
+  for(let n=0;n<6;n++){
+   const j=Math.round(count*(.18+n*.105)),base=j*(segments+1)*2;
+   light.beginPath();for(let i=0;i<=segments;i++){const x=points[base+i*2],y=points[base+i*2+1];i?light.lineTo(x,y):light.moveTo(x,y);}light.closePath();
+   light.strokeStyle=cache.glowGradients[n%3];light.lineWidth=3;light.shadowColor=cache.accents[n%3];light.shadowBlur=9;light.globalAlpha=.55;light.stroke();
+  }
+  light.shadowBlur=0;g.globalAlpha=a*.8;g.drawImage(glow,0,0,w,h);
+  g.lineJoin='round';g.lineCap='round';
+  for(let j=count-1;j>=0;j--){
+   const d=j/(count-1),base=j*(segments+1)*2;
+   g.beginPath();for(let i=0;i<=segments;i++){const x=points[base+i*2],y=points[base+i*2+1];i?g.lineTo(x,y):g.moveTo(x,y);}g.closePath();
+   const depth=.5+.5*Math.sin(d*8+phase[2]);
+   g.strokeStyle=cache.colors[j];g.globalAlpha=a*(.18+depth*.20)*(1-Math.pow(d,5)*.65);g.lineWidth=.55+depth*.40;g.stroke();
+   for(let n=0;n<6;n++)if(j===Math.round(count*(.18+n*.105))){g.strokeStyle=gradients[n%3];g.globalAlpha=a*(.82+.15*Math.sin(t*.09+n));g.lineWidth=1.25+depth*.4;g.stroke();}
   }
   g.globalAlpha=a;
  }
