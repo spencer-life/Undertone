@@ -95,7 +95,14 @@ if printf '%s' "$CLEAN_META" | grep -Eq 'Preview error|WebGPU is not available|N
   exit 1
 fi
 
-agent-browser --session "$SESSION" --webgpu --headed screenshot "$OUT/orbit-webgpu.png"
+SHOT_OUTPUT="$(agent-browser --session "$SESSION" --webgpu --headed screenshot)"
+printf '%s\n' "$SHOT_OUTPUT" | tee "$OUT/screenshot-command.txt"
+SHOT_PATH="$(printf '%s\n' "$SHOT_OUTPUT" | sed -n 's/.*Screenshot saved to \(.*\.png\)$/\1/p' | tail -1)"
+if [[ -z "$SHOT_PATH" || ! -f "$SHOT_PATH" ]]; then
+  echo "agent-browser did not return a usable screenshot path"
+  exit 1
+fi
+cp "$SHOT_PATH" "$OUT/orbit-webgpu.png"
 STDDEV="$(identify -format '%[fx:standard_deviation]' "$OUT/orbit-webgpu.png")"
 printf '%s\n' "$STDDEV" | tee "$OUT/screenshot-standard-deviation.txt"
 awk -v v="$STDDEV" 'BEGIN { exit !(v > 50) }'
