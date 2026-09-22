@@ -17,3 +17,21 @@ main{flex:1}.stage-wrap{flex:1;min-height:450px}.stage{min-height:450px;flex:1;b
 @media(max-width:640px){#shell{padding:0 16px}.topbar{height:70px}.brand-name{font-size:19px}.top-actions{gap:2px}.top-actions button{width:40px;padding:0}.top-actions #openSettings{width:auto;padding:0 6px 0 10px}.top-actions #openSettings .button-text{display:inline;font-size:12px}.top-actions #saveQuick{display:none}.top-actions #tvButton{display:flex}.intro h1{font-size:31px}.intro{gap:20px;padding:9px 0 18px}.intro p{max-width:none;font-size:12px}.preset-bar{gap:2px;padding:4px}.preset-bar button{font-size:11px;padding:9px 2px;min-height:42px;white-space:normal}.stage-wrap{min-height:510px}.stage{height:510px;min-height:510px;border-radius:12px}.stage-top{top:15px;left:15px;right:15px}.scene-id{font-size:11px;gap:8px}.scene-id .seed{display:none}.stage-top button{font-size:10px;min-height:40px}.stage-center{top:37%;padding:0 14px}.stage-center .state-line{font-size:9px;letter-spacing:.12em}.stage-center .large-number{font-size:62px}.stage-center .stage-start{margin-top:18px}.stage-dock{left:10px;right:10px;bottom:10px;padding:11px 12px 15px;grid-template-columns:minmax(0,1fr) auto;gap:4px 7px}.stage-dock .playback{gap:3px}.stage-dock .timer-button{min-width:66px;padding:8px 4px;font-size:10px}.stage-dock .timer-button svg{display:none}.stage-dock .play-main{width:46px;height:46px}.stage-dock #mixButton{display:none}.stage-dock .now{gap:8px}.stage-dock .now-title{font-size:11px}.stage-dock .now-sub{font-size:9px}.stage-dock .meter{width:18px}.stage-dock .transport-end{display:flex;grid-column:1/-1;border-top:1px solid #ffffff09;margin-top:5px;padding-top:3px;gap:4px}.stage-dock .route-quick{font-size:10px}.stage-dock .volume-control{width:120px;max-width:46%}.stage-dock .route-quick .button-text{display:inline}.stage-dock .icon-only{width:32px}.stage-bottom{bottom:148px;left:15px;right:15px;flex-direction:row}.stage-bottom-actions{width:auto}.stage-bottom #sceneSettings{font-size:10px;min-height:36px}.footer{flex-direction:row;align-items:center;gap:8px;padding:12px 0 max(12px,env(safe-area-inset-bottom))}.footer-meta{margin-left:auto;font-size:9px}.footer button{font-size:10px}.footer .connection svg{display:none}.panel-tabs{padding-left:16px;padding-right:16px}.panel-head{padding-left:20px;padding-right:20px}.panel-scroll{padding-left:20px;padding-right:20px}.cinema .stage-dock{left:12px;right:12px;bottom:20px}.cinema .stage-bottom{bottom:164px}.cinema .transport-end{display:flex}.cinema .stage-top{left:20px;right:20px}.cinema .tv-help{display:none}}
 @media(max-height:600px) and (min-width:641px){.topbar{height:60px}.intro{flex-direction:row;align-items:flex-end;padding:8px 0 18px}.intro-controls{min-width:360px}.intro h1{font-size:28px}.stage{min-height:360px;height:360px}.stage-center{top:35%}.stage-center .large-number{font-size:54px}.stage-center .stage-start{display:none}.cinema .stage{height:100vh}.cinema .stage-dock{bottom:20px}.cinema .stage-bottom{bottom:125px}}
 @media(min-width:1101px){.stage{flex:none;height:max(460px,calc(100svh - 290px))}.stage-wrap{min-height:0}}
+
+
+/* Immersive-first layout: the scene is the product surface; detailed controls live in the existing panel. */
+.panel-preset-bar{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:14px;padding:4px}
+.panel-preset-bar button{min-height:44px;white-space:normal}
+.cinema .stage-dock{max-width:980px;background:color-mix(in srgb,var(--bg2) 68%,transparent);border-color:#ffffff12;backdrop-filter:blur(20px)}
+.cinema .stage-top{left:4vw;right:4vw;top:4vh}
+.cinema .stage-bottom{left:4vw;right:4vw;bottom:calc(5vh + 94px)}
+.cinema .stage-center{top:45%}
+.cinema .tv-help{display:none!important}
+.cinema .stage-bottom #sceneSettings{opacity:.9;min-height:40px;padding:7px 12px}
+@media(max-width:640px){
+ .panel-preset-bar{grid-template-columns:1fr 1fr}
+ .cinema .stage-top{left:16px;right:16px;top:18px}
+ .cinema .stage-bottom{left:16px;right:16px;bottom:158px}
+ .cinema .stage-dock{left:10px;right:10px;bottom:max(12px,env(safe-area-inset-bottom));max-width:none}
+ .cinema .stage-center{top:42%}
+}

@@ -6,6 +6,7 @@ struct OrbitParams {
   primary: vec4f,
   secondary: vec4f,
   highlight: vec4f,
+  style: vec4f,
 }
 @group(0) @binding(0) var<uniform> params: OrbitParams;
 
@@ -55,16 +56,28 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
   let time = params.dynamics.x;
   let seed = params.dynamics.y;
   let audio_energy = params.dynamics.w;
+  let body_opacity = params.style.x;
+  let radius_scale = params.style.y;
+  let breath_amount = params.style.z;
+  let fabric_opacity = params.style.w;
   let p = (uv - vec2f(0.5, 0.43)) * vec2f(aspect, 1.0) / min(aspect, 1.0);
   let radial = length(p);
   let polar = atan2(p.y, p.x);
 
   // Softly irregular atmospheric volume. Unlike the old ring basis, this body
   // occupies the center so the composition reads as an orb rather than a donut.
-  let body_radius = 0.356
+  let base_body_radius = 0.356
     + 0.015 * sin(polar * 3.0 + time * 0.055 + seed * 0.013)
     + 0.009 * sin(polar * 5.0 - time * 0.041 + seed * 0.031)
     + 0.004 * sin(polar * 9.0 + time * 0.027);
+  let breathing_scale =
+    radius_scale *
+    (
+      1.0 +
+      breath_amount * sin(time * 0.22 + seed * 0.009) +
+      audio_energy * breath_amount * 0.35
+    );
+  let body_radius = base_body_radius * breathing_scale;
   let body = 1.0 - smoothstep(body_radius - 0.010, body_radius + 0.020, radial);
   let interior_depth = sqrt(max(0.0, 1.0 - pow(radial / max(body_radius, 0.001), 2.0)));
   let rim = pow(1.0 - interior_depth, 2.6) * body;
@@ -72,7 +85,7 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
 
   var color = params.background.rgb * 0.12 + params.low.rgb * backdrop * 0.018;
   let body_color = mix(params.low.rgb, mix(params.primary.rgb, params.secondary.rgb, 0.42), 0.30);
-  color += body_color * body * (0.018 + interior_depth * 0.022 + rim * 0.040);
+  color += body_color * body * (0.018 + interior_depth * 0.022 + rim * 0.040) * body_opacity;
 
   // Two very faint interior lobes give the volume atmospheric presence without
   // turning it into a solid filled sphere.
@@ -92,8 +105,8 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
       ) / vec2f(0.19, 0.27)
     ) * 4.8
   );
-  color += params.low.rgb * body * inner_a * 0.018;
-  color += params.secondary.rgb * body * inner_b * 0.010;
+  color += params.low.rgb * body * inner_a * 0.018 * body_opacity;
+  color += params.secondary.rgb * body * inner_b * 0.010 * body_opacity;
 
   var fabric = vec3f(0.0);
   var filaments = vec3f(0.0);
@@ -483,7 +496,8 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
       breath *
       surface_luminance *
       surface_clarity *
-      (0.105 + front * 0.105 + sphere_depth * 0.055);
+      (0.105 + front * 0.105 + sphere_depth * 0.055) *
+      fabric_opacity;
 
     // A faint secondary-colored underlayer suggests light passing through the
     // membrane instead of an opaque painted strip.
@@ -492,7 +506,8 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
       veil *
       (1.0 - front) *
       sphere_depth *
-      0.028;
+      0.028 *
+      fabric_opacity;
 
     // Crisp detail is intentionally quieter than Pass 5 so it sits *inside*
     // the broad surfaces instead of turning those surfaces back into ribbons.

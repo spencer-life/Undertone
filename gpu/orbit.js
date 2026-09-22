@@ -7,6 +7,9 @@ import POST_SHADER from './orbit-post.wgsl';
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, Number(value) || 0));
 const rgba = (rgb) => [rgb[0], rgb[1], rgb[2], 1];
+const orbitStyle = (theme) => theme === 'mono'
+  ? [0.46, 1.12, 0.055, 0.72]
+  : [1, 1, 0, 1];
 const BLURS = [
   { direction: [1, 0], radius: 1 },
   { direction: [0, 1], radius: 1 },
@@ -63,7 +66,7 @@ export async function createOrbitRenderer(canvas, { onFailure } = {}) {
     const orbitEffect = effect(gpu, ORBIT_SHADER, {
       label: 'undertone-orbit-scene',
       set: { params: {
-        viewport: [1, 1, 1, 1], dynamics: [0, 604, 0.8, 0],
+        viewport: [1, 1, 1, 1], dynamics: [0, 604, 0.8, 0], style: [1, 1, 0, 1],
         background: rgba(initialPalette.background), low: rgba(initialPalette.low),
         primary: rgba(initialPalette.primary), secondary: rgba(initialPalette.secondary),
         highlight: rgba(initialPalette.highlight),
@@ -114,6 +117,7 @@ export async function createOrbitRenderer(canvas, { onFailure } = {}) {
     // target/resource identities and the seven-pass submission remain unchanged.
     let previousViewport = [];
     let previousDynamics = [];
+    let previousStyle = [];
     let previousPalette;
     const draw = ({ width, height, dpr = 1, time = 0, seed = 604, theme = 'ocean', brightness = 80, energy = 0 } = {}) => {
       if (disposed) return false;
@@ -128,11 +132,13 @@ export async function createOrbitRenderer(canvas, { onFailure } = {}) {
         resize(pixelWidth, pixelHeight);
 
         const palette = orbitPalette(theme);
+        const style = orbitStyle(theme);
         const viewport = [pixelWidth, pixelHeight, pixelWidth / pixelHeight, renderScale];
         const dynamics = [Number(time) || 0, Number(seed) || 0, clamp(brightness, 10, 100) / 100, clamp(energy, 0, 1)];
         const params = {};
         if (viewport.some((value, index) => value !== previousViewport[index])) params.viewport = viewport;
         if (dynamics.some((value, index) => value !== previousDynamics[index])) params.dynamics = dynamics;
+        if (style.some((value, index) => value !== previousStyle[index])) params.style = style;
         if (palette !== previousPalette) Object.assign(params, {
           background: rgba(palette.background), low: rgba(palette.low),
           primary: rgba(palette.primary), secondary: rgba(palette.secondary), highlight: rgba(palette.highlight),
@@ -140,6 +146,7 @@ export async function createOrbitRenderer(canvas, { onFailure } = {}) {
         if (Object.keys(params).length) orbitEffect.set({ params });
         previousViewport = viewport;
         previousDynamics = dynamics;
+        previousStyle = style;
         previousPalette = palette;
 
         frame(gpu, (currentFrame) => {
