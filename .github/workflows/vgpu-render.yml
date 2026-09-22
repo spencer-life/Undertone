@@ -1,0 +1,41 @@
+name: vgpu Render CI
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: vgpu-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  vgpu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          cache: true
+
+      - run: mise run vgpu:ci
+
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: vgpu-render-review
+          path: |
+            .vgpu-ci/
+            artifacts/orbit-t0.ppm
+            artifacts/orbit-t25.ppm
+          include-hidden-files: true
+          if-no-files-found: warn
+          compression-level: 0
+          retention-days: 30
