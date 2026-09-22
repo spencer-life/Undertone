@@ -12,9 +12,6 @@ SESSION="undertone-vgpu-ci"
 rm -rf "$OUT"
 mkdir -p "$OUT"
 
-echo "==> Validate WGSL reflection/device compatibility"
-pnpm check:orbit | tee "$OUT/check-orbit.txt"
-
 echo "==> Verify vgpu can acquire an adapter and render"
 if ! pnpm exec vgpu doctor --pretty >"$OUT/doctor.txt" 2>&1; then
   cat "$OUT/doctor.txt"
@@ -24,6 +21,9 @@ if ! pnpm exec vgpu doctor --pretty >"$OUT/doctor.txt" 2>&1; then
 else
   cat "$OUT/doctor.txt"
 fi
+
+echo "==> Validate every WGSL module with device-backed validation"
+pnpm check:orbit | tee "$OUT/check-orbit.txt"
 
 echo "==> Deterministic seven-pass Node render + pixel assertions"
 pnpm render:orbit | tee "$OUT/render-orbit.txt"
