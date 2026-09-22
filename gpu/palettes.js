@@ -34,8 +34,8 @@ export const ORBIT_PALETTES = Object.freeze({
     primary: [0.12, 0.38, 1.40], secondary: [0.88, 0.16, 1.30], highlight: [1.50, 0.48, 1.15],
   },
   mono: {
-    background: [0.006, 0.006, 0.007], low: [0.050, 0.050, 0.060],
-    primary: [0.47, 0.48, 0.53], secondary: [0.72, 0.70, 0.75], highlight: [1.30, 1.26, 1.18],
+    background: [0.006, 0.006, 0.007], low: [0.025, 0.160, 0.100],
+    primary: [0.10, 0.72, 1.38], secondary: [0.92, 0.20, 1.12], highlight: [1.58, 0.72, 0.34],
   },
 });
 
