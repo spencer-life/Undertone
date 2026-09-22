@@ -12,3 +12,8 @@ pnpm check
 pnpm test
 pnpm build
 '''
+
+
+[tasks."visual:ci"]
+description = "Capture deterministic Playwright screenshots for rendered QA"
+run = "bash scripts/visual-review.sh"
