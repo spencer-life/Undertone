@@ -1,0 +1,14 @@
+name: Visual Review
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: visual-review-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual:
+    uses: spencer-life/github-workflows/.github/workflows/visual-review.yml@742d149b1e75ef50184861f984fcfe82dfe9d833
