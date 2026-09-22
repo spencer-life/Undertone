@@ -15,6 +15,19 @@ class UndertoneTrackPlayer {
   if(!ctx||!destination)throw new TypeError('UndertoneTrackPlayer needs an AudioContext and a destination node.');
   this.ctx=ctx;this.destination=destination;this.onStatus=typeof onStatus==='function'?onStatus:null;
   this.output=ctx.createGain();this.output.gain.value=.6;this.output.connect(destination);
+  // A music-only analyser feeds visuals without changing the authored audio path.
+  // It is intentionally a parallel tap: the analyser is not connected onward,
+  // so it cannot duplicate or color the audible signal.
+  this.visualAnalyser=typeof ctx.createAnalyser==='function'?ctx.createAnalyser():null;
+  this.visualBins=null;
+  if(this.visualAnalyser){
+   this.visualAnalyser.fftSize=1024;
+   this.visualAnalyser.smoothingTimeConstant=.45;
+   this.visualAnalyser.minDecibels=-90;
+   this.visualAnalyser.maxDecibels=-20;
+   this.visualBins=new Uint8Array(this.visualAnalyser.frequencyBinCount);
+   this.output.connect(this.visualAnalyser);
+  }
   this._volume=100;this._currentTrack=null;this._loaded=null;this._active=null;this._retiring=new Set();this._playing=false;this._generation=0;this._abort=null;this._loadOrigin=null;this._destroyed=false;
   this._autoTracks=[];this._autoEnabled=false;this._autoTimer=null;this._autoEpoch=0;this._autoRetryAt=null;
   this.loading=false;this.error=null;this.status='idle';this.offline=false;this.offlineAvailable=false;
@@ -23,6 +36,19 @@ class UndertoneTrackPlayer {
  get playing(){return this._playing;}
  get autoMix(){return this._autoEnabled;}
  setVolume(value){if(this._destroyed)return;const next=trackClamp(Number(value)||0,0,100);this._volume=next;const target=.6*next/100,param=this.output.gain,t=this.ctx.currentTime;param.cancelScheduledValues(t);param.setTargetAtTime(target,t,.08);}
+ visualLevels(){
+  if(this._destroyed||!this._playing||!this.visualAnalyser||!this.visualBins||typeof this.visualAnalyser.getByteFrequencyData!=='function')return{energy:0,bass:0,mid:0,high:0};
+  this.visualAnalyser.getByteFrequencyData(this.visualBins);
+  const binHz=(this.ctx.sampleRate/2)/this.visualBins.length;
+  const band=(low,high)=>{
+   const start=Math.max(0,Math.floor(low/binHz)),end=Math.min(this.visualBins.length-1,Math.ceil(high/binHz));
+   let sum=0,count=0;
+   for(let i=start;i<=end;i++){sum+=this.visualBins[i];count++;}
+   return count?Math.pow(sum/(count*255),.72):0;
+  };
+  const bass=band(45,180),mid=band(180,2200),high=band(2200,9000);
+  return{energy:trackClamp(bass*.38+mid*.44+high*.18,0,1),bass,mid,high};
+ }
  _notify(status,error=null,meta={}){this.status=status;if(error)this.error=error;const payload={status:this.status,loading:this.loading,error:this.error,currentTrack:this._currentTrack,playing:this._playing,offline:this.offline,offlineAvailable:this.offlineAvailable,autoMix:this._autoEnabled,trackChanged:!!meta.trackChanged,transitionReason:meta.transitionReason||null};if(this.onStatus)try{this.onStatus(payload);}catch(_){} }
  _validateTrack(track){if(!track||typeof track!=='object')throw new TypeError('A track descriptor is required.');if(typeof track.id!=='string'||!track.id)throw new TypeError('A track id is required.');if(typeof track.url!=='string'||!track.url)throw new TypeError('A track URL is required.');if(track.loop!=='seamless'&&track.loop!=='crossfade')throw new TypeError('Track loop must be “seamless” or “crossfade”.');return track;}
  _clearAutoTimer(){if(this._autoTimer!==null){clearTimeout(this._autoTimer);this._autoTimer=null;}}
@@ -106,7 +132,7 @@ class UndertoneTrackPlayer {
  async play(){if(this._destroyed)throw new Error('The track player has been destroyed.');if(!this._loaded){this.error=new Error('Load a track before playing.');this._notify('error',this.error);return false;}if(this._playing)return true;if(!this._active)this._active=this._newSource(this._loaded,1);else{const param=this._active.gain.gain;param.setTargetAtTime(1,this.ctx.currentTime,.08);}this._playing=true;this.error=null;this._notify('playing');this._scheduleAutoMix();return true;}
  pause(){if(this._destroyed)return;this._autoEpoch++;this._clearAutoTimer();this._cancelAutoLoad();this._playing=false;this._notify(this._currentTrack?'paused':'idle');}
  stop(fadeSeconds=0){if(this._destroyed)return;this._autoEpoch++;this._clearAutoTimer();this._generation++;if(this._abort)try{this._abort.abort();}catch(_){}this._abort=null;this._loadOrigin=null;this.loading=false;this._playing=false;const fade=trackClamp(Number(fadeSeconds)||0,0,4),entry=this._active;if(entry&&fade>0){this._active=null;this._retiring.add(entry);const t=this.ctx.currentTime,param=entry.gain.gain;param.cancelScheduledValues(t);param.setValueAtTime(param.value,t);param.linearRampToValueAtTime(0,t+fade);this._deferStop(entry,fade+.2);try{entry.source.stop(t+fade+.03);}catch(_){} }else this._stopAll();this._notify(this._currentTrack?'ready':'idle');}
- async destroy(){if(this._destroyed)return;this._destroyed=true;this._autoEpoch++;this._clearAutoTimer();this._generation++;if(this._abort)try{this._abort.abort();}catch(_){}this._abort=null;this._loadOrigin=null;this._playing=false;this._stopAll();try{this.output.disconnect();}catch(_){}this._loaded=null;this._currentTrack=null;this.loading=false;this._notify('destroyed');}
+ async destroy(){if(this._destroyed)return;this._destroyed=true;this._autoEpoch++;this._clearAutoTimer();this._generation++;if(this._abort)try{this._abort.abort();}catch(_){}this._abort=null;this._loadOrigin=null;this._playing=false;this._stopAll();try{this.visualAnalyser?.disconnect();}catch(_){}try{this.output.disconnect();}catch(_){}this._loaded=null;this._currentTrack=null;this.loading=false;this._notify('destroyed');}
 }
 
 if(typeof window!=='undefined')window.UndertoneTrackPlayer=UndertoneTrackPlayer;

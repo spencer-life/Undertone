@@ -23,7 +23,7 @@ class UndertoneAudio {
   this.limiter=c.createDynamicsCompressor();this.limiter.threshold.value=-8;this.limiter.knee.value=12;this.limiter.ratio.value=10;this.limiter.attack.value=.012;this.limiter.release.value=.38;
   this.highpass=c.createBiquadFilter();this.highpass.type='highpass';this.highpass.frequency.value=25;this.highpass.Q.value=.5;
   this.input.connect(this.highpass);this.highpass.connect(this.limiter);this.limiter.connect(this.master);this.master.connect(this.session);this.session.connect(this.transport);this.transport.connect(c.destination);
-  this.analyser=c.createAnalyser();this.analyser.fftSize=256;this.transport.connect(this.analyser);this.meterData=new Float32Array(256);
+  this.analyser=c.createAnalyser();this.analyser.fftSize=1024;this.analyser.smoothingTimeConstant=.45;this.analyser.minDecibels=-90;this.analyser.maxDecibels=-20;this.transport.connect(this.analyser);this.meterData=new Float32Array(this.analyser.fftSize);this.meterFreq=new Uint8Array(this.analyser.frequencyBinCount||this.analyser.fftSize/2);
   this.pad=this.gain();this.melody=this.gain();this.rain=this.gain();this.ocean=this.gain();this.noise=this.gain();
   this.musicFilter=c.createBiquadFilter();this.musicFilter.type='lowpass';this.musicFilter.frequency.value=950;this.musicFilter.Q.value=.45;
   this.pad.connect(this.musicFilter);this.musicFilter.connect(this.input);this.melody.connect(this.input);
@@ -84,6 +84,23 @@ class UndertoneAudio {
  clearTimer(){if(!this.ctx)return;this.endAt=null;const p=this.session.gain,t=this.ctx.currentTime;p.cancelScheduledValues(t);p.setValueAtTime(1,t);}
  remaining(){return this.endAt===null?null:Math.max(0,this.endAt-this.ctx.currentTime);}
  level(){if(!this.analyser||!this.running)return 0;this.analyser.getFloatTimeDomainData(this.meterData);let sum=0;for(const x of this.meterData)sum+=x*x;return Math.sqrt(sum/this.meterData.length);}
+ visualLevels(){
+  if(!this.analyser||!this.running)return{energy:0,bass:0,mid:0,high:0};
+  if(typeof this.analyser.getByteFrequencyData!=='function'){
+   const energy=clamp(this.level()*6,0,1);
+   return{energy,bass:energy,mid:energy*.75,high:energy*.45};
+  }
+  this.analyser.getByteFrequencyData(this.meterFreq);
+  const binHz=(this.ctx.sampleRate/2)/this.meterFreq.length;
+  const band=(low,high)=>{
+   const start=Math.max(0,Math.floor(low/binHz)),end=Math.min(this.meterFreq.length-1,Math.ceil(high/binHz));
+   let sum=0,count=0;
+   for(let i=start;i<=end;i++){sum+=this.meterFreq[i];count++;}
+   return count?Math.pow(sum/(count*255),.72):0;
+  };
+  const bass=band(45,180),mid=band(180,2200),high=band(2200,9000);
+  return{energy:clamp(bass*.38+mid*.44+high*.18,0,1),bass,mid,high};
+ }
  async testChannel(side){if(this.testBusy)return;this.testBusy=true;const wasRunning=this.running;try{await this.init(this.liveSettings||{score:'velvet',noiseType:'brown'});await this.ctx.resume();const c=this.ctx,t=c.currentTime,o=c.createOscillator(),g=this.gain(),m=c.createChannelMerger(2);o.frequency.value=330;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.025,t+.05);g.gain.setValueAtTime(.025,t+.6);g.gain.exponentialRampToValueAtTime(.0001,t+.8);o.connect(g);g.connect(m,0,side==='left'?0:1);m.connect(c.destination);o.start(t);o.stop(t+.85);await new Promise(r=>setTimeout(r,950));try{o.disconnect();g.disconnect();m.disconnect();}catch(_){}if(!wasRunning)await c.suspend();}finally{this.testBusy=false;}}
  async destroy(){clearInterval(this.scheduler);this.scheduler=null;for(const n of this.nodes){try{n.disconnect();}catch(_){} }if(this.ctx)await this.ctx.close();this.ctx=null;this.ready=false;}
 }

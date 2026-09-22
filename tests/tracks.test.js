@@ -29,6 +29,13 @@ test('loads lazily, preserves stereo, and starts one idempotent seamless source'
   player.setVolume(50);assert.equal(player._active.gain.gain.value,1);assert.equal(player.output.gain.value,.3);
 });
 
+test('music-only analyser exposes spectral levels without changing the audible route',async()=>{
+  const ctx=new Context(),analyser=new Node();analyser.frequencyBinCount=512;analyser.getByteFrequencyData=data=>{const hz=(ctx.sampleRate/2)/data.length;for(let i=0;i<data.length;i++){const f=i*hz;data[i]=f<180?235:f<2200?132:f<9000?48:8;}};
+  ctx.createAnalyser=()=>analyser;ctx.decodeQueue.push(decoded());const player=new UndertoneTrackPlayer(ctx,ctx.destination);await player.load(descriptor('reactive'));await player.play();
+  const levels=player.visualLevels();assert(levels.bass>levels.mid&&levels.mid>levels.high,'bands should preserve the synthetic spectral slope');assert(levels.energy>0&&levels.energy<=1);assert(player.output.connections.includes(ctx.destination),'music must still reach the original destination');assert(player.output.connections.includes(analyser),'analyser should be a parallel tap');assert.equal(analyser.connections.length,0,'visual analyser must not feed a second audible path');
+  await player.destroy();
+});
+
 test('prepares one-time equal-power crossfade loop with a rotated continuous splice',async()=>{
   const ctx=new Context(),source=decoded(48000*4);source.channels[0].fill(.4);source.channels[1].fill(-.4);ctx.decodeQueue.push(source);const player=new UndertoneTrackPlayer(ctx,ctx.destination);await player.load({...descriptor('broken-glimmers','crossfade'),crossfadeSeconds:2});const playable=player._loaded.playable;assert.equal(playable.length,source.length-96000);assert.equal(playable.numberOfChannels,2);
   for(const channel of [0,1]){const data=playable.getChannelData(channel),start=Math.abs(data[0]),end=Math.abs(data[data.length-1]);assert(start>.1&&end>.1,'crossfade loop boundary faded to zero');assert(Math.abs(data[0]-data[data.length-1])<.25,'rotated crossfade splice is discontinuous');}

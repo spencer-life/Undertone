@@ -1,5 +1,5 @@
 // An atomic, versioned app shell prevents offline HTML / module mismatches.
-const CACHE = 'undertone-v19';
+const CACHE = 'undertone-v20';
 const ASSETS = [
  './','./index.html','./styles.css','./layout.css','./audio.js',
  './audio-worklet.js','./music-library.js','./tracks.js','./orbit-bridge.js','./vendor/energy-orbit.js','./visuals.js','./webmcp.js','./app.js','./manifest.webmanifest',

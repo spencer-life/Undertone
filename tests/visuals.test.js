@@ -15,6 +15,25 @@ test('zero movement and system reduced motion render a still scene',()=>{
  const h=visualHarness();h.settings.motion=0;h.visual.frame(1000);const t=h.visual.time;h.visual.frame(2000);assert.equal(h.paints(),1);assert.equal(h.visual.time,t);
  h.settings.motion=40;h.media.matches=true;h.visual.dirty=true;h.visual.frame(3000);h.visual.frame(4000);assert.equal(h.paints(),2);assert.equal(h.visual.time,t);
 });
+test('still mode zeros audio reactivity even when a dirty repaint occurs during music',()=>{
+ const h=visualHarness();h.settings.motion=0;h.visual.audio=()=>({energy:1,bass:1,mid:1,high:1});
+ h.visual.audioState.energy=.8;h.visual.audioState.bass=.7;h.visual.audioState.mid=.6;h.visual.audioState.high=.5;h.visual.audioState.pulse=.9;h.visual.audioBaseline=.5;
+ h.visual.dirty=true;h.visual.frame(1000);
+ assert.deepEqual({...h.visual.audioState},{energy:0,bass:0,mid:0,high:0,pulse:0});assert.equal(h.visual.audioBaseline,0);
+});
+test('motion curve has a useful normal pace, a fast top end, and restrained music boost',()=>{
+ const h=visualHarness(),v=h.visual,idle={energy:0,bass:0,mid:0,high:0,pulse:0},music={energy:.7,bass:.8,mid:.6,high:.4,pulse:.75};
+ h.settings.motion=40;const normal=v.motionRate(h.settings,idle);assert(normal>1&&normal<1.2,`motion 40 should be near 1x, got ${normal}`);
+ h.settings.motion=100;const fast=v.motionRate(h.settings,idle),reactive=v.motionRate(h.settings,music);assert(fast>=2.9&&fast<=3.1,`motion 100 should reach about 3x, got ${fast}`);assert(reactive>fast&&reactive<=4,'music should lift speed without exceeding the cap');
+ h.settings.motion=0;assert.equal(v.motionRate(h.settings,music),0,'motion zero must stay still even with music');
+});
+test('audio envelope exposes smoothed bands and a decaying onset pulse',()=>{
+ const h=visualHarness(),v=h.visual;
+ for(let i=0;i<5;i++)v.updateAudio({energy:.8,bass:1,mid:.65,high:.35},.05);
+ assert(v.audioState.energy>.3);assert(v.audioState.bass>v.audioState.high);assert(v.audioState.pulse>0,'rising music should create an onset pulse');
+ const peak=v.audioState.pulse;for(let i=0;i<16;i++)v.updateAudio({energy:0,bass:0,mid:0,high:0},.05);
+ assert(v.audioState.pulse<peak,'pulse should release instead of sticking');
+});
 test('blackout and hidden document stop rendering work',()=>{
  const h=visualHarness();h.settings.blackout=true;h.visual.frame(1000);assert.equal(h.paints(),0);h.settings.blackout=false;h.scope.document.hidden=true;h.visual.frame(2000);assert.equal(h.paints(),0);h.scope.document.hidden=false;h.visual.frame(3000);assert.equal(h.paints(),1);
 });
@@ -47,7 +66,7 @@ test('BFCache page lifecycle releases and recreates the GPU bridge without anoth
 test('Canvas frame contract reuses storage and preserves theme, time and controls',()=>{
  const h=visualHarness(),v=h.visual;v.time=7;v.reseed(42);
  const a=v.canvasContract(h.settings),viewport=a.viewport;h.settings.motion=0;h.settings.brightness=30;h.media.matches=true;
- const b=v.canvasContract(h.settings);assert.equal(a,b);assert.equal(b.viewport,viewport);assert.equal(b.seed,42);assert.equal(b.time,7+42*.0037);assert.equal(b.motion,0);assert.equal(b.brightness,.3);assert.equal(b.reducedMotion,true);assert.equal(b.palette.name,'Noir');assert.equal(b.viewport.dpr,1.5);
+ const b=v.canvasContract(h.settings);assert.equal(a,b);assert.equal(b.viewport,viewport);assert.equal(b.audio,v.audioState);assert.equal(b.seed,42);assert.equal(b.time,7+42*.0037);assert.equal(b.motion,0);assert.equal(b.brightness,.3);assert.equal(b.reducedMotion,true);assert.equal(b.palette.name,'Noir');assert.equal(b.viewport.dpr,1.5);
 });
 test('contours are seeded, finite, animated and reuse buffers and glow surface',()=>{
  const h=visualHarness(),v=h.visual;let canvases=0;const alphas=[];

@@ -18,6 +18,19 @@ The existing renderers were inspected before implementation: nested contours, op
 
 The legacy render dispatch passes the same time, viewport and art palette to all Canvas scenes. The common vignette is now cached by dimensions/DPR with unchanged gradient stops. The shared clock still owns30/20FPS, visibility/blackout pauses, transitions, and reduced motion.
 
+## Audio-reactive motion
+
+The scene visuals keep their approved geometry and palettes, but their motion is now driven by one shared controller rather than separate per-scene analysers.
+
+- The authored FLAC player exposes a parallel, music-only analyser tap; it does not create a second audible route.
+- Generated/fallback audio uses the existing Undertone analyser.
+- The shared visual envelope exposes smoothed `energy`, `bass`, `mid`, `high`, and a short `pulse` derived from rising spectral energy.
+- Attack is deliberately faster than release so changes feel musical without flicker.
+- The motion slider now uses a nonlinear scene-time curve: motion 40 is roughly the everyday 1× pace, while motion 100 reaches about 3× before temporary music reactivity. Reactive lift is capped at 4×.
+- Motion 0 and OS reduced motion remain fully still, even while music plays.
+
+Scene mappings stay restrained and product-specific: Living Contours uses bass/mids for field deformation and highlighted elevations; Silk Drift uses bass/mids for sheet amplitude with highs on fine edges; Wet Glass gets only small rain/luminance nudges because the shared clock already supplies most of its speed response. Energy Orbit receives the same music-reactive clock plus the existing composite energy uniform, so its approved Pass 7 shader structure is unchanged.
+
 ## Living Contours
 
 64 contours on narrow viewports,88 otherwise, with160 segments per closed path. A seeded smooth field makes broad asymmetric lobes and saddles. Slowly drifting deformation uses several distinct periods without rotation. Many fine subdued lines establish depth; only six selected elevations receive localized color/glow.

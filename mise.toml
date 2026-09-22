@@ -12,3 +12,17 @@ pnpm check
 pnpm test
 pnpm build
 '''
+
+
+[tasks."visual:ci"]
+description = "Capture deterministic Playwright screenshots for rendered QA"
+run = "bash scripts/visual-review.sh"
+
+
+[tasks."vgpu:ci"]
+description = "Validate Undertone WebGPU shaders, deterministic pixels, and browser WebGPU rendering"
+run = '''
+set -eu
+pnpm install --frozen-lockfile
+bash scripts/vgpu-ci.sh
+'''
