@@ -86,8 +86,11 @@ class UndertoneVisuals {
   if(s.scene!=='orbit')this.orbitGPU?.prepare(s.scene);
   if(document.hidden||s.blackout)return;
   this.orbitGPU?.prepare(s.scene);
-  const audio=this.updateAudio(this.audio(),dt);
   const still=s.motion===0||this.reduced.matches;
+  let audio=this.audioState;
+  if(still){
+   audio.energy=0;audio.bass=0;audio.mid=0;audio.high=0;audio.pulse=0;this.audioBaseline=0;
+  }else audio=this.updateAudio(this.audio(),dt);
   if(!still)this.time+=dt*this.motionRate(s,audio);
   if(!this.dirty&&(still||ms-this.lastPaint<1000/(s.eco?20:30)))return;
   const paintDt=this.lastPaint?Math.min((ms-this.lastPaint)/1000,.2):0;this.lastPaint=ms;
