@@ -15,6 +15,12 @@ test('zero movement and system reduced motion render a still scene',()=>{
  const h=visualHarness();h.settings.motion=0;h.visual.frame(1000);const t=h.visual.time;h.visual.frame(2000);assert.equal(h.paints(),1);assert.equal(h.visual.time,t);
  h.settings.motion=40;h.media.matches=true;h.visual.dirty=true;h.visual.frame(3000);h.visual.frame(4000);assert.equal(h.paints(),2);assert.equal(h.visual.time,t);
 });
+test('still mode zeros audio reactivity even when a dirty repaint occurs during music',()=>{
+ const h=visualHarness();h.settings.motion=0;h.visual.audio=()=>({energy:1,bass:1,mid:1,high:1});
+ h.visual.audioState.energy=.8;h.visual.audioState.bass=.7;h.visual.audioState.mid=.6;h.visual.audioState.high=.5;h.visual.audioState.pulse=.9;h.visual.audioBaseline=.5;
+ h.visual.dirty=true;h.visual.frame(1000);
+ assert.deepEqual({...h.visual.audioState},{energy:0,bass:0,mid:0,high:0,pulse:0});assert.equal(h.visual.audioBaseline,0);
+});
 test('motion curve has a useful normal pace, a fast top end, and restrained music boost',()=>{
  const h=visualHarness(),v=h.visual,idle={energy:0,bass:0,mid:0,high:0,pulse:0},music={energy:.7,bass:.8,mid:.6,high:.4,pulse:.75};
  h.settings.motion=40;const normal=v.motionRate(h.settings,idle);assert(normal>1&&normal<1.2,`motion 40 should be near 1x, got ${normal}`);
