@@ -46,7 +46,7 @@ PW="playwright@1.55.0"
 pnpm dlx "$PW" install chromium >/dev/null
 
 mix_url() {
-  node - "$BASE" "$1" "$2" <<'NODE'
+  node - "$BASE" "$1" "$2" "$3" <<'NODE'
 const [base,scene,motion,theme='violet']=process.argv.slice(2);
 const mix={
   musicSource:'library',
@@ -104,10 +104,11 @@ for scene in tides dunes orbit rain; do
   capture "$scene" 100 5600 "motion100-late"
 done
 
-# Graphite owns a distinct prismatic Energy Orbit treatment; keep dedicated
-# pre-merge evidence for its translucent immersive composition.
-capture "orbit" 40 600  "graphite-early" "mono"
-capture "orbit" 40 5600 "graphite-late"  "mono"
+# Graphite uses scene-specific prismatic lighting across the full scene set.
+for scene in tides dunes orbit rain; do
+  capture "$scene" 40 600  "graphite-early" "mono"
+  capture "$scene" 40 5600 "graphite-late"  "mono"
+done
 
 GIT_SHA="${GITHUB_SHA:-unknown}" RUN_ID="${GITHUB_RUN_ID:-local}" BASE_URL="$BASE" node <<'NODE'
 const fs=require('fs');
@@ -133,16 +134,18 @@ for(const [route,name] of scenes){
     }
   }
 }
-for(const timing of ['early','late']){
-  captures.push({
-    route:'orbit',
-    name:'Energy Orbit · Graphite',
-    theme:'mono',
-    motion:40,
-    timing,
-    viewport:{width:1440,height:1100},
-    screenshot:`pages/orbit/graphite-${timing}.png`
-  });
+for(const [route,name] of scenes){
+  for(const timing of ['early','late']){
+    captures.push({
+      route,
+      name:`${name} · Graphite`,
+      theme:'mono',
+      motion:40,
+      timing,
+      viewport:{width:1440,height:1100},
+      screenshot:`pages/${route}/graphite-${timing}.png`
+    });
+  }
 }
 fs.writeFileSync('.visual-review/manifest.json',JSON.stringify({
   commit:process.env.GIT_SHA,

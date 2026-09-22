@@ -9,7 +9,7 @@ const UT_THEMES={
  moss:{name:'Moss',bg:'#141815',bg2:'#151c17',surface:'#1e2821',raised:'#28342b',text:'#f4f6ee',secondary:'#c5d2bd',muted:'#a1b09b',line:'#414e3d',accent:'#bdddab',strong:'#94c37d',ink:'#1e2a18',art:['#141b17','#2c3d32','#51654a','#859774','#c6d8b0']},
  ember:{name:'Ember',bg:'#191513',bg2:'#201915',surface:'#2a211b',raised:'#35291f',text:'#fff5ea',secondary:'#dfc9b1',muted:'#b59d83',line:'#524233',accent:'#f4c194',strong:'#eba76e',ink:'#2c1d13',art:['#1d1713','#493226','#7e5139','#b27a51','#e6b887']},
  violet:{name:'Night violet',bg:'#17141c',bg2:'#1c1723',surface:'#251e2e',raised:'#30273b',text:'#f7f1fb',secondary:'#d3c2e4',muted:'#ad98bd',line:'#4a3c59',accent:'#d5b4ed',strong:'#ba91db',ink:'#271c32',art:['#19151f','#372b46','#62507c','#9982b2','#d8bde9']},
- mono:{name:'Graphite',bg:'#151516',bg2:'#19191a',surface:'#222224',raised:'#2d2d30',text:'#f7f5f0',secondary:'#d2d0ca',muted:'#a9a6a0',line:'#47474c',accent:'#e4dfd5',strong:'#c3bdb0',ink:'#232220',art:['#171719','#303033','#57565b','#939096','#d6d0d5']}
+ mono:{name:'Graphite',bg:'#151516',bg2:'#19191a',surface:'#222224',raised:'#2d2d30',text:'#f7f5f0',secondary:'#d2d0ca',muted:'#a9a6a0',line:'#47474c',accent:'#e4dfd5',strong:'#c3bdb0',ink:'#232220',art:['#171719','#303033','#57565b','#939096','#d6d0d5'],contourAccents:['#62e3cf','#63b9ff','#d58be5','#efa36f'],silkAccents:['#4e8fda','#5dd8cb','#93d6c8','#ef8c98','#c17de5','#718fe8'],glassAccents:['#5edfd0','#66b8f3','#d58cdd','#f0aa76']}
 };
 // Original Canvas rendering, informed by the Figma scene board and React Bits'
 // layered motion / restrained lighting. No framework or graphics dependencies.
@@ -162,7 +162,7 @@ class UndertoneVisuals {
   for(let n=0;n<6;n++){
    const j=Math.round(count*(.18+n*.105)),base=j*(segments+1)*2;
    light.beginPath();for(let i=0;i<=segments;i++){const x=points[base+i*2],y=points[base+i*2+1];i?light.lineTo(x,y):light.moveTo(x,y);}light.closePath();
-   light.strokeStyle=cache.glowGradients[n%3];light.lineWidth=3;light.shadowColor=cache.accents[n%3];light.shadowBlur=9;light.globalAlpha=Math.min(1,.55+audio.mid*.08+audio.pulse*.10);light.stroke();
+   const accentIndex=n%cache.accents.length;light.strokeStyle=cache.glowGradients[accentIndex];light.lineWidth=3;light.shadowColor=cache.accents[accentIndex];light.shadowBlur=9;light.globalAlpha=Math.min(1,.55+audio.mid*.08+audio.pulse*.10);light.stroke();
   }
   light.shadowBlur=0;g.globalAlpha=a*.8;g.drawImage(glow,0,0,w,h);
   g.lineJoin='round';g.lineCap='round';
@@ -171,7 +171,7 @@ class UndertoneVisuals {
    g.beginPath();for(let i=0;i<=segments;i++){const x=points[base+i*2],y=points[base+i*2+1];i?g.lineTo(x,y):g.moveTo(x,y);}g.closePath();
    const depth=.5+.5*Math.sin(d*8+phase[2]);
    g.strokeStyle=cache.colors[j];g.globalAlpha=a*(.18+depth*.20)*(1-Math.pow(d,5)*.65);g.lineWidth=.55+depth*.40;g.stroke();
-   for(let n=0;n<6;n++)if(j===Math.round(count*(.18+n*.105))){g.strokeStyle=gradients[n%3];g.globalAlpha=a*Math.min(1,.78+.12*Math.sin(t*.09+n)+audio.mid*.08+audio.pulse*.08);g.lineWidth=1.25+depth*.4+audio.high*.12;g.stroke();}
+   for(let n=0;n<6;n++)if(j===Math.round(count*(.18+n*.105))){g.strokeStyle=gradients[n%gradients.length];g.globalAlpha=a*Math.min(1,.78+.12*Math.sin(t*.09+n)+audio.mid*.08+audio.pulse*.08);g.lineWidth=1.25+depth*.4+audio.high*.12;g.stroke();}
   }
   g.globalAlpha=a;
  }
@@ -191,7 +191,7 @@ class UndertoneVisuals {
    const baseY=new Float32Array(layers),tilt=new Float32Array(layers),amp=new Float32Array(layers);
    const amp2=new Float32Array(layers),freq=new Float32Array(layers),phase=new Float32Array(layers);
    const speed=new Float32Array(layers),widths=new Float32Array(layers),opacity=new Float32Array(layers);
-   const colors=[],gradients=[];
+   const colors=[],gradients=[],prism=theme.silkAccents||null;
    const rgbaColor=(color,alpha)=>color[0]==='r'?color.replace('rgb(','rgba(').replace(')',','+alpha+')'):this.rgba(color,alpha);
    for(let j=0;j<layers;j++){
     const d=j/(layers-1);
@@ -206,13 +206,16 @@ class UndertoneVisuals {
     widths[j]=.040+random()*.055*(j===1||j===layers-2?1.25:.8);
     opacity[j]=.54+random()*.26;
     const shade=.22+d*.26+(random()-.5)*.04;
-    const color=this.color(p,shade);colors[j]=color;
+    const color=prism?prism[j%prism.length]:this.color(p,shade);colors[j]=color;
+    const lowColor=prism?this.blend(color,p[0],.34):this.color(p,Math.max(.16,shade-.04));
+    const highColor=prism?this.blend(color,'#ffffff',.16):this.color(p,Math.min(.98,shade+.18));
+    const edgeColor=prism?this.blend(color,p[0],.52):this.color(p,Math.max(.12,shade-.16));
     const gradient=g.createLinearGradient(0,h*(baseY[j]-.17),0,h*(baseY[j]+.17));
-    gradient.addColorStop(0,rgbaColor(this.color(p,Math.max(.12,shade-.16)),0));
-    gradient.addColorStop(.22,rgbaColor(this.color(p,Math.max(.16,shade-.04)),.20));
-    gradient.addColorStop(.50,rgbaColor(this.color(p,Math.min(.98,shade+.18)),.34));
-    gradient.addColorStop(.72,rgbaColor(this.color(p,Math.min(.98,shade+.06)),.16));
-    gradient.addColorStop(1,rgbaColor(this.color(p,Math.max(.12,shade-.14)),0));
+    gradient.addColorStop(0,rgbaColor(edgeColor,0));
+    gradient.addColorStop(.22,rgbaColor(lowColor,prism?.14:.20));
+    gradient.addColorStop(.50,rgbaColor(highColor,prism?.30:.34));
+    gradient.addColorStop(.72,rgbaColor(color,prism?.15:.16));
+    gradient.addColorStop(1,rgbaColor(edgeColor,0));
     gradients[j]=gradient;
    }
    const supportY=new Float32Array(supports),supportTilt=new Float32Array(supports);
@@ -229,10 +232,10 @@ class UndertoneVisuals {
     supportSpeed[j]=speed[parent]*(.82+random()*.42);
     supportWidth[j]=.45+random()*.72;
     supportOpacity[j]=.18+random()*.26;
-    supportColors[j]=this.color(p,.27+d*.46+(random()-.5)*.06);
+    supportColors[j]=prism?prism[(j+2)%prism.length]:this.color(p,.27+d*.46+(random()-.5)*.06);
    }
    const glowGradients=[];
-   const glowStops=[p[2],p[3],p[4]];
+   const glowStops=prism?[prism[0],prism[Math.floor(prism.length/2)],prism[prism.length-1]]:[p[2],p[3],p[4]];
    for(let j=0;j<3;j++){
     const x=w*(.23+j*.27),y=h*(.30+(j%2)*.28),r=Math.min(w,h)*(.38+.08*(j%2));
     const gradient=light.createRadialGradient(x,y,0,x,y,r);
@@ -317,17 +320,20 @@ class UndertoneVisuals {
   g.globalAlpha=a;
  }
  glassBackground(w,h,p){
-  const key=[Math.round(w),Math.round(h),this.seed,p.join('')].join(':');if(this.glassKey===key)return;
+  const theme=this.canvasFrame.palette||UT_THEMES.ocean,prism=theme.glassAccents||null;
+  const key=[Math.round(w),Math.round(h),this.seed,theme.name,p.join('')].join(':');if(this.glassKey===key)return;
   this.glassKey=key;const c=this.glass||document.createElement('canvas');c.width=Math.ceil(w);c.height=Math.ceil(h);const g=c.getContext('2d');
   const bg=g.createLinearGradient(0,0,w,h);bg.addColorStop(0,p[0]);bg.addColorStop(.48,p[1]);bg.addColorStop(1,p[0]);g.fillStyle=bg;g.fillRect(0,0,w,h);
-  const scale=Math.min(w,h);
-  this.glow(g,w*.25,h*.38,scale*.65,p[2],.28);this.glow(g,w*.72,h*.57,scale*.55,p[3],.20);
+  const scale=Math.min(w,h),glowA=prism?prism[0]:p[2],glowB=prism?prism[2%prism.length]:p[3];
+  this.glow(g,w*.25,h*.38,scale*.65,glowA,prism?.22:.28);this.glow(g,w*.72,h*.57,scale*.55,glowB,prism?.17:.20);
   // Defocused lamps and their vertical reflections; no skyline or window grid.
-  for(const light of this.lights){
-   const x=light.x*w,y=light.y*h,r=scale*light.r;
-   const color=light.warm?this.blend(p[3],'#ddc7a2',p===UT_THEMES.noir.art?0:.28):p[3];
-   g.save();g.translate(x,y);g.scale(1,1.15);const halo=g.createRadialGradient(0,0,r*.15,0,0,r*2.6);halo.addColorStop(0,color);halo.addColorStop(.18,this.rgba(p[4],.7));halo.addColorStop(.44,this.rgba(p[3],.28));halo.addColorStop(1,this.rgba(p[3],0));g.globalAlpha=light.alpha*.68;g.fillStyle=halo;g.fillRect(-r*3,-r*3,r*6,r*6);g.restore();
-   g.save();g.translate(x,y+r*2);g.scale(1,4);this.glow(g,0,0,r*1.1,p[3],light.alpha*.045);g.restore();
+  for(let li=0;li<this.lights.length;li++){
+   const light=this.lights[li],x=light.x*w,y=light.y*h,r=scale*light.r;
+   const baseColor=prism?prism[li%prism.length]:p[3];
+   const color=prism?baseColor:(light.warm?this.blend(p[3],'#ddc7a2',p===UT_THEMES.noir.art?0:.28):p[3]);
+   const bright=prism?this.blend(color,'#ffffff',.22):p[4];
+   g.save();g.translate(x,y);g.scale(1,1.15);const halo=g.createRadialGradient(0,0,r*.15,0,0,r*2.6);halo.addColorStop(0,bright);halo.addColorStop(.18,this.rgba(bright,.66));halo.addColorStop(.44,this.rgba(color,.25));halo.addColorStop(1,this.rgba(color,0));g.globalAlpha=light.alpha*(prism?.58:.68);g.fillStyle=halo;g.fillRect(-r*3,-r*3,r*6,r*6);g.restore();
+   g.save();g.translate(x,y+r*2);g.scale(1,4);this.glow(g,0,0,r*1.1,color,light.alpha*(prism?.035:.045));g.restore();
   }
   this.glass=c;
   // Small drop sprites avoid rebuilding hundreds of gradients every frame.
@@ -342,12 +348,13 @@ class UndertoneVisuals {
   for(let i=0;i<this.drops.length;i++){const d=this.drops[i];if(!d.moving)this.glassDrop(pg,d,i,w,h,0,1);}
   this.glassPlate=plate;
   // Two reusable alpha-gradient sprites replace dozens of gradients per frame.
+  const rainColor=prism?prism[1%prism.length]:p[3],rainHighlight=prism?prism[0]:p[4];
   const streak=this.rainStreak||document.createElement('canvas');streak.width=8;streak.height=128;
   const sg=streak.getContext('2d'),rain=sg.createLinearGradient(0,0,0,128);
-  rain.addColorStop(0,this.rgba(p[4],0));rain.addColorStop(.8,this.rgba(p[3],.15));rain.addColorStop(1,this.rgba(p[4],.27));sg.fillStyle=rain;sg.fillRect(3,0,1.5,128);this.rainStreak=streak;
+  rain.addColorStop(0,this.rgba(rainHighlight,0));rain.addColorStop(.8,this.rgba(rainColor,prism?.11:.15));rain.addColorStop(1,this.rgba(rainHighlight,prism?.22:.27));sg.fillStyle=rain;sg.fillRect(3,0,1.5,128);this.rainStreak=streak;
   const trail=this.dropTrail||document.createElement('canvas');trail.width=24;trail.height=128;
   const tg=trail.getContext('2d'),wet=tg.createLinearGradient(0,0,0,128);
-  wet.addColorStop(0,this.rgba(p[3],0));wet.addColorStop(.60,this.rgba(p[3],.045));wet.addColorStop(1,this.rgba(p[4],.17));tg.strokeStyle=wet;tg.lineWidth=2;
+  wet.addColorStop(0,this.rgba(rainColor,0));wet.addColorStop(.60,this.rgba(rainColor,prism?.035:.045));wet.addColorStop(1,this.rgba(rainHighlight,prism?.13:.17));tg.strokeStyle=wet;tg.lineWidth=2;
   tg.beginPath();for(let i=0;i<=32;i++){const y=i*4,x=12+Math.sin(i*.20)*2;i?tg.lineTo(x,y):tg.moveTo(x,y);}tg.stroke();this.dropTrail=trail;
  }
  glassDrop(g,d,index,w,h,t,a){
