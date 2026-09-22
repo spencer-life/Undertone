@@ -105,6 +105,8 @@ fi
 cp "$SHOT_PATH" "$OUT/orbit-webgpu.png"
 STDDEV="$(identify -format '%[fx:standard_deviation]' "$OUT/orbit-webgpu.png")"
 printf '%s\n' "$STDDEV" | tee "$OUT/screenshot-standard-deviation.txt"
-awk -v v="$STDDEV" 'BEGIN { exit !(v > 50) }'
+# ImageMagick 6 on GitHub-hosted Ubuntu reports standard deviation on a
+# normalized 0..1 scale. Reject essentially uniform/black captures.
+awk -v v="$STDDEV" 'BEGIN { exit !(v > 0.02) }'
 
 echo "vgpu CI passed: shader validation, doctor, deterministic pixels, and browser WebGPU path."
