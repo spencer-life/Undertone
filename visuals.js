@@ -47,7 +47,7 @@ class UndertoneVisuals {
   this.offset=seed*.0037;this.glassKey='';this.dirty=true;
  }
  hex(h){return [1,3,5].map(i=>parseInt(h.slice(i,i+2),16));}
- rgba(h,a){return `rgba(${this.hex(h).join(',')},${a})`;}
+ rgba(h,a){if(typeof h==='string'&&h.startsWith('rgb('))return h.replace('rgb(','rgba(').replace(')',','+a+')');return `rgba(${this.hex(h).join(',')},${a})`;}
  blend(a,b,f){const x=this.hex(a),y=this.hex(b);return `rgb(${x.map((v,i)=>Math.round(v+(y[i]-v)*f)).join(',')})`;}
  color(p,x){const n=Math.max(0,Math.min(.999,x))*(p.length-1),i=Math.floor(n);return this.blend(p[i],p[i+1],n-i);}
  updateAudio(raw,dt){
