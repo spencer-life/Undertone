@@ -212,9 +212,9 @@ class UndertoneVisuals {
     const edgeColor=prism?this.blend(color,p[0],.52):this.color(p,Math.max(.12,shade-.16));
     const gradient=g.createLinearGradient(0,h*(baseY[j]-.17),0,h*(baseY[j]+.17));
     gradient.addColorStop(0,rgbaColor(edgeColor,0));
-    gradient.addColorStop(.22,rgbaColor(lowColor,prism?.14:.20));
-    gradient.addColorStop(.50,rgbaColor(highColor,prism?.30:.34));
-    gradient.addColorStop(.72,rgbaColor(color,prism?.15:.16));
+    gradient.addColorStop(.22,rgbaColor(lowColor,prism ? .14 : .20));
+    gradient.addColorStop(.50,rgbaColor(highColor,prism ? .30 : .34));
+    gradient.addColorStop(.72,rgbaColor(color,prism ? .15 : .16));
     gradient.addColorStop(1,rgbaColor(edgeColor,0));
     gradients[j]=gradient;
    }
@@ -325,15 +325,15 @@ class UndertoneVisuals {
   this.glassKey=key;const c=this.glass||document.createElement('canvas');c.width=Math.ceil(w);c.height=Math.ceil(h);const g=c.getContext('2d');
   const bg=g.createLinearGradient(0,0,w,h);bg.addColorStop(0,p[0]);bg.addColorStop(.48,p[1]);bg.addColorStop(1,p[0]);g.fillStyle=bg;g.fillRect(0,0,w,h);
   const scale=Math.min(w,h),glowA=prism?prism[0]:p[2],glowB=prism?prism[2%prism.length]:p[3];
-  this.glow(g,w*.25,h*.38,scale*.65,glowA,prism?.22:.28);this.glow(g,w*.72,h*.57,scale*.55,glowB,prism?.17:.20);
+  this.glow(g,w*.25,h*.38,scale*.65,glowA,prism ? .22 : .28);this.glow(g,w*.72,h*.57,scale*.55,glowB,prism ? .17 : .20);
   // Defocused lamps and their vertical reflections; no skyline or window grid.
   for(let li=0;li<this.lights.length;li++){
    const light=this.lights[li],x=light.x*w,y=light.y*h,r=scale*light.r;
    const baseColor=prism?prism[li%prism.length]:p[3];
    const color=prism?baseColor:(light.warm?this.blend(p[3],'#ddc7a2',p===UT_THEMES.noir.art?0:.28):p[3]);
    const bright=prism?this.blend(color,'#ffffff',.22):p[4];
-   g.save();g.translate(x,y);g.scale(1,1.15);const halo=g.createRadialGradient(0,0,r*.15,0,0,r*2.6);halo.addColorStop(0,bright);halo.addColorStop(.18,this.rgba(bright,.66));halo.addColorStop(.44,this.rgba(color,.25));halo.addColorStop(1,this.rgba(color,0));g.globalAlpha=light.alpha*(prism?.58:.68);g.fillStyle=halo;g.fillRect(-r*3,-r*3,r*6,r*6);g.restore();
-   g.save();g.translate(x,y+r*2);g.scale(1,4);this.glow(g,0,0,r*1.1,color,light.alpha*(prism?.035:.045));g.restore();
+   g.save();g.translate(x,y);g.scale(1,1.15);const halo=g.createRadialGradient(0,0,r*.15,0,0,r*2.6);halo.addColorStop(0,bright);halo.addColorStop(.18,this.rgba(bright,.66));halo.addColorStop(.44,this.rgba(color,.25));halo.addColorStop(1,this.rgba(color,0));g.globalAlpha=light.alpha*(prism ? .58 : .68);g.fillStyle=halo;g.fillRect(-r*3,-r*3,r*6,r*6);g.restore();
+   g.save();g.translate(x,y+r*2);g.scale(1,4);this.glow(g,0,0,r*1.1,color,light.alpha*(prism ? .035 : .045));g.restore();
   }
   this.glass=c;
   // Small drop sprites avoid rebuilding hundreds of gradients every frame.
@@ -351,10 +351,10 @@ class UndertoneVisuals {
   const rainColor=prism?prism[1%prism.length]:p[3],rainHighlight=prism?prism[0]:p[4];
   const streak=this.rainStreak||document.createElement('canvas');streak.width=8;streak.height=128;
   const sg=streak.getContext('2d'),rain=sg.createLinearGradient(0,0,0,128);
-  rain.addColorStop(0,this.rgba(rainHighlight,0));rain.addColorStop(.8,this.rgba(rainColor,prism?.11:.15));rain.addColorStop(1,this.rgba(rainHighlight,prism?.22:.27));sg.fillStyle=rain;sg.fillRect(3,0,1.5,128);this.rainStreak=streak;
+  rain.addColorStop(0,this.rgba(rainHighlight,0));rain.addColorStop(.8,this.rgba(rainColor,prism ? .11 : .15));rain.addColorStop(1,this.rgba(rainHighlight,prism ? .22 : .27));sg.fillStyle=rain;sg.fillRect(3,0,1.5,128);this.rainStreak=streak;
   const trail=this.dropTrail||document.createElement('canvas');trail.width=24;trail.height=128;
   const tg=trail.getContext('2d'),wet=tg.createLinearGradient(0,0,0,128);
-  wet.addColorStop(0,this.rgba(rainColor,0));wet.addColorStop(.60,this.rgba(rainColor,prism?.035:.045));wet.addColorStop(1,this.rgba(rainHighlight,prism?.13:.17));tg.strokeStyle=wet;tg.lineWidth=2;
+  wet.addColorStop(0,this.rgba(rainColor,0));wet.addColorStop(.60,this.rgba(rainColor,prism ? .035 : .045));wet.addColorStop(1,this.rgba(rainHighlight,prism ? .13 : .17));tg.strokeStyle=wet;tg.lineWidth=2;
   tg.beginPath();for(let i=0;i<=32;i++){const y=i*4,x=12+Math.sin(i*.20)*2;i?tg.lineTo(x,y):tg.moveTo(x,y);}tg.stroke();this.dropTrail=trail;
  }
  glassDrop(g,d,index,w,h,t,a){
