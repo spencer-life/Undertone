@@ -116,7 +116,7 @@ class UndertoneVisuals {
   const c=this.canvasFrame;c.time=this.time+this.offset;c.viewport.width=this.width;c.viewport.height=this.height;c.viewport.dpr=Math.min(window.devicePixelRatio||1,1.5);c.seed=this.seed;c.palette=UT_THEMES[s.theme];c.motion=s.motion/100;c.brightness=s.brightness/100;c.reducedMotion=this.reduced.matches;c.audio=this.audioState;return c;
  }
  renderScene(scene,g,w,h,t,p,a){g.save();g.globalAlpha=a;if(scene==='rain')this.wetGlass(g,w,h,t,p,a);else if(scene==='dunes')this.silk(g,w,h,t,p,a);else if(scene==='orbit')this.orbit(g,w,h,t,p,a);else this.contours(g,w,h,t,p,a);g.restore();}
- glow(g,x,y,r,color,opacity){const v=g.createRadialGradient(x,y,0,x,y,r);v.addColorStop(0,this.rgba(color,opacity));v.addColorStop(.45,this.rgba(color,opacity*.4));v.addColorStop(1,this.rgba(color,0));g.fillStyle=v;g.fillRect(x-r,y-r,r*2,r*2);}
+ glow(g,x,y,r,color,opacity){const v=g.createRadialGradient(x,y,0,x,y,r);v.addColorStop(0,this.rgba(color,opacity));v.addColorStop(.45,this.rgba(color,opacity*.4));v.addColorStop(1,alphaColor(color,0));g.fillStyle=v;g.fillRect(x-r,y-r,r*2,r*2);}
  contours(g,w,h,t,p,a){
   const c=this.canvasFrame,theme=c.palette||UT_THEMES.ocean,audio=c.audio||this.audioState;
   const count=w<650?64:88,segments=160;
@@ -323,6 +323,7 @@ class UndertoneVisuals {
   const theme=this.canvasFrame.palette||UT_THEMES.ocean,prism=theme.glassAccents||null;
   const key=[Math.round(w),Math.round(h),this.seed,theme.name,p.join('')].join(':');if(this.glassKey===key)return;
   this.glassKey=key;const c=this.glass||document.createElement('canvas');c.width=Math.ceil(w);c.height=Math.ceil(h);const g=c.getContext('2d');
+  const alphaColor=(value,alpha)=>value[0]==='r'?value.replace('rgb(','rgba(').replace(')',','+alpha+')'):this.rgba(value,alpha);
   const bg=g.createLinearGradient(0,0,w,h);bg.addColorStop(0,p[0]);bg.addColorStop(.48,p[1]);bg.addColorStop(1,p[0]);g.fillStyle=bg;g.fillRect(0,0,w,h);
   const scale=Math.min(w,h),glowA=prism?prism[0]:p[2],glowB=prism?prism[2%prism.length]:p[3];
   this.glow(g,w*.25,h*.38,scale*.65,glowA,prism ? .22 : .28);this.glow(g,w*.72,h*.57,scale*.55,glowB,prism ? .17 : .20);
@@ -332,7 +333,7 @@ class UndertoneVisuals {
    const baseColor=prism?prism[li%prism.length]:p[3];
    const color=prism?baseColor:(light.warm?this.blend(p[3],'#ddc7a2',p===UT_THEMES.noir.art?0:.28):p[3]);
    const bright=prism?this.blend(color,'#ffffff',.22):p[4];
-   g.save();g.translate(x,y);g.scale(1,1.15);const halo=g.createRadialGradient(0,0,r*.15,0,0,r*2.6);halo.addColorStop(0,bright);halo.addColorStop(.18,this.rgba(bright,.66));halo.addColorStop(.44,this.rgba(color,.25));halo.addColorStop(1,this.rgba(color,0));g.globalAlpha=light.alpha*(prism ? .58 : .68);g.fillStyle=halo;g.fillRect(-r*3,-r*3,r*6,r*6);g.restore();
+   g.save();g.translate(x,y);g.scale(1,1.15);const halo=g.createRadialGradient(0,0,r*.15,0,0,r*2.6);halo.addColorStop(0,bright);halo.addColorStop(.18,alphaColor(bright,.66));halo.addColorStop(.44,alphaColor(color,.25));halo.addColorStop(1,this.rgba(color,0));g.globalAlpha=light.alpha*(prism ? .58 : .68);g.fillStyle=halo;g.fillRect(-r*3,-r*3,r*6,r*6);g.restore();
    g.save();g.translate(x,y+r*2);g.scale(1,4);this.glow(g,0,0,r*1.1,color,light.alpha*(prism ? .035 : .045));g.restore();
   }
   this.glass=c;
