@@ -116,7 +116,7 @@ class UndertoneVisuals {
   const c=this.canvasFrame;c.time=this.time+this.offset;c.viewport.width=this.width;c.viewport.height=this.height;c.viewport.dpr=Math.min(window.devicePixelRatio||1,1.5);c.seed=this.seed;c.palette=UT_THEMES[s.theme];c.motion=s.motion/100;c.brightness=s.brightness/100;c.reducedMotion=this.reduced.matches;c.audio=this.audioState;return c;
  }
  renderScene(scene,g,w,h,t,p,a){g.save();g.globalAlpha=a;if(scene==='rain')this.wetGlass(g,w,h,t,p,a);else if(scene==='dunes')this.silk(g,w,h,t,p,a);else if(scene==='orbit')this.orbit(g,w,h,t,p,a);else this.contours(g,w,h,t,p,a);g.restore();}
- glow(g,x,y,r,color,opacity){const v=g.createRadialGradient(x,y,0,x,y,r);v.addColorStop(0,this.rgba(color,opacity));v.addColorStop(.45,this.rgba(color,opacity*.4));v.addColorStop(1,alphaColor(color,0));g.fillStyle=v;g.fillRect(x-r,y-r,r*2,r*2);}
+ glow(g,x,y,r,color,opacity){const v=g.createRadialGradient(x,y,0,x,y,r);v.addColorStop(0,this.rgba(color,opacity));v.addColorStop(.45,this.rgba(color,opacity*.4));v.addColorStop(1,this.rgba(color,0));g.fillStyle=v;g.fillRect(x-r,y-r,r*2,r*2);}
  contours(g,w,h,t,p,a){
   const c=this.canvasFrame,theme=c.palette||UT_THEMES.ocean,audio=c.audio||this.audioState;
   const count=w<650?64:88,segments=160;
@@ -333,7 +333,7 @@ class UndertoneVisuals {
    const baseColor=prism?prism[li%prism.length]:p[3];
    const color=prism?baseColor:(light.warm?this.blend(p[3],'#ddc7a2',p===UT_THEMES.noir.art?0:.28):p[3]);
    const bright=prism?this.blend(color,'#ffffff',.22):p[4];
-   g.save();g.translate(x,y);g.scale(1,1.15);const halo=g.createRadialGradient(0,0,r*.15,0,0,r*2.6);halo.addColorStop(0,bright);halo.addColorStop(.18,alphaColor(bright,.66));halo.addColorStop(.44,alphaColor(color,.25));halo.addColorStop(1,this.rgba(color,0));g.globalAlpha=light.alpha*(prism ? .58 : .68);g.fillStyle=halo;g.fillRect(-r*3,-r*3,r*6,r*6);g.restore();
+   g.save();g.translate(x,y);g.scale(1,1.15);const halo=g.createRadialGradient(0,0,r*.15,0,0,r*2.6);halo.addColorStop(0,bright);halo.addColorStop(.18,alphaColor(bright,.66));halo.addColorStop(.44,alphaColor(color,.25));halo.addColorStop(1,alphaColor(color,0));g.globalAlpha=light.alpha*(prism ? .58 : .68);g.fillStyle=halo;g.fillRect(-r*3,-r*3,r*6,r*6);g.restore();
    g.save();g.translate(x,y+r*2);g.scale(1,4);this.glow(g,0,0,r*1.1,color,light.alpha*(prism ? .035 : .045));g.restore();
   }
   this.glass=c;
