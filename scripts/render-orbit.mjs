@@ -19,7 +19,7 @@ try {
   ];
   const samp = sampler(gpu, { minFilter: 'linear', magFilter: 'linear' });
   const orbit = effect(gpu, shader('orbit.wgsl'), { set: { params: {
-    viewport: [width, height, width / height, 1], dynamics: [0, 604, 0.8, 0],
+    viewport: [width, height, width / height, 1], dynamics: [0, 604, 0.8, 0], style: [1, 1, 0, 1],
     ...Object.fromEntries(Object.entries(palette).map(([key, color]) => [key, rgba(color)])),
   } } });
   const bright = effect(gpu, shader('orbit-bright.wgsl'), { set: { src: scene, samp } });
