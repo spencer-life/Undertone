@@ -8,7 +8,7 @@ import POST_SHADER from './orbit-post.wgsl';
 const clamp = (value, min, max) => Math.min(max, Math.max(min, Number(value) || 0));
 const rgba = (rgb) => [rgb[0], rgb[1], rgb[2], 1];
 const orbitStyle = (theme) => theme === 'mono'
-  ? [0.46, 1.12, 0.055, 0.72]
+  ? [0.30, 1.16, 0.060, 0.72]
   : [1, 1, 0, 1];
 const BLURS = [
   { direction: [1, 0], radius: 1 },
