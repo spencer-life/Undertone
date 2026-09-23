@@ -70,7 +70,7 @@ const mix={
   musicSource:'generated',track:'broken-glimmers',music:70,autoMix:false,
   preset:'soft',route:'speakers',hz:10,carrier:220,beats:true,beatVolume:14,
   master:35,pad:76,melody:20,rain:0,ocean:0,noise:8,noiseType:'pink',
-  score:'horizon',theme:'mono',scene:'orbit',motion:60,brightness:94,
+  score:'horizon',theme:'mono',scene:'orbit',motion:60,brightness:100,
   eco:false,breathing:false,keepAwake:false,blackout:false,timer:0,seed:604
 };
 console.log(base+'/?renderer=webgpu#mix='+encodeURIComponent(JSON.stringify(mix)));
@@ -79,7 +79,12 @@ NODE
 
 echo "==> Verify the real browser WebGPU path through SwiftShader"
 agent-browser --session "$SESSION" --webgpu --headed open "$URL"
-agent-browser --session "$SESSION" --webgpu --headed wait 6000
+agent-browser --session "$SESSION" --webgpu --headed wait 700
+EARLY_SHOT_OUTPUT="$(agent-browser --session "$SESSION" --webgpu --headed screenshot)"
+printf '%s\n' "$EARLY_SHOT_OUTPUT" | tee "$OUT/startup-screenshot-command.txt"
+EARLY_SHOT_PATH="$(printf '%s\n' "$EARLY_SHOT_OUTPUT" | sed -n 's/.*Screenshot saved to \(.*\.png\)$/\1/p' | tail -1)"
+if [[ -n "$EARLY_SHOT_PATH" && -f "$EARLY_SHOT_PATH" ]]; then cp "$EARLY_SHOT_PATH" "$OUT/orbit-webgpu-startup.png"; fi
+agent-browser --session "$SESSION" --webgpu --headed wait 5300
 agent-browser --session "$SESSION" --webgpu --headed eval 'new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))' >/dev/null
 
 META="$(agent-browser --session "$SESSION" --webgpu --headed eval 'new Promise((resolve)=>{const deadline=Date.now()+10000;const tick=()=>{const base=document.querySelector("#visual");const result={hasGpu:Boolean(navigator.gpu),renderer:base?.dataset?.renderer||null,orbitStatus:base?.dataset?.orbitStatus||null,orbitError:base?.dataset?.orbitError||null,gpuLayerVisible:Boolean(base?.nextElementSibling?.tagName==="CANVAS"&&base.nextElementSibling.style.display!=="none")};if(result.renderer==="webgpu"&&result.orbitStatus==="ready")resolve(JSON.stringify(result));else if(Date.now()>deadline)resolve(JSON.stringify(result));else setTimeout(tick,100)};tick()})')"

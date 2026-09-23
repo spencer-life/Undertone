@@ -3,7 +3,7 @@
 (function(){
  const $=id=>document.getElementById(id),$$=q=>Array.from(document.querySelectorAll(q));
  const STORE='undertone.v1';
- const DEFAULTS={musicSource:'library',track:'broken-glimmers',music:70,autoMix:false,preset:'soft',route:'speakers',hz:10,carrier:220,beats:true,beatVolume:14,master:35,pad:74,melody:26,rain:10,ocean:0,noise:10,noiseType:'brown',score:'velvet',theme:'mono',scene:'orbit',motion:60,brightness:94,eco:false,breathing:false,keepAwake:true,blackout:false,timer:0,seed:604};
+ const DEFAULTS={musicSource:'library',track:'broken-glimmers',music:70,autoMix:false,preset:'soft',route:'speakers',hz:10,carrier:220,beats:true,beatVolume:14,master:35,pad:74,melody:26,rain:10,ocean:0,noise:10,noiseType:'brown',score:'velvet',theme:'mono',scene:'orbit',motion:60,brightness:100,eco:false,breathing:false,keepAwake:true,blackout:false,timer:0,seed:604};
  const PRESETS={
  focus:{title:'Make room for one thing.',description:'An open soundscape for your next stretch of work.',label:'Focus',hz:40,carrier:340,beats:true,beatVolume:14,pad:76,melody:20,rain:0,ocean:0,noise:8,noiseType:'pink',score:'horizon'},
  soft:{title:'Find your easy focus.',description:'A little less noise. A little more room to think.',label:'Relaxed focus',hz:10,carrier:220,beats:true,beatVolume:14,pad:74,melody:26,rain:10,ocean:0,noise:10,noiseType:'brown',score:'velvet'},

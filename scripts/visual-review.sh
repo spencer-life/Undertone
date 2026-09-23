@@ -70,7 +70,7 @@ const mix={
   theme,
   scene,
   motion:Number(motion),
-  brightness:theme==='mono'?94:80,
+  brightness:theme==='mono'?100:80,
   eco:false,
   breathing:false,
   keepAwake:false,
