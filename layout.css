@@ -66,3 +66,20 @@ body.cinema{overflow:hidden}
  .cinema .stage-dock .mobile-tune .icon{width:17px;height:17px}
  .cinema .dock-progress{left:12px;right:12px;bottom:5px}
 }
+
+@media(max-width:640px){
+ .panel{width:100%}
+ .panel-head{padding:18px 18px 8px}
+ .panel-tabs{padding:0 10px 7px}
+ .panel-tabs button{font-size:12px}
+ .panel-scroll{padding:16px 18px 24px}
+ .cinema .stage-dock .visual-quick-toggle{display:inline-flex;min-width:64px;padding:6px 7px}
+ .cinema .stage-dock .dock-controls{display:inline-flex;min-height:42px;padding:6px 8px;font-size:10px;gap:5px}
+ .cinema .stage-dock .transport-end{grid-template-columns:auto minmax(74px,1fr) auto}
+ .visual-quick{bottom:calc(max(10px,env(safe-area-inset-bottom)) + 102px);width:calc(100% - 20px);padding:12px;border-radius:13px}
+ .quick-scenes{grid-template-columns:repeat(2,1fr)}
+ .quick-themes{grid-template-columns:repeat(5,1fr)}
+ .quick-theme{min-height:38px}
+ .quick-theme .theme-swatches i{height:20px}
+ .transport-peek{bottom:max(12px,env(safe-area-inset-bottom))}
+}
