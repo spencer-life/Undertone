@@ -58,3 +58,28 @@ body.playing .peek-meter i{animation:meter 1.7s ease-in-out infinite alternate}
 body.transport-tucked .stage-dock{opacity:0;transform:translateY(24px);pointer-events:none}
 body.transport-tucked .transport-peek{display:inline-flex!important}
 .cinema .stage-dock{transition:opacity .42s cubic-bezier(.22,1,.36,1),transform .42s cubic-bezier(.22,1,.36,1)}
+
+.panel-head-actions{display:flex;align-items:center;gap:4px}
+.panel-install{min-height:40px;padding:6px 9px;font-size:11px}
+.panel-install .icon{width:16px;height:16px}
+.install-callout{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 12px;align-items:center}
+.install-callout>p,.install-callout .small{grid-column:1/-1}
+.install-callout .primary{min-width:118px}
+.guide-grid{display:grid;gap:8px;margin-top:12px}
+.guide-grid>div{display:grid;grid-template-columns:64px 1fr;gap:9px;align-items:start;padding:9px 0;border-bottom:1px solid var(--line)}
+.guide-grid>div:last-child{border-bottom:0}
+.guide-grid strong{font-size:13px;color:var(--text)}
+.guide-grid span{font-size:12px;line-height:1.45;color:var(--secondary)}
+.guide-note{margin-top:8px!important}
+.compact-details details{margin-top:0;border-top:1px solid var(--line)}
+.compact-details details+details{margin-top:0}
+.compact-details details p{margin-top:4px}
+.compact-details details a{display:inline-flex;min-height:40px;align-items:center;font-size:12px}
+.about-version{margin-top:12px!important}
+@media(max-width:640px){
+ .panel-install span{display:none}
+ .panel-install{width:40px;padding:0}
+ .install-callout{grid-template-columns:1fr}
+ .install-callout .primary{width:100%}
+ .guide-grid>div{grid-template-columns:58px 1fr;padding:8px 0}
+}
