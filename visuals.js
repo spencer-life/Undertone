@@ -9,7 +9,7 @@ const UT_THEMES={
  moss:{name:'Moss',bg:'#141815',bg2:'#151c17',surface:'#1e2821',raised:'#28342b',text:'#f4f6ee',secondary:'#c5d2bd',muted:'#a1b09b',line:'#414e3d',accent:'#bdddab',strong:'#94c37d',ink:'#1e2a18',art:['#141b17','#2c3d32','#51654a','#859774','#c6d8b0']},
  ember:{name:'Ember',bg:'#191513',bg2:'#201915',surface:'#2a211b',raised:'#35291f',text:'#fff5ea',secondary:'#dfc9b1',muted:'#b59d83',line:'#524233',accent:'#f4c194',strong:'#eba76e',ink:'#2c1d13',art:['#1d1713','#493226','#7e5139','#b27a51','#e6b887']},
  violet:{name:'Night violet',bg:'#17141c',bg2:'#1c1723',surface:'#251e2e',raised:'#30273b',text:'#f7f1fb',secondary:'#d3c2e4',muted:'#ad98bd',line:'#4a3c59',accent:'#d5b4ed',strong:'#ba91db',ink:'#271c32',art:['#19151f','#372b46','#62507c','#9982b2','#d8bde9']},
- mono:{name:'Graphite',bg:'#151516',bg2:'#19191a',surface:'#222224',raised:'#2d2d30',text:'#f7f5f0',secondary:'#d2d0ca',muted:'#a9a6a0',line:'#47474c',accent:'#e4dfd5',strong:'#c3bdb0',ink:'#232220',art:['#171719','#303033','#57565b','#939096','#d6d0d5'],contourAccents:['#62e3cf','#63b9ff','#d58be5','#efa36f'],silkAccents:['#4e8fda','#5dd8cb','#93d6c8','#ef8c98','#c17de5','#718fe8'],glassAccents:['#5edfd0','#66b8f3','#d58cdd','#f0aa76']}
+ mono:{name:'Graphite',bg:'#151516',bg2:'#19191a',surface:'#222224',raised:'#2d2d30',text:'#f7f5f0',secondary:'#d2d0ca',muted:'#a9a6a0',line:'#47474c',accent:'#e4dfd5',strong:'#c3bdb0',ink:'#232220',art:['#171719','#303033','#57565b','#939096','#d6d0d5'],contourAccents:['#62e3cf','#63b9ff','#d58be5','#efa36f'],silkAccents:['#4e8fda','#5dd8cb','#93d6c8','#ef8c98','#c17de5','#718fe8'],glassAccents:['#5edfd0','#66b8f3','#d58cdd','#f0aa76'],orbitAccents:['#071719','#2f7f9f','#58a7e4','#b567d6','#e3a080']}
 };
 // Original Canvas rendering, informed by the Figma scene board and React Bits'
 // layered motion / restrained lighting. No framework or graphics dependencies.
@@ -291,11 +291,12 @@ class UndertoneVisuals {
   g.globalAlpha=a;
  }
  orbit(g,w,h,t,p,a){
+  const theme=this.canvasFrame.palette||UT_THEMES.ocean,q=theme.orbitAccents||p;
   const cx=w*.5,cy=h*.43,r=Math.min(w*.33,h*.32);
-  this.glow(g,cx,cy,r*1.65,p[2],.28);
+  this.glow(g,cx,cy,r*1.65,q[2],.28);
   // Dark core and luminous atmospheric limb give the orbit actual volume.
   const sphere=g.createRadialGradient(cx-r*.22,cy-r*.3,r*.04,cx,cy,r);
-  sphere.addColorStop(0,this.rgba(p[2],.1));sphere.addColorStop(.65,this.rgba(p[1],.25));sphere.addColorStop(.92,this.rgba(p[3],.17));sphere.addColorStop(1,this.rgba(p[0],0));g.fillStyle=sphere;g.fillRect(cx-r,cy-r,r*2,r*2);
+  sphere.addColorStop(0,this.rgba(q[2],.1));sphere.addColorStop(.65,this.rgba(q[1],.25));sphere.addColorStop(.92,this.rgba(q[3],.17));sphere.addColorStop(1,this.rgba(q[0],0));g.fillStyle=sphere;g.fillRect(cx-r,cy-r,r*2,r*2);
   g.translate(cx,cy);g.rotate(-.4+t*.075);
   for(let j=0;j<68;j++){
    const d=j/67,inclination=d*Math.PI+t*.18,phase=t*.32+d*4.5;
@@ -306,7 +307,7 @@ class UndertoneVisuals {
     const y=Math.sin(q)*r*Math.cos(inclination)*.85+Math.sin(q*2+phase)*r*.035;
     i?g.lineTo(x,y):g.moveTo(x,y);
    }
-   g.strokeStyle=this.color(p,.28+.53*Math.pow(Math.sin(d*Math.PI),2));g.globalAlpha=a*(.06+.19*Math.pow(Math.sin(d*9+t*.12)*.5+.5,3));g.lineWidth=.7;g.stroke();
+   g.strokeStyle=this.color(q,.28+.53*Math.pow(Math.sin(d*Math.PI),2));g.globalAlpha=a*(.06+.19*Math.pow(Math.sin(d*9+t*.12)*.5+.5,3));g.lineWidth=.7;g.stroke();
   }
   // A few close elliptical paths carry broad, softly graduated highlights.
   for(let j=0;j<4;j++){
@@ -315,7 +316,7 @@ class UndertoneVisuals {
     const q=k/80*Math.PI*2,head=t*(.32+j*.04)+j*1.8;
     const light=Math.pow(Math.max(0,Math.cos(q-head)),14);
     g.beginPath();g.ellipse(0,0,r*(1.13+j*.025),r*(.39+j*.12),0,q,q+Math.PI*2/80+.003);
-    g.strokeStyle=p[3];g.globalAlpha=a*(.025+light*.38);g.lineWidth=.8+light*.65;g.stroke();
+    g.strokeStyle=q[3];g.globalAlpha=a*(.025+light*.38);g.lineWidth=.8+light*.65;g.stroke();
    }g.restore();
   }
   g.globalAlpha=a;
