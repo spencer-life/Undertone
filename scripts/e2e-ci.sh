@@ -74,6 +74,18 @@ for spec in "sound:#soundQuickButton" "music:#musicQuickButton" "scene:#sceneQui
   agent-browser --session "$SESSION" click "$selector"
 done
 
+echo "==> Palette changes do not tint application chrome"
+agent-browser --session "$SESSION" eval 'window.undertoneDebug.change({theme:"moss"}); true' >/dev/null
+CHROME_BG="$(agent-browser --session "$SESSION" eval 'getComputedStyle(document.documentElement).getPropertyValue("--bg").trim()' | tail -1 | tr -d '"\r')"
+CHROME_SURFACE="$(agent-browser --session "$SESSION" eval 'getComputedStyle(document.documentElement).getPropertyValue("--surface").trim()' | tail -1 | tr -d '"\r')"
+THEME_COLOR="$(agent-browser --session "$SESSION" eval 'document.querySelector("meta[name=theme-color]").content' | tail -1 | tr -d '"\r')"
+THEME_STATE="$(agent-browser --session "$SESSION" eval 'window.undertoneDebug.state.theme' | tail -1 | tr -d '"\r')"
+if [[ "$THEME_STATE" != "moss" || "$CHROME_BG" != "#151516" || "$CHROME_SURFACE" != "#222224" || "$THEME_COLOR" != "#151516" ]]; then
+  echo "Palette leaked into UI chrome: theme=$THEME_STATE bg=$CHROME_BG surface=$CHROME_SURFACE meta=$THEME_COLOR"
+  exit 1
+fi
+agent-browser --session "$SESSION" eval 'window.undertoneDebug.change({theme:"mono"}); true' >/dev/null
+
 echo "==> Quick-control behavior"
 agent-browser --session "$SESSION" click "#soundQuickButton"
 agent-browser --session "$SESSION" click '#soundPicker [data-preset="focus"]'

@@ -104,14 +104,14 @@ class UndertoneVisuals {
   const g=this.g,w=this.width,h=this.height;if(!g||!w||!h)return;
   if(s.scene==='orbit'&&this.transition>=1&&this.orbitGPU?.draw({width:w,height:h,dpr:Math.min(window.devicePixelRatio||1,1.5),time:this.time,seed:this.seed,theme:s.theme,brightness:s.brightness,eco:s.eco,energy:this.energy}))return;
   this.orbitGPU?.hide();
-  const contract=this.canvasContract(s),p=contract.palette.art,t=contract.time;g.globalAlpha=1;g.fillStyle=p[0];g.fillRect(0,0,w,h);
+  const contract=this.canvasContract(s),p=contract.palette.art,t=contract.time;g.globalAlpha=1;g.fillStyle='#090a0c';g.fillRect(0,0,w,h);
   if(this.previousScene&&this.transition<1){this.renderScene(this.previousScene,g,w,h,t,p,1-this.transition);this.renderScene(this.activeScene,g,w,h,t,p,this.transition);}
   else{this.renderScene(this.activeScene,g,w,h,t,p,1);this.previousScene=null;}
   // Dark corners keep controls legible, without masking the central art.
   const vignetteKey=[w,h,contract.viewport.dpr].join(':');
   if(this.vignetteKey!==vignetteKey){this.vignette=g.createRadialGradient(w*.5,h*.42,h*.12,w*.5,h*.45,Math.max(w*.62,h*.74));this.vignette.addColorStop(0,'#0000');this.vignette.addColorStop(1,'#0009');this.vignetteKey=vignetteKey;}
   g.fillStyle=this.vignette;g.fillRect(0,0,w,h);
-  g.globalAlpha=1-s.brightness/100;g.fillStyle=p[0];g.fillRect(0,0,w,h);g.globalAlpha=1;
+  g.globalAlpha=1-s.brightness/100;g.fillStyle='#090a0c';g.fillRect(0,0,w,h);g.globalAlpha=1;
  }
  canvasContract(s){
   const c=this.canvasFrame;c.time=this.time+this.offset;c.viewport.width=this.width;c.viewport.height=this.height;c.viewport.dpr=Math.min(window.devicePixelRatio||1,1.5);c.seed=this.seed;c.palette=UT_THEMES[s.theme];c.motion=s.motion/100;c.brightness=s.brightness/100;c.reducedMotion=this.reduced.matches;c.audio=this.audioState;return c;
@@ -139,7 +139,7 @@ class UndertoneVisuals {
    const gradients=makeGradients(g),glowGradients=makeGradients(light);
    const cos=new Float32Array(segments+1),sin=new Float32Array(segments+1);
    for(let i=0;i<=segments;i++){cos[i]=Math.cos(i/segments*Math.PI*2);sin[i]=Math.sin(i/segments*Math.PI*2);}
-   cache=this.contourCache={key,glow,light,phase,gradients,glowGradients,accents,cos,sin,points:new Float32Array(count*(segments+1)*2),colors:Array.from({length:count},(_,j)=>this.color(p,.29+.24*(1-j/count))),dark:this.blend(p[0],'#000000',.77)};
+   cache=this.contourCache={key,glow,light,phase,gradients,glowGradients,accents,cos,sin,points:new Float32Array(count*(segments+1)*2),colors:Array.from({length:count},(_,j)=>this.color(p,.29+.24*(1-j/count))),dark:this.blend('#090a0c',p[1],.08)};
   }
   const {points,phase,cos,sin,light,glow,gradients}=cache;
   const rx=w*.48,ry=h*.43,cx=w*.50,cy=h*.46;
@@ -245,7 +245,7 @@ class UndertoneVisuals {
    }
    cache=this.silkCache={key,glow,light,baseY,tilt,amp,amp2,freq,phase,speed,widths,opacity,colors,gradients,
     supportY,supportTilt,supportAmp,supportFreq,supportPhase,supportSpeed,supportWidth,supportOpacity,supportColors,
-    glowGradients,points:new Float32Array(layers*(samples+1)*4),supportPoints:new Float32Array(supports*(samples+1)*2),dark:this.blend(p[0],'#000000',.72),layers,samples,supports};
+    glowGradients,points:new Float32Array(layers*(samples+1)*4),supportPoints:new Float32Array(supports*(samples+1)*2),dark:this.blend('#090a0c',p[1],.08),layers,samples,supports};
   }
   const {light,glow,glowGradients,points,supportPoints}=cache;
   g.globalAlpha=a;g.fillStyle=cache.dark;g.fillRect(0,0,w,h);
@@ -326,7 +326,7 @@ class UndertoneVisuals {
   const key=[Math.round(w),Math.round(h),this.seed,theme.name,p.join('')].join(':');if(this.glassKey===key)return;
   this.glassKey=key;const c=this.glass||document.createElement('canvas');c.width=Math.ceil(w);c.height=Math.ceil(h);const g=c.getContext('2d');
   const alphaColor=(value,alpha)=>value[0]==='r'?value.replace('rgb(','rgba(').replace(')',','+alpha+')'):this.rgba(value,alpha);
-  const bg=g.createLinearGradient(0,0,w,h);bg.addColorStop(0,p[0]);bg.addColorStop(.48,p[1]);bg.addColorStop(1,p[0]);g.fillStyle=bg;g.fillRect(0,0,w,h);
+  const bg=g.createLinearGradient(0,0,w,h),neutralMid=this.blend('#111419',p[1],.12);bg.addColorStop(0,'#090b0d');bg.addColorStop(.48,neutralMid);bg.addColorStop(1,'#090b0d');g.fillStyle=bg;g.fillRect(0,0,w,h);
   const scale=Math.min(w,h),glowA=prism?prism[0]:p[2],glowB=prism?prism[2%prism.length]:p[3];
   this.glow(g,w*.25,h*.38,scale*.65,glowA,prism ? .22 : .28);this.glow(g,w*.72,h*.57,scale*.55,glowB,prism ? .17 : .20);
   // Defocused lamps and their vertical reflections; no skyline or window grid.

@@ -137,7 +137,8 @@ capture_ui_state "scene-picker" 'document.querySelector("#sceneQuickButton").cli
 capture_ui_state "color-picker" 'document.querySelector("#colorQuickButton").click()'
 capture_ui_state "timer-picker" 'document.querySelector("#timerButton").click()'
 capture_ui_state "route-picker" 'document.querySelector("#routeQuick").click()'
-capture_ui_state "tune" 'document.querySelector("#dockControls").click()'
+capture_ui_state "moss-neutral-chrome" 'window.undertoneDebug.change({theme:"moss"}); true'
+capture_ui_state "tune" 'window.undertoneDebug.change({theme:"mono"}); document.querySelector("#dockControls").click()'
 capture_ui_state "tune-about" 'document.querySelector("#tab-about").click()'
 
 echo "vgpu CI passed: shader validation, doctor, deterministic pixels, browser WebGPU path, and control-state captures."
