@@ -76,10 +76,10 @@ done
 
 echo "==> Quick-control behavior"
 agent-browser --session "$SESSION" click "#soundQuickButton"
-agent-browser --session "$SESSION" click '[data-preset="focus"]'
+agent-browser --session "$SESSION" click '#soundPicker [data-preset="focus"]'
 MODE="$(agent-browser --session "$SESSION" eval 'window.undertoneDebug.state.preset' | tail -1 | tr -d '"\r')"
 if [[ "$MODE" != "focus" ]]; then echo "Sound picker did not change mode"; exit 1; fi
-agent-browser --session "$SESSION" click '[data-preset="soft"]'
+agent-browser --session "$SESSION" click '#soundPicker [data-preset="soft"]'
 agent-browser --session "$SESSION" click "#soundQuickButton"
 
 agent-browser --session "$SESSION" click "#timerButton"
