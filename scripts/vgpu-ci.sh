@@ -87,7 +87,7 @@ if [[ -n "$EARLY_SHOT_PATH" && -f "$EARLY_SHOT_PATH" ]]; then cp "$EARLY_SHOT_PA
 agent-browser --session "$SESSION" --webgpu --headed wait 5300
 agent-browser --session "$SESSION" --webgpu --headed eval 'new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))' >/dev/null
 
-META="$(agent-browser --session "$SESSION" --webgpu --headed eval 'new Promise((resolve)=>{const deadline=Date.now()+10000;const tick=()=>{const base=document.querySelector("#visual");const result={hasGpu:Boolean(navigator.gpu),renderer:base?.dataset?.renderer||null,orbitStatus:base?.dataset?.orbitStatus||null,orbitError:base?.dataset?.orbitError||null,gpuLayerVisible:Boolean(base?.nextElementSibling?.tagName==="CANVAS"&&base.nextElementSibling.style.display!=="none")};if(result.renderer==="webgpu"&&result.orbitStatus==="ready")resolve(JSON.stringify(result));else if(Date.now()>deadline)resolve(JSON.stringify(result));else setTimeout(tick,100)};tick()})')"
+META="$(agent-browser --session "$SESSION" --webgpu --headed eval 'new Promise((resolve)=>{const deadline=Date.now()+10000;const tick=()=>{const base=document.querySelector("#visual");const result={hasGpu:Boolean(navigator.gpu),renderer:base?.dataset?.renderer||null,orbitStatus:base?.dataset?.orbitStatus||null,orbitError:base?.dataset?.orbitError||null,gpuLayerVisible:Boolean(base?.nextElementSibling?.tagName==="CANVAS"&&base.nextElementSibling.style.display!=="none"),bootSettled:!document.body.classList.contains("app-booting"),dockVisible:Boolean(document.querySelector("#transportDock")?.getClientRects().length)};if(result.renderer==="webgpu"&&result.orbitStatus==="ready")resolve(JSON.stringify(result));else if(Date.now()>deadline)resolve(JSON.stringify(result));else setTimeout(tick,100)};tick()})')"
 printf '%s\n' "$META" | tee "$OUT/browser-meta-raw.txt"
 CLEAN_META="$(printf '%s' "$META" | sed 's/\\"/"/g')"
 printf '%s\n' "$CLEAN_META" | tee "$OUT/browser-meta.txt"
@@ -95,6 +95,8 @@ printf '%s' "$CLEAN_META" | grep -q '"hasGpu":true'
 printf '%s' "$CLEAN_META" | grep -q '"renderer":"webgpu"'
 printf '%s' "$CLEAN_META" | grep -q '"orbitStatus":"ready"'
 printf '%s' "$CLEAN_META" | grep -q '"gpuLayerVisible":true'
+printf '%s' "$CLEAN_META" | grep -q '"bootSettled":true'
+printf '%s' "$CLEAN_META" | grep -q '"dockVisible":true'
 if printf '%s' "$CLEAN_META" | grep -Eq 'Preview error|WebGPU is not available|No WebGPU adapter was found|"orbitError":"[^"]+'; then
   echo "Browser reported a WebGPU error"
   exit 1
