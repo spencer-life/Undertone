@@ -70,7 +70,7 @@ const mix={
   theme,
   scene,
   motion:Number(motion),
-  brightness:80,
+  brightness:theme==='mono'?94:80,
   eco:false,
   breathing:false,
   keepAwake:false,
@@ -106,9 +106,16 @@ done
 
 # Graphite uses scene-specific prismatic lighting across the full scene set.
 for scene in tides dunes orbit rain; do
-  capture "$scene" 40 600  "graphite-early" "mono"
-  capture "$scene" 40 5600 "graphite-late"  "mono"
+  capture "$scene" 60 600  "graphite-early" "mono"
+  capture "$scene" 60 5600 "graphite-late"  "mono"
 done
+
+mkdir -p "$OUT/pages/mobile"
+pnpm dlx "$PW" screenshot \
+  --browser=chromium \
+  --viewport-size="390,844" \
+  --wait-for-timeout=1200 \
+  "$BASE/" "$OUT/pages/mobile/default-graphite-orbit.png" >/dev/null
 
 GIT_SHA="${GITHUB_SHA:-unknown}" RUN_ID="${GITHUB_RUN_ID:-local}" BASE_URL="$BASE" node <<'NODE'
 const fs=require('fs');
@@ -140,13 +147,22 @@ for(const [route,name] of scenes){
       route,
       name:`${name} · Graphite`,
       theme:'mono',
-      motion:40,
+      motion:60,
       timing,
       viewport:{width:1440,height:1100},
       screenshot:`pages/${route}/graphite-${timing}.png`
     });
   }
 }
+captures.push({
+  route:'mobile-default',
+  name:'Fresh mobile default · Graphite Energy Orbit',
+  theme:'mono',
+  motion:60,
+  timing:'settled',
+  viewport:{width:390,height:844},
+  screenshot:'pages/mobile/default-graphite-orbit.png'
+});
 fs.writeFileSync('.visual-review/manifest.json',JSON.stringify({
   commit:process.env.GIT_SHA,
   runId:process.env.RUN_ID,

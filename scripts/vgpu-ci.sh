@@ -70,7 +70,7 @@ const mix={
   musicSource:'generated',track:'broken-glimmers',music:70,autoMix:false,
   preset:'soft',route:'speakers',hz:10,carrier:220,beats:true,beatVolume:14,
   master:35,pad:76,melody:20,rain:0,ocean:0,noise:8,noiseType:'pink',
-  score:'horizon',theme:'mono',scene:'orbit',motion:100,brightness:80,
+  score:'horizon',theme:'mono',scene:'orbit',motion:60,brightness:94,
   eco:false,breathing:false,keepAwake:false,blackout:false,timer:0,seed:604
 };
 console.log(base+'/?renderer=webgpu#mix='+encodeURIComponent(JSON.stringify(mix)));
