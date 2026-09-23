@@ -65,15 +65,35 @@ NODE
 
 run_a11y "main"
 
-agent-browser --session "$SESSION" click "#sceneQuickButton"
-agent-browser --session "$SESSION" wait 250
-run_a11y "scene-picker"
-agent-browser --session "$SESSION" click "#sceneQuickButton"
+for spec in "sound:#soundQuickButton" "music:#musicQuickButton" "scene:#sceneQuickButton" "color:#colorQuickButton" "timer:#timerButton" "route:#routeQuick"; do
+  name="${spec%%:*}"
+  selector="${spec#*:}"
+  agent-browser --session "$SESSION" click "$selector"
+  agent-browser --session "$SESSION" wait 300
+  run_a11y "$name-picker"
+  agent-browser --session "$SESSION" click "$selector"
+done
 
-agent-browser --session "$SESSION" click "#colorQuickButton"
-agent-browser --session "$SESSION" wait 250
-run_a11y "color-picker"
-agent-browser --session "$SESSION" click "#colorQuickButton"
+echo "==> Quick-control behavior"
+agent-browser --session "$SESSION" click "#soundQuickButton"
+agent-browser --session "$SESSION" click '[data-preset="focus"]'
+MODE="$(agent-browser --session "$SESSION" eval 'window.undertoneDebug.state.preset' | tail -1 | tr -d '"\r')"
+if [[ "$MODE" != "focus" ]]; then echo "Sound picker did not change mode"; exit 1; fi
+agent-browser --session "$SESSION" click '[data-preset="soft"]'
+agent-browser --session "$SESSION" click "#soundQuickButton"
+
+agent-browser --session "$SESSION" click "#timerButton"
+agent-browser --session "$SESSION" click '[data-timer="15"]'
+TIMER_SETTING="$(agent-browser --session "$SESSION" eval 'window.undertoneDebug.state.timer' | tail -1 | tr -d '"\r')"
+if [[ "$TIMER_SETTING" != "15" ]]; then echo "Timer picker did not update timer"; exit 1; fi
+agent-browser --session "$SESSION" click "#timerButton"
+
+agent-browser --session "$SESSION" click "#routeQuick"
+agent-browser --session "$SESSION" click '[data-route="speakers"]'
+ROUTE="$(agent-browser --session "$SESSION" eval 'window.undertoneDebug.state.route' | tail -1 | tr -d '"\r')"
+if [[ "$ROUTE" != "speakers" ]]; then echo "Output picker did not switch route"; exit 1; fi
+agent-browser --session "$SESSION" click '[data-route="headphones"]'
+agent-browser --session "$SESSION" click "#routeQuick"
 
 agent-browser --session "$SESSION" click "#dockControls"
 agent-browser --session "$SESSION" wait 500
@@ -82,7 +102,7 @@ agent-browser --session "$SESSION" click "#closePanel"
 agent-browser --session "$SESSION" wait 400
 
 echo "==> Timer + breathing interaction regression"
-agent-browser --session "$SESSION" eval 'window.undertoneDebug.change({musicSource:"generated",breathing:true,timer:0}); true' >/dev/null
+agent-browser --session "$SESSION" eval 'window.undertoneDebug.change({musicSource:"generated",route:"headphones",preset:"soft",breathing:true,timer:0}); true' >/dev/null
 agent-browser --session "$SESSION" click "#playButton"
 agent-browser --session "$SESSION" wait 900
 

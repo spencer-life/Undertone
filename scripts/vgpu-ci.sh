@@ -130,10 +130,14 @@ capture_ui_state() {
   cp "$path" "$OUT/$name.png"
 }
 
-echo "==> Capture direct visual controls and compact Tune states"
+echo "==> Capture primary control surface states"
+capture_ui_state "sound-picker" 'document.querySelector("#soundQuickButton").click()'
+capture_ui_state "music-picker" 'document.querySelector("#musicQuickButton").click()'
 capture_ui_state "scene-picker" 'document.querySelector("#sceneQuickButton").click()'
 capture_ui_state "color-picker" 'document.querySelector("#colorQuickButton").click()'
-capture_ui_state "tune-sound" 'if(!document.querySelector("#colorPicker").hidden)document.querySelector("#colorQuickButton").click();document.querySelector("#dockControls").click()'
+capture_ui_state "timer-picker" 'document.querySelector("#timerButton").click()'
+capture_ui_state "route-picker" 'document.querySelector("#routeQuick").click()'
+capture_ui_state "tune" 'document.querySelector("#dockControls").click()'
 capture_ui_state "tune-about" 'document.querySelector("#tab-about").click()'
 
 echo "vgpu CI passed: shader validation, doctor, deterministic pixels, browser WebGPU path, and control-state captures."
