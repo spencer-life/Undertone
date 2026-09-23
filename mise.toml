@@ -26,3 +26,12 @@ set -eu
 pnpm install --frozen-lockfile
 bash scripts/vgpu-ci.sh
 '''
+
+
+[tasks."e2e:ci"]
+description = "Run browser interaction and WCAG 2.2 AA accessibility regression checks"
+run = '''
+set -eu
+pnpm install --frozen-lockfile
+bash scripts/e2e-ci.sh
+'''

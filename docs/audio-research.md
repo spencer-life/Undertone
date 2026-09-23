@@ -82,3 +82,36 @@ under music, and headphone studies do not establish benefits for speaker pulses.
 The UI now states this limitation beside the sound controls. Presets remain
 adjustable; users may disable beats entirely. Music rotation changes tracks,
 not the user's selected beat frequency.
+
+
+## Preset calibration (2026-09-23)
+
+The listening presets remain research-informed starting points rather than claims
+of an optimal brain state. The current defaults intentionally keep the beat
+layer quiet and let the user disable it.
+
+- **Focus:** 40 Hz beat, 340 Hz carrier, 14% beat level, white noise at 8%.
+  The frequency/carrier pair matches a 2025 attention experiment more closely
+  than the previous pink-noise version. Undertone does not reproduce that
+  study's calibrated dB SPL, so the internal percentages must not be described
+  as equivalent sound-pressure levels.
+- **Relaxed focus:** 10 Hz beat, 250 Hz carrier, 14% beat level, brown noise at
+  10%. The 10 Hz choice remains exploratory; the 250 Hz carrier is better
+  represented in the binaural-beat literature than the previous 220 Hz value.
+- **Relax:** 6 Hz beat, 250 Hz carrier, 12% beat level, pink noise at 8%.
+  This follows the theta/pink-noise literature more closely than the previous
+  180 Hz carrier while keeping the beat subtle.
+- **Ambient:** beat layer off. Ambient mode is intentionally not framed as an
+  entrainment protocol.
+
+Additional references:
+- 40 Hz / 340 Hz attention study:
+  https://www.nature.com/articles/s41598-025-88517-z
+- 6 Hz binaural/pink-noise study:
+  https://pubmed.ncbi.nlm.nih.gov/41920802/
+- White/pink noise attention meta-analysis:
+  https://pubmed.ncbi.nlm.nih.gov/38428577/
+
+Brown noise remains a tonal preference, not an evidence-backed attention
+prescription. Frequency labels such as alpha/theta/gamma describe rate bands;
+they do not guarantee the corresponding subjective or EEG state.

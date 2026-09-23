@@ -1,0 +1,40 @@
+# Adapted from spencer-life/github-workflows/.github/workflows/web-e2e.yml
+# Source revision: 742d149b1e75ef50184861f984fcfe82dfe9d833
+# The shared catalog is private while Undertone is public, so this caller keeps
+# the shared workflow shape local and delegates repo-specific work to mise.
+name: Web E2E + A11y
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: web-e2e-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          cache: true
+      - run: mise run e2e:ci
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: web-e2e-a11y
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: warn
+          compression-level: 0
+          retention-days: 14
