@@ -125,3 +125,46 @@ body.transport-tucked .transport-peek{display:inline-flex!important}
 .panel-scroll .label-desc{font-size:10px;line-height:1.35}
 
 .cinema .stage-bottom{display:none!important}
+
+/* Main control surface */
+.stage-top-actions{display:flex;align-items:center;gap:6px}
+.fullscreen-quick{min-height:42px;width:42px;padding:0}
+.sound-quick,.music-quick{min-width:0}
+.sound-quick .dock-meter{width:22px;height:28px;flex:0 0 auto}
+.music-quick .dock-music-preview{width:38px;height:34px;display:grid;place-items:center;border-radius:6px;background:#0c0d0f;color:var(--accent);flex:0 0 auto}
+.music-quick .dock-music-preview .icon{width:18px;height:18px}
+.dock-pick-copy>span{font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:112px}
+.cinema .stage-dock{max-width:1180px;grid-template-columns:minmax(150px,1fr) minmax(145px,1fr) auto minmax(280px,auto) minmax(220px,1fr);gap:9px}
+.compact-picker{width:min(560px,calc(100% - 32px))}
+.mode-picker-options{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.mode-picker-options button{min-height:52px;display:flex;flex-direction:column;gap:2px;padding:7px 6px}
+.mode-picker-options button span{font-size:9px;color:var(--muted);font-weight:450}
+.picker-inline-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin-top:9px}
+.picker-switch{min-height:42px}
+.frequency-picker-options{display:flex;align-items:center;gap:4px}
+.frequency-picker-options button{min-height:38px;min-width:40px;padding:5px}
+.frequency-picker-options>span{font-size:10px;color:var(--muted)}
+.picker-frequency-live{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+.picker-frequency-live .value{display:flex;align-items:baseline;gap:4px}
+.picker-frequency-live .value #hzValue{font-size:24px}
+.picker-frequency-live .channels{text-align:right;font-size:10px;color:var(--muted)}
+.music-picker-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.music-picker-grid label,.generated-picker{font-size:10px;color:var(--muted)}
+.music-picker-grid select,.generated-picker select{margin-top:4px;width:100%}
+.music-picker-actions{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-top:8px}
+.generated-picker{display:block;margin-top:8px}
+.picker-status{margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+.picker-status p{margin-top:3px}
+.quick-timer-options{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.quick-timer-options button{min-height:44px}
+.quick-route-options{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.quick-route-options button{min-height:54px;padding:8px;flex-direction:column;align-items:flex-start}
+.quick-route-options button span{font-size:9px;color:var(--muted)}
+.tune-group{border-top:1px solid var(--line)}
+.tune-group:first-child{border-top:0}
+.tune-group>summary{min-height:46px;display:flex;align-items:center;font-size:13px;font-weight:600}
+.tune-group-body{padding:0 0 10px}
+.nested-details{margin-top:8px}
+.panel{width:410px}
+.panel-tabs{grid-template-columns:repeat(3,1fr)}
+body.transport-tucked .stage-dock{transform:translateY(32px)}

@@ -119,3 +119,27 @@ body.cinema{overflow:hidden}
  .frequencies{gap:3px}
  .frequencies button{font-size:10px}
 }
+
+@media(max-width:1100px){
+ .cinema .stage-dock{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}
+ .cinema .stage-dock .dock-visual-picks{grid-column:1/3}
+ .cinema .stage-dock .transport-end{grid-column:1/-1}
+}
+@media(max-width:640px){
+ .cinema .stage-dock{grid-template-columns:1fr 1fr;gap:6px 7px;padding:9px 10px 10px}
+ .cinema .stage-dock .sound-quick,.cinema .stage-dock .music-quick{width:100%;min-width:0;min-height:44px;padding:4px 7px}
+ .cinema .stage-dock .playback{grid-column:1/-1;justify-self:center}
+ .cinema .stage-dock .dock-visual-picks{grid-column:1/-1}
+ .cinema .stage-dock .transport-end{grid-column:1/-1}
+ .dock-pick-copy>span{max-width:88px}
+ .compact-picker,.dock-picker{bottom:calc(max(10px,env(safe-area-inset-bottom)) + 204px);width:calc(100% - 20px)}
+ .mode-picker-options{grid-template-columns:1fr 1fr}
+ .picker-inline-row{grid-template-columns:1fr}
+ .frequency-picker-options{justify-content:space-between}
+ .music-picker-grid{grid-template-columns:1fr}
+ .quick-timer-options{grid-template-columns:1fr 1fr 1fr}
+ .panel{width:100%}
+ .panel-tabs{padding:0 12px 5px}
+ .panel-scroll{padding:10px 14px 16px}
+ .tune-group>summary{min-height:43px}
+}
