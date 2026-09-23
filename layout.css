@@ -36,3 +36,33 @@ body.cinema{overflow:hidden}
  .cinema .stage-dock{left:10px;right:10px;bottom:max(12px,env(safe-area-inset-bottom));max-width:none}
  .cinema .stage-center{top:42%}
 }
+
+.mobile-tune{display:none}
+@media(max-width:640px){
+ body.cinema{overflow:hidden}
+ .cinema .stage{height:100svh;min-height:100svh}
+ .cinema .stage-top{left:14px;right:14px;top:14px}
+ .cinema .stage-top #newScene{min-height:40px;padding:7px 10px;font-size:11px;gap:7px}
+ .cinema .stage-top #newScene .icon{width:17px;height:17px}
+ .cinema .stage-center{top:39%;padding:0 22px}
+ .cinema .stage-center .state-line{font-size:10px;letter-spacing:.11em}
+ .cinema .stage-center .large-number{font-size:58px}
+ .cinema .stage-center .freq-note{font-size:11px}
+ .cinema .stage-center .stage-start{min-height:44px;margin-top:16px}
+ .cinema .stage-bottom{display:none}
+ .cinema .stage-dock{left:10px;right:10px;bottom:max(10px,env(safe-area-inset-bottom));max-width:none;min-height:0;padding:10px 12px 12px;grid-template-columns:minmax(0,1fr) auto;gap:8px 10px;border-radius:15px}
+ .cinema .stage-dock .now{gap:9px;min-width:0}
+ .cinema .stage-dock .now-title{font-size:12px}
+ .cinema .stage-dock .now-sub{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .cinema .stage-dock .meter{width:19px;height:24px}
+ .cinema .stage-dock .playback{justify-self:end;gap:4px}
+ .cinema .stage-dock .timer-button{min-width:68px;min-height:42px;padding:7px 4px;font-size:10px}
+ .cinema .stage-dock .play-main{width:48px;height:48px}
+ .cinema .stage-dock .transport-end{grid-column:1/-1;display:grid;grid-template-columns:auto minmax(84px,1fr) auto;align-items:center;gap:8px;border-top:1px solid #ffffff0a;margin-top:0;padding-top:7px}
+ .cinema .stage-dock .route-quick{min-height:42px;padding:6px 4px;font-size:10px}
+ .cinema .stage-dock .volume-control{width:100%;max-width:none;gap:5px}
+ .cinema .stage-dock .volume-control .icon-only{width:36px;min-height:42px}
+ .cinema .stage-dock .mobile-tune{display:inline-flex;min-height:42px;padding:6px 9px;font-size:10px;gap:6px}
+ .cinema .stage-dock .mobile-tune .icon{width:17px;height:17px}
+ .cinema .dock-progress{left:12px;right:12px;bottom:5px}
+}
