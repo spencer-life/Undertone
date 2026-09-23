@@ -39,7 +39,7 @@ class UndertoneOrbitBridge {
    if(submitted===false)throw new Error('WebGPU frame was not submitted');
    const firstReveal=this.layer.style.display==='none';
    this.layer.style.display='block';
-   if(firstReveal){const layer=this.layer;layer.style.opacity='0';requestAnimationFrame(()=>{if(this.layer===layer)layer.style.opacity='1';});}
+   if(firstReveal){const layer=this.layer,nextFrame=globalThis.requestAnimationFrame||((fn)=>fn());layer.style.opacity='0';nextFrame(()=>{if(this.layer===layer)layer.style.opacity='1';});}
    if(this.base.dataset)this.base.dataset.renderer='webgpu';
    return true;
   }catch(error){this.release();this.failed=true;this.status('unavailable',error);this.invalidate();return false;}
