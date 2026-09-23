@@ -179,5 +179,5 @@
  registerTools();window.addEventListener('pagehide',()=>removeTools());window.addEventListener('pageshow',event=>{if(event.persisted)registerTools();});
  // Local QA diagnostics. Settings and history remain on this device; there is no remote transport.
  Object.defineProperty(window,'undertoneDebug',{value:{get state(){return{...state};},get audio(){return audio;},get tracks(){return trackPlayer;},get playing(){return playing;},get savedCount(){return saved.length;},get history(){return history.map(x=>({...x}));},get cinema(){return cinema;}},writable:false});
- setCinema(true,{silent:true});sync();renderSaved();renderHistory();updateConnection();initPWA();if(!('wakeLock'in navigator))$('wakeDescription').textContent='Not supported by this browser; device sleep settings take priority.';if(shared)setTimeout(()=>toast('Shared mix loaded. Check volume and choose speakers or headphones before playing.'),450);
+ setCinema(true,{silent:true});sync();renderSaved();renderHistory();updateConnection();initPWA();requestAnimationFrame(()=>requestAnimationFrame(()=>document.body.classList.remove('app-booting')));if(!('wakeLock'in navigator))$('wakeDescription').textContent='Not supported by this browser; device sleep settings take priority.';if(shared)setTimeout(()=>toast('Shared mix loaded. Check volume and choose speakers or headphones before playing.'),450);
 })();
