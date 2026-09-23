@@ -18,5 +18,5 @@ test('activation removes only obsolete Undertone caches',async()=>{
 });
 test('offline shell stays versioned; missing modules do not receive HTML',async()=>{
  const sw=serviceWorker();let response;sw.handlers.fetch({request:{method:'GET',mode:'navigate',url:'https://undertone.test/'},respondWith:p=>response=p});assert.equal(await response,'network');assert.equal(sw.network[0].url,'https://undertone.test/');
- const req={method:'GET',mode:'same-origin',url:'https://undertone.test/missing.js'};sw.handlers.fetch({request:req,respondWith:p=>response=p});assert.equal(await response,'network');assert.equal(sw.network[0],req);
+ const req={method:'GET',mode:'same-origin',url:'https://undertone.test/missing.js'};sw.handlers.fetch({request:req,respondWith:p=>response=p});assert.equal(await response,'network');assert.equal(sw.network.at(-1),req);
 });
