@@ -119,7 +119,7 @@ awk -v v="$STDDEV" 'BEGIN { exit !(v > 0.02) }'
 capture_ui_state() {
   local name="$1" script="$2"
   agent-browser --session "$SESSION" --webgpu --headed eval "$script" >/dev/null
-  agent-browser --session "$SESSION" --webgpu --headed wait 350
+  agent-browser --session "$SESSION" --webgpu --headed wait 800
   local output path
   output="$(agent-browser --session "$SESSION" --webgpu --headed screenshot)"
   path="$(printf '%s\n' "$output" | sed -n 's/.*Screenshot saved to \(.*\.png\)$/\1/p' | tail -1)"
