@@ -116,4 +116,24 @@ printf '%s\n' "$STDDEV" | tee "$OUT/screenshot-standard-deviation.txt"
 # normalized 0..1 scale. Reject essentially uniform/black captures.
 awk -v v="$STDDEV" 'BEGIN { exit !(v > 0.02) }'
 
-echo "vgpu CI passed: shader validation, doctor, deterministic pixels, and browser WebGPU path."
+capture_ui_state() {
+  local name="$1" script="$2"
+  agent-browser --session "$SESSION" --webgpu --headed eval "$script" >/dev/null
+  agent-browser --session "$SESSION" --webgpu --headed wait 350
+  local output path
+  output="$(agent-browser --session "$SESSION" --webgpu --headed screenshot)"
+  path="$(printf '%s\n' "$output" | sed -n 's/.*Screenshot saved to \(.*\.png\)$/\1/p' | tail -1)"
+  if [[ -z "$path" || ! -f "$path" ]]; then
+    echo "Could not capture UI state: $name"
+    exit 1
+  fi
+  cp "$path" "$OUT/$name.png"
+}
+
+echo "==> Capture direct visual controls and compact Tune states"
+capture_ui_state "scene-picker" 'document.querySelector("#sceneQuickButton").click()'
+capture_ui_state "color-picker" 'document.querySelector("#colorQuickButton").click()'
+capture_ui_state "tune-sound" 'if(!document.querySelector("#colorPicker").hidden)document.querySelector("#colorQuickButton").click();document.querySelector("#dockControls").click()'
+capture_ui_state "tune-about" 'document.querySelector("#tab-about").click()'
+
+echo "vgpu CI passed: shader validation, doctor, deterministic pixels, browser WebGPU path, and control-state captures."

@@ -123,3 +123,5 @@ body.transport-tucked .transport-peek{display:inline-flex!important}
 .frequencies{margin-top:3px}
 .frequencies button{min-height:40px;padding:5px 4px}
 .panel-scroll .label-desc{font-size:10px;line-height:1.35}
+
+.cinema .stage-bottom{display:none!important}
