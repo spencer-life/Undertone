@@ -143,3 +143,38 @@ body.cinema{overflow:hidden}
  .panel-scroll{padding:10px 14px 16px}
  .tune-group>summary{min-height:43px}
 }
+/* Calm state tint stays in the Graphite chrome across every scene palette. */
+:root{--state-tint:#d8b9c6}
+.stage-dock button[aria-expanded=true]{
+ background:color-mix(in srgb,var(--raised) 88%,var(--state-tint) 12%);
+ border-color:color-mix(in srgb,var(--state-tint) 34%,transparent);
+ box-shadow:inset 0 -2px color-mix(in srgb,var(--state-tint) 52%,transparent),0 0 0 1px color-mix(in srgb,var(--state-tint) 10%,transparent)
+}
+.dock-pick[aria-expanded=true]{border-color:color-mix(in srgb,var(--state-tint) 34%,transparent)}
+button[aria-pressed=true].choice,
+.route-options button[aria-pressed=true],
+.quick-scene[aria-pressed=true],
+.quick-theme[aria-pressed=true],
+.theme[aria-pressed=true],
+.scene-option[aria-pressed=true]{
+ color:var(--text);
+ background:color-mix(in srgb,var(--raised) 92%,var(--state-tint) 8%);
+ border-color:color-mix(in srgb,var(--state-tint) 34%,transparent);
+ box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--state-tint) 38%,transparent)
+}
+.panel-tabs button[aria-selected=true]{
+ color:var(--text);
+ background:color-mix(in srgb,var(--state-tint) 7%,transparent);
+ box-shadow:inset 0 -2px color-mix(in srgb,var(--state-tint) 52%,transparent)
+}
+.tune-group[open]>summary{color:color-mix(in srgb,var(--text) 88%,var(--state-tint))}
+.dock-picker:not([hidden]){
+ border-color:color-mix(in srgb,var(--line) 78%,var(--state-tint) 22%);
+ transform-origin:50% 100%;
+ animation:dock-picker-unfold .24s cubic-bezier(.22,1,.36,1) both
+}
+@keyframes dock-picker-unfold{
+ from{opacity:0;transform:translateX(-50%) translateY(7px) scaleY(.96)}
+ to{opacity:1;transform:translateX(-50%) translateY(0) scaleY(1)}
+}
+@media(prefers-reduced-motion:reduce){.dock-picker:not([hidden]){animation:none}}
