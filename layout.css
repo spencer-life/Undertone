@@ -178,3 +178,25 @@ button[aria-pressed=true].choice,
  to{opacity:1;transform:translateX(-50%) translateY(0) scaleY(1)}
 }
 @media(prefers-reduced-motion:reduce){.dock-picker:not([hidden]){animation:none}}
+@media(min-width:1200px){
+ .cinema .stage-dock{max-width:1120px;gap:12px;padding-left:20px;padding-right:20px}
+ .cinema .stage-dock .dock-visual-picks{gap:10px}
+ .cinema .stage-dock .transport-end{gap:14px}
+ .cinema .stage-dock .route-quick{padding-inline:10px}
+ .cinema .stage-dock .volume-control{width:132px;gap:8px}
+ .cinema .stage-dock .dock-controls{padding-inline:10px}
+ .dock-picker{padding:16px 18px}
+ .dock-picker-head{margin-bottom:14px}
+ .mode-picker-options{gap:8px}
+ .picker-inline-row{gap:14px;margin-top:12px}
+ .frequency-picker-options{gap:6px}
+ .frequency-picker-options>span{margin-left:2px}
+ .picker-frequency-live{margin-top:10px;padding-top:10px}
+ .music-picker-grid{gap:10px}
+ .music-picker-actions{gap:12px;margin-top:12px}
+ .picker-status{margin-top:10px;padding-top:10px}
+ .scene-picker-options,.color-picker-options{gap:9px}
+ .quick-scene,.quick-theme{padding:7px 8px;gap:9px}
+ .quick-timer-options{gap:8px}
+ .quick-route-options{gap:9px}
+}
