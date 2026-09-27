@@ -209,3 +209,109 @@ button[aria-pressed=true].choice,
  .quick-timer-options{gap:8px}
  .quick-route-options{gap:9px}
 }
+@media(max-width:430px){
+ /* iPhone dock: keep the four selectors compact, then use a real transport row. */
+ .cinema .stage-dock{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:6px;
+  padding:8px 9px 10px;
+  border-radius:14px
+ }
+ .cinema .stage-dock .sound-quick{grid-column:1/3;grid-row:1}
+ .cinema .stage-dock .music-quick{grid-column:3/5;grid-row:1}
+ .cinema .stage-dock .sound-quick,
+ .cinema .stage-dock .music-quick{
+  min-height:48px;
+  padding:4px 6px 4px 5px
+ }
+ .cinema .stage-dock .sound-quick .dock-meter{width:18px;height:24px}
+ .cinema .stage-dock .music-quick .dock-music-preview{width:34px;height:32px}
+ .cinema .stage-dock .dock-pick-copy small{display:none}
+ .cinema .stage-dock .dock-pick-copy strong{font-size:11px;max-width:112px}
+ .cinema .stage-dock .dock-pick-copy>span{font-size:9px;max-width:112px}
+ .cinema .stage-dock .dock-visual-picks{
+  grid-column:1/5;
+  grid-row:2;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px
+ }
+ .cinema .stage-dock .dock-visual-picks .dock-pick{
+  min-height:44px;
+  padding:3px 6px 3px 5px
+ }
+ .cinema .stage-dock .dock-scene-preview{width:40px;height:28px}
+ .cinema .stage-dock .dock-color-preview{width:32px;height:28px}
+ .cinema .stage-dock .playback,
+ .cinema .stage-dock .transport-end{display:contents}
+ .cinema .stage-dock .timer-button{
+  grid-column:1;
+  grid-row:3;
+  width:100%;
+  min-width:0;
+  min-height:44px;
+  padding:5px 6px;
+  border:1px solid #ffffff0d;
+  border-radius:9px;
+  background:color-mix(in srgb,var(--surface) 84%,transparent);
+  font-size:10px
+ }
+ .cinema .stage-dock .play-main{
+  grid-column:2;
+  grid-row:3;
+  align-self:center;
+  justify-self:center;
+  width:44px;
+  height:44px
+ }
+ .cinema .stage-dock .route-quick{
+  grid-column:3;
+  grid-row:3;
+  justify-self:stretch;
+  width:100%;
+  min-width:0;
+  min-height:44px;
+  padding:5px;
+  border:1px solid #ffffff0d;
+  border-radius:9px;
+  background:color-mix(in srgb,var(--surface) 84%,transparent)
+ }
+ .cinema .stage-dock .route-quick .button-text{display:none}
+ .cinema .stage-dock .route-quick svg{width:18px;height:18px}
+ .cinema .stage-dock .dock-controls{
+  grid-column:4;
+  grid-row:3;
+  justify-self:stretch;
+  width:100%;
+  min-width:0;
+  min-height:44px;
+  padding:5px 6px;
+  gap:5px;
+  border:1px solid #ffffff0d;
+  border-radius:9px;
+  background:color-mix(in srgb,var(--surface) 84%,transparent);
+  font-size:10px
+ }
+ .cinema .stage-dock .volume-control{
+  grid-column:1/5;
+  grid-row:4;
+  width:100%;
+  max-width:none;
+  min-width:0;
+  min-height:36px;
+  display:grid;
+  grid-template-columns:32px minmax(0,1fr);
+  gap:8px;
+  align-items:center;
+  border-top:1px solid #ffffff09;
+  padding-top:4px
+ }
+ .cinema .stage-dock .volume-control .icon-only{
+  width:32px;
+  min-height:36px
+ }
+ .cinema .dock-progress{left:10px;right:10px;bottom:4px}
+ .compact-picker,.dock-picker{
+  bottom:calc(max(10px,env(safe-area-inset-bottom)) + 202px)
+ }
+}
