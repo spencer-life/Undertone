@@ -4,6 +4,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+pnpm install --frozen-lockfile >/dev/null
+pnpm build:orbit >/dev/null
+
 OUT=".visual-review"
 PORT="${VISUAL_REVIEW_PORT:-4178}"
 BASE="${TARGET_URL:-}"
@@ -139,6 +142,7 @@ const scenes=[
   ['tides','Living Contours'],
   ['dunes','Silk Drift'],
   ['orbit','Energy Orbit'],
+  ['horizon','Event Horizon'],
   ['rain','Wet Glass'],
 ];
 const captures=[];
