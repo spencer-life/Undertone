@@ -1,4 +1,4 @@
-# Specialized GPU validation; follows the shared catalog's permissions/trigger policy.
+# Specialized GPU validation following the shared catalog's trigger/security policy.
 name: vgpu Render CI
 on:
   pull_request:
@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: ./.github/actions/setup-runtime
+      - uses: $/.github/actions/setup-runtime
         with:
           gpu: 'true'
       - run: mise run vgpu:ci
