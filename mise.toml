@@ -9,14 +9,18 @@ run = '''
 set -eu
 pnpm install --frozen-lockfile
 pnpm check
-pnpm test
 pnpm build
+pnpm test
 '''
 
 
 [tasks."visual:ci"]
 description = "Capture deterministic Playwright screenshots for rendered QA"
-run = "bash scripts/visual-review.sh"
+run = '''
+set -eu
+pnpm install --frozen-lockfile
+bash scripts/visual-review.sh
+'''
 
 
 [tasks."vgpu:ci"]
