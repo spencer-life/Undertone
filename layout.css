@@ -564,3 +564,60 @@ button[aria-pressed=true].choice,
  .cinema .stage-dock .dock-controls{background:rgba(255,255,255,.018)}
  .cinema .stage-dock .volume-control{gap:10px}
 }
+
+
+/* Match the approved dock mock more literally: larger modules, airier rhythm, darker glass. */
+@media(min-width:1101px){
+ .cinema .stage-dock{
+  width:min(92vw,1460px);
+  left:50%;right:auto;
+  transform:translateX(-50%);
+  max-width:none;
+  min-height:112px;
+  grid-template-columns:minmax(230px,1.15fr) minmax(235px,1.15fr) minmax(205px,.9fr) minmax(320px,1.3fr) minmax(340px,1.3fr);
+  column-gap:24px;
+  padding:16px 24px;
+  border-radius:38px;
+  background:linear-gradient(180deg,rgba(20,21,24,.975),rgba(10,11,14,.98));
+  border-color:#ffffff20;
+  box-shadow:inset 0 1px 0 #ffffff10,0 16px 44px #0008
+ }
+ .cinema .stage-dock .sound-quick,
+ .cinema .stage-dock .music-quick,
+ .cinema .stage-dock .dock-visual-picks .dock-pick{
+  min-height:72px;
+  border-radius:20px;
+  padding:9px 13px;
+  background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.018))
+ }
+ .cinema .stage-dock .sound-quick,
+ .cinema .stage-dock .music-quick{gap:12px}
+ .cinema .stage-dock .dock-meter{width:28px;height:34px}
+ .cinema .stage-dock .dock-music-preview{width:42px;height:42px}
+ .cinema .stage-dock .dock-pick-copy small{font-size:11px}
+ .cinema .stage-dock .dock-pick-copy strong{font-size:14px;line-height:1.12;max-width:150px}
+ .cinema .stage-dock .dock-pick-copy>span{font-size:11px;margin-top:3px;max-width:150px}
+ .cinema .stage-dock .playback{gap:15px}
+ .cinema .stage-dock .timer-button{min-width:92px;font-size:12px}
+ .cinema .stage-dock .play-main{width:68px;height:68px}
+ .cinema .stage-dock .play-main svg{width:25px;height:25px}
+ .cinema .stage-dock .dock-visual-picks{gap:14px}
+ .cinema .stage-dock .dock-scene-preview{width:50px;height:36px}
+ .cinema .stage-dock .dock-color-preview{width:42px;height:36px}
+ .cinema .stage-dock .transport-end{gap:18px}
+ .cinema .stage-dock .route-quick{font-size:12px}
+ .cinema .stage-dock .volume-control{width:142px}
+ .cinema .stage-dock .dock-controls{font-size:12px;min-width:78px}
+ .cinema .stage-dock .sound-quick::after,
+ .cinema .stage-dock .music-quick::after,
+ .cinema .stage-dock .dock-visual-picks .dock-pick::after{
+  content:"";
+  width:7px;height:7px;
+  border-right:1.5px solid #d9d6dc;
+  border-bottom:1.5px solid #d9d6dc;
+  transform:rotate(45deg) translateY(-2px);
+  opacity:.8;
+  margin-left:auto;
+  flex:0 0 auto
+ }
+}
