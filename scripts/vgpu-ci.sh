@@ -18,12 +18,9 @@ pnpm check:orbit >"$OUT/check-orbit.txt" 2>&1
 pnpm render:orbit >"$OUT/render-orbit.txt" 2>&1
 pnpm build:orbit >"$OUT/build-orbit.txt" 2>&1
 cp artifacts/orbit-t0.ppm artifacts/orbit-t25.ppm "$OUT/"
-# A small, public-source review snapshot enables exact offline inspection. No
-# credentials, .git, package caches, or 105 MB music library enter this artifact.
 tar -czf "$OUT/review-runtime.tgz" index.html styles.css layout.css app.js visuals.js \
   orbit-bridge.js black-hole-bridge.js audio.js audio-worklet.js music-library.js \
   tracks.js webmcp.js sw.js manifest.webmanifest icons vendor gpu scripts tests package.json
-pnpm exec vgpu docs cat /guides/no-bundler.docs.md >"$OUT/package-docs.txt"
 
 npm install --global agent-browser@0.33.0 >/dev/null
 sudo apt-get update -qq
@@ -50,12 +47,11 @@ NODE
 ab(){ agent-browser --session "$SESSION" --webgpu --headed "$@"; }
 ab open "$URL"
 ab set viewport 1440 900 >/dev/null
-
 wait_scene(){
   local status=''
   for attempt in $(seq 1 60); do
     status="$(ab eval '(()=>{const b=document.querySelector("#visual"),s=window.undertoneDebug.state.scene;const status=s==="horizon"?b.dataset.blackHoleStatus:b.dataset.orbitStatus;if(status==="unavailable")throw Error(b.dataset.blackHoleError||b.dataset.orbitError);return status==="ready"&&b.dataset.renderer==="webgpu"?"ready":status;})()' | tail -1 | tr -d '"\r')"
-    if [[ "$status" == ready ]]; then return; fi
+    if [[ "$status" == ready ]]; then ab wait 1200 >/dev/null; return; fi
     ab wait 1000 >/dev/null
   done
   ab eval 'document.querySelector("#visual").dataset' | tee "$OUT/readiness-failure.txt"
@@ -69,7 +65,7 @@ capture(){
   [[ -n "$path" && -f "$path" ]] || { echo "Missing capture: $name" >&2; return 1; }
   cp "$path" "$OUT/$name.png"
 }
-state_capture(){ ab eval "$2" >/dev/null; ab wait 500 >/dev/null; capture "$1"; }
+state_capture(){ ab eval "$2" >/dev/null; ab wait 600 >/dev/null; capture "$1"; }
 wait_scene
 capture orbit-webgpu
 ab wait 3000 >/dev/null
@@ -85,23 +81,28 @@ wait_scene
 capture event-horizon
 ab wait 3000 >/dev/null
 capture event-horizon-later
-# Freeze must stop GPU submissions, not merely stop a uniform while a second RAF runs.
-ab eval 'window.undertoneDebug.change({motion:0}); true' >/dev/null
-ab wait 700 >/dev/null
-ab eval 'window.__horizonFrame=document.querySelector("[data-scene-renderer=horizon]").dataset.frameCount; true' >/dev/null
-ab wait 700 >/dev/null
-ab eval 'if(document.querySelector("[data-scene-renderer=horizon]").dataset.frameCount!==window.__horizonFrame)throw Error("Still mode kept submitting GPU work"); true' >/dev/null
+# Keep one continuous JS context for the observation, with local state rather
+# than a global shared between separate automation evaluations.
+ab eval '(async()=>{const wait=ms=>new Promise(r=>setTimeout(r,ms));window.undertoneDebug.change({motion:0});await wait(1500);if(window.undertoneDebug.state.motion!==0)throw Error("Motion state did not stop");const layer=document.querySelector("[data-scene-renderer=horizon]");const first={frames:layer.dataset.frameCount,time:layer.dataset.animationTime};await wait(1500);const last={frames:layer.dataset.frameCount,time:layer.dataset.animationTime};if(first.frames!==last.frames||first.time!==last.time)throw Error("Still-mode changed: "+JSON.stringify({first,last,state:window.undertoneDebug.state}));return {first,last,pass:true};})()' | tee "$OUT/still-state.json"
 state_capture event-horizon-violet 'window.undertoneDebug.change({theme:"violet"}); true'
 for spec in 'mobile:390:844' 'ipad:834:1194'; do
   IFS=: read -r name width height <<<"$spec"
   ab set viewport "$width" "$height" >/dev/null
-  ab wait 700 >/dev/null
+  ab wait 1200 >/dev/null
   capture "event-horizon-$name"
 done
 ab set viewport 1440 900 >/dev/null
 ab eval 'window.undertoneDebug.change({scene:"orbit",theme:"mono",motion:60}); true' >/dev/null
 wait_scene
 ab eval 'if(document.querySelector("[data-scene-renderer=horizon]"))throw Error("Event horizon canvas leaked after leaving"); true' >/dev/null
-state_capture tune 'document.querySelector("#dockControls").click()'
+state_capture orbit-violet 'window.undertoneDebug.change({theme:"violet",motion:0}); true'
+for spec in 'mobile:390:844' 'ipad:834:1194'; do
+  IFS=: read -r name width height <<<"$spec"
+  ab set viewport "$width" "$height" >/dev/null
+  ab wait 1200 >/dev/null
+  capture "orbit-$name"
+done
+ab set viewport 1440 900 >/dev/null
+state_capture tune 'window.undertoneDebug.change({theme:"mono",motion:60});document.querySelector("#dockControls").click()'
 state_capture tune-about 'document.querySelector("#tab-about").click()'
 echo 'GPU checks passed: compiled shaders, real pixels, scene startup, still mode, resize and teardown.'

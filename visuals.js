@@ -89,8 +89,10 @@ class UndertoneVisuals {
  }
  frame(ms){
   requestAnimationFrame(this.frame);const s=this.settings(),dt=this.last?Math.min((ms-this.last)/1000,.1):0;this.last=ms;
-  this.orbitGPU?.prepare(s.scene);this.blackHoleGPU?.prepare(s.scene);
+  if(s.scene!=='orbit')this.orbitGPU?.prepare(s.scene);
+  if(s.scene!=='horizon')this.blackHoleGPU?.prepare(s.scene);
   if(document.hidden||s.blackout)return;
+  this.orbitGPU?.prepare(s.scene);this.blackHoleGPU?.prepare(s.scene);
   const still=s.motion===0||this.reduced.matches;
   let audio=this.audioState;
   if(still){
@@ -107,7 +109,7 @@ class UndertoneVisuals {
  render(s){
   const g=this.g,w=this.width,h=this.height;if(!g||!w||!h)return;
   const sceneTheme=UT_THEMES[s.theme]||UT_THEMES.mono;
-  if(s.scene==='horizon'&&this.transition>=1&&this.blackHoleGPU?.draw({motion:s.motion,brightness:s.brightness,energy:this.energy,reducedMotion:this.reduced.matches,eco:s.eco,palette:sceneTheme.orbitAccents||sceneTheme.art}))return;
+  if(s.scene==='horizon'&&this.transition>=1&&this.blackHoleGPU?.draw({width:w,height:h,time:this.time,seed:this.seed,motion:s.motion,brightness:s.brightness,energy:this.energy,reducedMotion:this.reduced.matches,eco:s.eco,palette:sceneTheme.orbitAccents||sceneTheme.art}))return;
   this.blackHoleGPU?.hide();
   if(s.scene==='orbit'&&this.transition>=1&&this.orbitGPU?.draw({width:w,height:h,dpr:Math.min(window.devicePixelRatio||1,1.5),time:this.time,seed:this.seed,theme:s.theme,brightness:s.brightness,eco:s.eco,energy:this.energy}))return;
   this.orbitGPU?.hide();
@@ -333,9 +335,9 @@ class UndertoneVisuals {
   for(let j=0;j<4;j++){
    g.save();g.rotate(.25+j*.31+Math.sin(t*.12+j)*.16);
    for(let k=0;k<80;k++){
-    const q=k/80*Math.PI*2,head=t*(.32+j*.04)+j*1.8;
-    const light=Math.pow(Math.max(0,Math.cos(q-head)),14);
-    g.beginPath();g.ellipse(0,0,r*(1.13+j*.025),r*(.39+j*.12),0,q,q+Math.PI*2/80+.003);
+    const angle=k/80*Math.PI*2,head=t*(.32+j*.04)+j*1.8;
+    const light=Math.pow(Math.max(0,Math.cos(angle-head)),14);
+    g.beginPath();g.ellipse(0,0,r*(1.13+j*.025),r*(.39+j*.12),0,angle,angle+Math.PI*2/80+.003);
     g.strokeStyle=q[3];g.globalAlpha=a*(.025+light*.38);g.lineWidth=.8+light*.65;g.stroke();
    }g.restore();
   }
