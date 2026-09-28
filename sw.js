@@ -1,8 +1,8 @@
 // An atomic, versioned app shell prevents offline HTML / module mismatches.
-const CACHE = 'undertone-v37';
+const CACHE = 'undertone-v38';
 const ASSETS = [
  './','./index.html','./styles.css','./layout.css','./audio.js',
- './audio-worklet.js','./music-library.js','./tracks.js','./orbit-bridge.js','./vendor/energy-orbit.js','./visuals.js','./webmcp.js','./app.js','./manifest.webmanifest',
+ './audio-worklet.js','./music-library.js','./tracks.js','./orbit-bridge.js','./black-hole-bridge.js','./vendor/energy-orbit.js','./vendor/black-hole.js','./visuals.js','./webmcp.js','./app.js','./manifest.webmanifest',
  './icons/icon-192.png','./icons/icon-512.png','./icons/icon-512-maskable.png',
  './icons/apple-touch-icon.png'
 ];
