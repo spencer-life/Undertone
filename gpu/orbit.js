@@ -8,7 +8,7 @@ import POST_SHADER from './orbit-post.wgsl';
 const clamp = (value, min, max) => Math.min(max, Math.max(min, Number(value) || 0));
 const rgba = (rgb) => [rgb[0], rgb[1], rgb[2], 1];
 const orbitStyle = (theme) => theme === 'mono'
-  ? [0.30, 1, 0, 0.72]
+  ? [0.52, 1, 0, 0.86]
   : [1, 1, 0, 1];
 const BLURS = [
   { direction: [1, 0], radius: 1 },
@@ -83,7 +83,7 @@ export async function createOrbitRenderer(canvas, { onFailure } = {}) {
       label: 'undertone-orbit-post',
       set: {
         src: sceneTarget, bloom: bloomTargets[0], samp: linearSampler,
-        post: { center: [0.5, 0.43], bloomStrength: 0.64, pad: 0 },
+        post: { center: [0.5, 0.43], bloomStrength: 0.74, pad: 0 },
       },
     });
 
