@@ -85,7 +85,12 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
 
   var color = params.background.rgb * 0.12 + params.low.rgb * backdrop * 0.018;
   let body_color = mix(params.low.rgb, mix(params.primary.rgb, params.secondary.rgb, 0.42), 0.30);
-  color += body_color * body * (0.018 + interior_depth * 0.022 + rim * 0.040) * body_opacity;
+  let pseudo_normal = normalize(vec3f(p / max(body_radius, 0.001), interior_depth));
+  let key_light = pow(max(dot(pseudo_normal, normalize(vec3f(-0.42, -0.56, 0.72))), 0.0), 1.55);
+  let fill_light = 0.5 + 0.5 * dot(pseudo_normal.xy, normalize(vec2f(0.72, -0.38)));
+  color += body_color * body * (0.014 + interior_depth * 0.027 + rim * 0.034) * body_opacity;
+  color += mix(params.primary.rgb, params.highlight.rgb, 0.22) * body * key_light * (0.026 + 0.018 * audio_energy) * body_opacity;
+  color += params.low.rgb * body * fill_light * interior_depth * 0.010 * body_opacity;
 
   // Two very faint interior lobes give the volume atmospheric presence without
   // turning it into a solid filled sphere.
@@ -116,8 +121,8 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
   // star/rosette convergence seen in the previous pass.
   for (var j: i32 = 0; j < 4; j = j + 1) {
     let fj = f32(j);
-    let slow = time * (0.036 + fj * 0.0045) + seed * (0.0043 + fj * 0.00021);
-    let travel_clock = time * (0.16 + fj * 0.019) + seed * 0.0061;
+    let slow = time * (0.062 + fj * 0.0065) + seed * (0.0043 + fj * 0.00021);
+    let travel_clock = time * (0.25 + fj * 0.026) + seed * 0.0061;
 
     let base_angle =
       -0.92 +
@@ -272,16 +277,16 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
     // through a sphere rather than lying on a flat disc.
     let front_back =
       mix(
-        0.30,
-        1.0,
+        0.16,
+        1.10,
         front
       );
 
     let volume_depth =
       mix(
-        0.58,
-        1.0,
-        pow(sphere_depth, 0.72)
+        0.42,
+        1.08,
+        pow(sphere_depth, 0.68)
       );
 
     let depth =
@@ -290,9 +295,9 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
 
     let depth_fade =
       mix(
-        0.54,
+        0.40,
         1.0,
-        smoothstep(0.05, 0.32, sphere_depth)
+        smoothstep(0.04, 0.34, sphere_depth)
       );
 
     // Derivative-aware filament masks fade when too dense to resolve cleanly.
@@ -323,12 +328,12 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
     let chroma =
       0.5 +
       0.5 *
-      sin(nx * 2.05 + fj * 1.81 - time * (0.071 + fj * 0.006));
+      sin(nx * 2.05 + fj * 1.81 - time * (0.108 + fj * 0.009));
 
     let cyan_bias =
       0.5 +
       0.5 *
-      sin(nx * 3.55 - fj * 1.47 + time * 0.043);
+      sin(nx * 3.55 - fj * 1.47 + time * 0.071);
 
     var sheet_color =
       mix(
@@ -378,7 +383,7 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
     let violet_center =
       0.52 *
       sin(
-        time * (0.118 + fj * 0.008) +
+        time * (0.182 + fj * 0.012) +
         fj * 1.77 +
         seed * 0.004
       );
@@ -471,7 +476,7 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
     let surface_luminance = max(0.12,
       0.30 + 0.82 * fold_light + 0.08 * cross_light
       - 0.16 * fold_trough * mix(0.45, 1.0, front));
-    let surface_clarity = mix(0.88, 1.12, front);
+    let surface_clarity = mix(0.72, 1.20, front);
     // Preserve line masks/antialiasing; reduce radiance, especially at the center.
     let detail_weight = mix(0.70, 0.82, smoothstep(0.04, 0.24, radial));
 
@@ -554,16 +559,20 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
   }
 
   color += fabric + filaments;
+  // Stronger near/far separation gives the sphere a readable front hemisphere
+  // instead of a flat bundle of equally bright strands.
+  color *= 1.0 - body * pow(interior_depth, 1.45) * 0.035;
+  color += params.highlight.rgb * body * pow(key_light, 3.0) * (0.010 + 0.010 * audio_energy);
 
   // One softly irregular silhouette seam replaces the previous pair of
   // elliptical structural rings. It helps close the spherical read without
   // reintroducing the atom/donut silhouette.
   let seam_radius = body_radius - 0.007
-    + 0.006 * sin(polar * 4.0 - time * 0.061)
-    + 0.003 * sin(polar * 7.0 + time * 0.037 + seed * 0.011);
+    + 0.006 * sin(polar * 4.0 - time * 0.096)
+    + 0.003 * sin(polar * 7.0 + time * 0.059 + seed * 0.011);
   let seam = aa_line(radial - seam_radius, 0.0015) * body;
-  let seam_front = smoothstep(-0.72, 0.72, sin(polar + time * 0.043));
-  let seam_hot = pulse(polar, time * 0.23 + seed * 0.007, 46.0) * seam_front;
+  let seam_front = smoothstep(-0.72, 0.72, sin(polar + time * 0.068));
+  let seam_hot = pulse(polar, time * 0.33 + seed * 0.007, 46.0) * seam_front;
 
   // Break the perimeter into quiet fragments. The references imply their
   // silhouette through luminous folds; a continuous circular outline makes the
@@ -576,7 +585,7 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
       0.5 *
       sin(
         polar * 2.17 -
-        time * 0.024 +
+        time * 0.040 +
         seed * 0.009
       )
     );
@@ -586,13 +595,13 @@ fn gaussian(x: f32, sigma: f32) -> f32 {
   color += params.highlight.rgb * seam * seam_hot * seam_presence * 0.24;
 
   // Sparse motes stay outside the core so they add atmosphere, not noise.
-  let moving_point = p + vec2f(seed * 0.0007, time * 0.0015);
+  let moving_point = p + vec2f(seed * 0.0007, time * 0.0028);
   let cell = floor(moving_point * 118.0);
   let rnd = hash21(cell + seed);
   let point = fract(moving_point * 118.0) - 0.5;
   let mote = (1.0 - smoothstep(0.022, 0.105, length(point))) * step(0.982, rnd);
   let halo_mask = smoothstep(0.17, 0.27, radial) * (1.0 - smoothstep(0.37, 0.43, radial));
-  color += mix(params.secondary.rgb, params.highlight.rgb, rnd) * mote * halo_mask * (0.07 + 0.04 * sin(time * 0.071 + rnd * 20.0));
+  color += mix(params.secondary.rgb, params.highlight.rgb, rnd) * mote * halo_mask * (0.07 + 0.04 * sin(time * 0.108 + rnd * 20.0));
 
   // Preserve HDR radiance for the existing selective bloom chain.
   let exposure = mix(0.12, 1.0, params.dynamics.z) * 1.24;
