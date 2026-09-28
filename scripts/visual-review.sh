@@ -100,7 +100,7 @@ capture() {
 
 # Two timing samples at everyday pace and two at max pace for the scenes whose
 # motion is easiest to evaluate from still-frame displacement.
-for scene in tides dunes orbit rain; do
+for scene in tides dunes orbit horizon rain; do
   capture "$scene" 40 600  "motion40-early"
   capture "$scene" 40 5600 "motion40-late"
   capture "$scene" 100 600  "motion100-early"
@@ -108,7 +108,7 @@ for scene in tides dunes orbit rain; do
 done
 
 # Graphite uses scene-specific prismatic lighting across the full scene set.
-for scene in tides dunes orbit rain; do
+for scene in tides dunes orbit horizon rain; do
   capture "$scene" 60 600  "graphite-early" "mono"
   capture "$scene" 60 5600 "graphite-late"  "mono"
 done
