@@ -1,0 +1,61 @@
+/* Event Horizon WebGPU surface adapted from the verified VGPU Optimized Black Hole example.
+   Owns the renderer lifecycle; Undertone owns scene state, controls and audio. */
+class UndertoneBlackHoleBridge {
+ constructor(canvas,invalidate,options={}) {
+  this.base=canvas;this.invalidate=invalidate;this.renderer=null;this.layer=null;
+  this.pending=false;this.failed=false;this.generation=0;this.disposed=false;
+  this.load=options.load||(()=>import('./vendor/black-hole.js'));
+  this.enabled=options.enabled??(!!globalThis.navigator?.gpu&&new URLSearchParams(globalThis.location?.search||'').get('renderer')!=='canvas');
+  this.status(this.enabled?'idle':'canvas');
+ }
+ status(value,error){
+  this.state=value;
+  if(this.base.dataset){this.base.dataset.blackHoleStatus=value;
+   if(error)this.base.dataset.blackHoleError=String(error.message||error);}
+ }
+ prepare(scene){
+  if(this.disposed)return;
+  if(scene!=='horizon'){if(this.pending||this.renderer)this.release();return;}
+  if(!this.enabled||this.failed||this.pending||this.renderer)return;
+  this.pending=true;const generation=++this.generation;this.status('loading');
+  const layer=this.base.ownerDocument.createElement('canvas');
+  layer.setAttribute('aria-hidden','true');layer.style.pointerEvents='none';
+  layer.style.display='none';layer.style.opacity='0';
+  layer.style.transition=globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'none':'opacity .7s cubic-bezier(.22,1,.36,1)';
+  this.base.after(layer);this.layer=layer;
+  const fail=error=>{
+   if(generation!==this.generation||this.disposed)return;
+   this.release();this.failed=true;this.status('unavailable',error);this.invalidate();
+  };
+  this.load().then(async module=>{
+   if(generation!==this.generation||this.disposed)return null;
+   const renderer=module.createBlackHoleRenderer(layer,{onFailure:fail});
+   await renderer.ready;
+   return renderer;
+  }).then(renderer=>{
+   if(!renderer)return;
+   if(generation!==this.generation||this.disposed){renderer.dispose();layer.remove();return;}
+   this.renderer=renderer;this.pending=false;this.status('ready');this.invalidate();
+  }).catch(fail);
+ }
+ draw(parameters){
+  if(!this.renderer||this.disposed)return false;
+  try{
+   this.renderer.update(parameters);
+   if(!this.layer||!this.renderer)return false;
+   const firstReveal=this.layer.style.display==='none';
+   this.layer.style.display='block';
+   if(firstReveal){const layer=this.layer,nextFrame=globalThis.requestAnimationFrame||((fn)=>fn());layer.style.opacity='0';nextFrame(()=>{if(this.layer===layer)layer.style.opacity='1';});}
+   if(this.base.dataset)this.base.dataset.renderer='webgpu';
+   return true;
+  }catch(error){this.release();this.failed=true;this.status('unavailable',error);this.invalidate();return false;}
+ }
+ hide(){if(this.layer)this.layer.style.display='none';}
+ release(){
+  ++this.generation;this.pending=false;this.hide();
+  const renderer=this.renderer;this.renderer=null;
+  try{renderer?.dispose();}finally{this.layer?.remove();this.layer=null;}
+  this.status('idle');
+ }
+ dispose(){if(this.disposed)return;this.release();this.disposed=true;}
+}
