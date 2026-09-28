@@ -1,0 +1,30 @@
+# Local public-repo adaptation of the github-workflows mise setup.
+# Cache action pin matches github-workflows/templates/expo-metro-cache.yml.
+name: Set up Undertone runtime
+description: Install locked tools and restore download caches, never node_modules or rendered evidence.
+inputs:
+  gpu:
+    description: Restore the verified portable software GPU download cache
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+      with:
+        cache: true
+    - id: paths
+      shell: bash
+      run: mise run cache:paths
+    - name: Restore pnpm content-addressed store
+      uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+      with:
+        path: ${{ steps.paths.outputs.pnpm }}
+        key: pnpm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pnpm-lock.yaml', 'pnpm-workspace.yaml') }}
+        restore-keys: |
+          pnpm-${{ runner.os }}-${{ runner.arch }}-
+    - name: Restore portable GPU renderer
+      if: inputs.gpu == 'true'
+      uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+      with:
+        path: ~/.cache/vgpu/software-renderer
+        key: vgpu-software-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('package.json', 'pnpm-lock.yaml') }}
