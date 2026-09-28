@@ -180,20 +180,57 @@ button[aria-pressed=true].choice,
  to{opacity:1;transform:translateX(-50%) translateY(0) scaleY(1)}
 }
 @media(prefers-reduced-motion:reduce){.dock-picker:not([hidden]){animation:none}}
+.cinema .stage-dock>*,
+.cinema .stage-dock .playback,
+.cinema .stage-dock .dock-visual-picks,
+.cinema .stage-dock .transport-end,
+.cinema .stage-dock .volume-control{min-width:0}
+.cinema .stage-dock .route-quick{min-width:0}
+.cinema .stage-dock .route-quick .button-text{overflow:hidden;text-overflow:ellipsis}
+
+@media(min-width:1101px) and (max-width:1199px){
+ .cinema .stage-dock{
+  max-width:1080px;
+  grid-template-columns:minmax(135px,1fr) minmax(130px,1fr) auto minmax(230px,250px) minmax(245px,1fr);
+  gap:9px;
+  padding-left:16px;
+  padding-right:16px
+ }
+ .cinema .stage-dock .playback{gap:8px}
+ .cinema .stage-dock .dock-visual-picks{gap:7px}
+ .cinema .stage-dock .transport-end{gap:10px}
+ .cinema .stage-dock .route-quick .button-text{display:none}
+ .cinema .stage-dock .volume-control{width:104px;gap:6px}
+ .cinema .stage-dock .dock-controls{padding-inline:8px}
+}
+@media(min-width:1200px) and (max-width:1359px){
+ .cinema .stage-dock{
+  max-width:1080px;
+  grid-template-columns:minmax(150px,1fr) minmax(145px,1fr) auto minmax(250px,270px) minmax(285px,1fr);
+  gap:10px;
+  padding-left:16px;
+  padding-right:16px
+ }
+ .cinema .stage-dock .playback{gap:8px}
+ .cinema .stage-dock .dock-visual-picks{gap:8px}
+ .cinema .stage-dock .transport-end{gap:10px}
+ .cinema .stage-dock .volume-control{width:108px;gap:6px}
+ .cinema .stage-dock .dock-controls{padding-inline:8px}
+}
 @media(min-width:1360px){
  .cinema .stage-dock{
-  max-width:1240px;
-  grid-template-columns:185px 185px auto 300px minmax(318px,1fr);
-  gap:18px;
+  max-width:1200px;
+  grid-template-columns:minmax(160px,1fr) minmax(160px,1fr) auto minmax(250px,280px) minmax(320px,1fr);
+  gap:14px;
   padding-left:20px;
   padding-right:20px
  }
  .cinema .stage-dock .playback{gap:10px}
- .cinema .stage-dock .dock-visual-picks{gap:12px}
- .cinema .stage-dock .transport-end{gap:18px}
- .cinema .stage-dock .route-quick{padding-inline:10px}
- .cinema .stage-dock .volume-control{width:132px;gap:8px}
- .cinema .stage-dock .dock-controls{padding-inline:10px}
+ .cinema .stage-dock .dock-visual-picks{gap:10px}
+ .cinema .stage-dock .transport-end{gap:14px}
+ .cinema .stage-dock .route-quick{padding-inline:9px}
+ .cinema .stage-dock .volume-control{width:118px;gap:7px}
+ .cinema .stage-dock .dock-controls{padding-inline:9px}
  .dock-picker{padding:16px 18px}
  .dock-picker-head{margin-bottom:14px}
  .mode-picker-options{gap:8px}
