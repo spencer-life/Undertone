@@ -106,6 +106,9 @@ class UndertoneVisuals {
  }
  render(s){
   const g=this.g,w=this.width,h=this.height;if(!g||!w||!h)return;
+  const sceneTheme=UT_THEMES[s.theme]||UT_THEMES.mono;
+  if(s.scene==='horizon'&&this.transition>=1&&this.blackHoleGPU?.draw({motion:s.motion,brightness:s.brightness,energy:this.energy,reducedMotion:this.reduced.matches,eco:s.eco,palette:sceneTheme.orbitAccents||sceneTheme.art}))return;
+  this.blackHoleGPU?.hide();
   if(s.scene==='orbit'&&this.transition>=1&&this.orbitGPU?.draw({width:w,height:h,dpr:Math.min(window.devicePixelRatio||1,1.5),time:this.time,seed:this.seed,theme:s.theme,brightness:s.brightness,eco:s.eco,energy:this.energy}))return;
   this.orbitGPU?.hide();
   const contract=this.canvasContract(s),p=contract.palette.art,t=contract.time;g.globalAlpha=1;g.fillStyle='#090a0c';g.fillRect(0,0,w,h);
@@ -120,7 +123,7 @@ class UndertoneVisuals {
  canvasContract(s){
   const c=this.canvasFrame;c.time=this.time+this.offset;c.viewport.width=this.width;c.viewport.height=this.height;c.viewport.dpr=Math.min(window.devicePixelRatio||1,1.5);c.seed=this.seed;c.palette=UT_THEMES[s.theme];c.motion=s.motion/100;c.brightness=s.brightness/100;c.reducedMotion=this.reduced.matches;c.audio=this.audioState;return c;
  }
- renderScene(scene,g,w,h,t,p,a){g.save();g.globalAlpha=a;if(scene==='rain')this.wetGlass(g,w,h,t,p,a);else if(scene==='dunes')this.silk(g,w,h,t,p,a);else if(scene==='orbit')this.orbit(g,w,h,t,p,a);else this.contours(g,w,h,t,p,a);g.restore();}
+ renderScene(scene,g,w,h,t,p,a){g.save();g.globalAlpha=a;if(scene==='rain')this.wetGlass(g,w,h,t,p,a);else if(scene==='dunes')this.silk(g,w,h,t,p,a);else if(scene==='orbit')this.orbit(g,w,h,t,p,a);else if(scene==='horizon')this.blackHole(g,w,h,t,p,a);else this.contours(g,w,h,t,p,a);g.restore();}
  glow(g,x,y,r,color,opacity){const v=g.createRadialGradient(x,y,0,x,y,r);v.addColorStop(0,this.rgba(color,opacity));v.addColorStop(.45,this.rgba(color,opacity*.4));v.addColorStop(1,this.rgba(color,0));g.fillStyle=v;g.fillRect(x-r,y-r,r*2,r*2);}
  contours(g,w,h,t,p,a){
   const c=this.canvasFrame,theme=c.palette||UT_THEMES.ocean,audio=c.audio||this.audioState;
