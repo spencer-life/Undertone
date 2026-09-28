@@ -138,6 +138,17 @@ capture_ui_state "color-picker" 'document.querySelector("#colorQuickButton").cli
 capture_ui_state "timer-picker" 'document.querySelector("#timerButton").click()'
 capture_ui_state "route-picker" 'document.querySelector("#routeQuick").click()'
 capture_ui_state "moss-neutral-chrome" 'if(!document.querySelector("#routePicker").hidden)document.querySelector("#routeQuick").click(); window.undertoneDebug.change({theme:"moss",scene:"rain"}); true'
+
+echo "==> Verify Event horizon WebGPU path"
+agent-browser --session "$SESSION" --webgpu --headed eval 'window.undertoneDebug.change({theme:"mono",scene:"horizon",motion:72,brightness:92}); true' >/dev/null
+agent-browser --session "$SESSION" --webgpu --headed wait 1800
+BLACK_HOLE_META="$(agent-browser --session "$SESSION" --webgpu --headed eval 'JSON.stringify({scene:window.undertoneDebug.state.scene,status:document.querySelector("#visual")?.dataset?.blackHoleStatus||null,renderer:document.querySelector("#visual")?.dataset?.renderer||null})')"
+printf '%s\n' "$BLACK_HOLE_META" | tee "$OUT/black-hole-meta.txt"
+printf '%s' "$BLACK_HOLE_META" | grep -q '"scene":"horizon"'
+printf '%s' "$BLACK_HOLE_META" | grep -q '"status":"ready"'
+printf '%s' "$BLACK_HOLE_META" | grep -q '"renderer":"webgpu"'
+capture_ui_state "event-horizon" 'true'
+
 capture_ui_state "tune" 'window.undertoneDebug.change({theme:"mono",scene:"orbit"}); document.querySelector("#dockControls").click()'
 capture_ui_state "tune-about" 'document.querySelector("#tab-about").click()'
 
