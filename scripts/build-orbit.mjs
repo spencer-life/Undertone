@@ -6,7 +6,7 @@ const wgslPlugin={
  setup(builder){
   builder.onLoad({filter:/\.wgsl$/},async args=>{
    const resolved=await resolveShader({entry:args.path});
-   return {contents:`export default ${JSON.stringify(resolved.wgsl)};`,loader:'js',watchFiles:resolved.deps};
+   return {contents:`export default ${JSON.stringify(resolved.wgsl)};`,loader:'js'};
   });
  }
 };
