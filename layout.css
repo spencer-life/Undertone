@@ -247,7 +247,7 @@ button[aria-pressed=true].choice,
  .quick-route-options{gap:9px}
 }
 @media(min-width:901px) and (max-width:1100px){
- .compact-picker,.dock-picker{bottom:calc(5vh + 165px)}
+ .compact-picker,.dock-picker{bottom:calc(5vh + 195px)}
 }
 @media(min-width:641px) and (max-width:900px){
  .compact-picker,.dock-picker{bottom:calc(5vh + 190px)}
