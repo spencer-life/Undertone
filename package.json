@@ -4,11 +4,11 @@
   "version": "0.3.0",
   "description": "A no-build ambient audio and generative scene PWA",
   "scripts": {
-    "check": "node --check app.js && node --check visuals.js && node --check audio.js && node --check audio-worklet.js && node --check sw.js && node --check tracks.js && node --check music-library.js && node --check webmcp.js && node --check orbit-bridge.js && node --check gpu/orbit.js && node --check gpu/palettes.js",
+    "check": "node --check app.js && node --check visuals.js && node --check audio.js && node --check audio-worklet.js && node --check sw.js && node --check tracks.js && node --check music-library.js && node --check webmcp.js && node --check orbit-bridge.js && node --check black-hole-bridge.js && node --check gpu/orbit.js && node --check gpu/palettes.js",
     "test": "node --test audio.test.js tests/*.test.js",
     "preview": "python3 scripts/preview.py",
     "build:orbit": "node scripts/build-orbit.mjs",
-    "check:orbit": "vgpu check gpu/orbit.wgsl --require-validation && vgpu check gpu/orbit-bright.wgsl --require-validation && vgpu check gpu/orbit-blur.wgsl --require-validation && vgpu check gpu/orbit-post.wgsl --require-validation",
+    "check:orbit": "vgpu check gpu/orbit.wgsl --require-validation && vgpu check gpu/orbit-bright.wgsl --require-validation && vgpu check gpu/orbit-blur.wgsl --require-validation && vgpu check gpu/orbit-post.wgsl --require-validation && vgpu check gpu/optimized-black-hole/bake.wgsl --require-validation && vgpu check gpu/optimized-black-hole/refine.wgsl --require-validation && vgpu check gpu/optimized-black-hole/shade.wgsl --require-validation && vgpu check gpu/optimized-black-hole/bloom.wgsl --require-validation && vgpu check gpu/optimized-black-hole/composite.wgsl --require-validation",
     "render:orbit": "node scripts/render-orbit.mjs",
     "build": "pnpm build:orbit && node scripts/build-site.mjs"
   },
