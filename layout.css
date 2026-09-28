@@ -359,3 +359,17 @@ button[aria-pressed=true].choice,
   bottom:calc(max(10px,env(safe-area-inset-bottom)) + 230px)
  }
 }
+
+/* Undertone identity: generated wordmark used as restrained app chrome, not scene decoration. */
+.brand{min-width:0}
+.brand-logo{display:block;width:clamp(154px,13vw,202px);height:auto;object-fit:contain;object-position:left center;opacity:.94;filter:saturate(.86) brightness(.98)}
+.stage-identity{display:flex;flex-direction:column;align-items:flex-start;gap:4px;pointer-events:none;min-width:0}
+.stage-logo{display:none;width:clamp(132px,12vw,178px);height:auto;object-fit:contain;object-position:left center;opacity:.82;filter:saturate(.82) brightness(.96)}
+.cinema .stage-logo{display:block}
+.cinema .stage-identity{gap:2px}
+@media(max-width:640px){
+ .brand-logo{width:142px}
+ .cinema .stage-logo{width:128px;opacity:.8}
+ .cinema .stage-identity{gap:0}
+ .cinema .stage-identity .scene-id{font-size:10px}
+}

@@ -9,7 +9,7 @@ const files = [
   'index.html', 'styles.css', 'layout.css', 'app.js', 'visuals.js',
   'audio.js', 'audio-worklet.js', 'music-library.js', 'tracks.js',
   'orbit-bridge.js', 'black-hole-bridge.js', 'webmcp.js', 'sw.js', 'manifest.webmanifest', '_headers',
-  'icons', 'assets/music', 'vendor/energy-orbit.js', 'vendor/black-hole.js', 'vendor/LICENSE.vgpu',
+  'icons', 'assets/music', 'assets/brand', 'vendor/energy-orbit.js', 'vendor/black-hole.js', 'vendor/LICENSE.vgpu',
   'labs/energy-orbit',
 ];
 await rm(output, { recursive: true, force: true });
