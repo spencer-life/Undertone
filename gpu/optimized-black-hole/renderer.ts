@@ -56,15 +56,15 @@ export function createBlackHoleRenderer(canvas: HTMLCanvasElement, { onFailure }
     const nextGpu = await nextApi.init({ powerPreference: 'low-power' });
     if (disposed) { nextGpu.dispose(); return; }
     api = nextApi; gpu = nextGpu;
-    // A hidden loading canvas has no CSS size. Compile against a small explicit
-    // surface and resize only when the host submits a real viewport.
     surface = api.surface(gpu, canvas, { autoResize: false, size: [1, 1], alphaMode: 'opaque' });
     effects = createEffects(api, gpu);
     targets = createTargets(api, gpu, [1, 1]);
     Object.assign(settings, blackHoleLayout(1, 1));
-    setBindings(effects, targets);
+    // The first uniform write must be complete. Binding setup sends partial
+    // resolution updates and is valid only after these structs are initialized.
     setBakeUniforms(effects, targets, settings);
     setShadeUniforms(effects, targets, settings, 0, 0);
+    setBindings(effects, targets);
     setPostUniforms(effects, targets, settings);
     await prewarm(effects, targets, surface);
     if (disposed) return;
@@ -133,8 +133,6 @@ export function createBlackHoleRenderer(canvas: HTMLCanvasElement, { onFailure }
   return { ready, update, dispose, stats };
 }
 
-// Retained for source compatibility with the example's host. The integrating
-// application must call update; there is intentionally no second animation loop.
 export function createRenderer({ canvas, onFailure }: { canvas: HTMLCanvasElement } & Options) {
   return createBlackHoleRenderer(canvas, { onFailure });
 }
