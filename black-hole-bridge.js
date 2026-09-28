@@ -3,11 +3,24 @@ class UndertoneBlackHoleBridge {
  constructor(canvas,invalidate,options={}) {
   this.base=canvas;this.invalidate=invalidate;this.renderer=null;this.pendingRenderer=null;this.layer=null;
   this.pending=false;this.failed=false;this.generation=0;this.disposed=false;this.stillKey='';
+  this.caption=null;this.captionStyle=null;
   this.load=options.load||(()=>import('./vendor/black-hole.js'));
   this.enabled=options.enabled??(!!globalThis.navigator?.gpu&&new URLSearchParams(globalThis.location?.search||'').get('renderer')!=='canvas');
   this.status(this.enabled?'idle':'canvas');
  }
  status(value,error){this.state=value;if(this.base.dataset){this.base.dataset.blackHoleStatus=value;if(error)this.base.dataset.blackHoleError=String(error.message||error);}}
+ protectCaption(){
+  // The luminous disk crosses the headphones guidance. This scene owns a small
+  // solid backing for that text and restores the existing UI on scene exit.
+  const note=this.base.ownerDocument.getElementById?.('heroNote');
+  if(!note||this.caption)return;
+  this.caption=note;this.captionStyle=note.getAttribute('style');
+  Object.assign(note.style,{background:'#111114',color:'#f7f5f0',width:'fit-content',maxWidth:'calc(100% - 16px)',marginInline:'auto',padding:'4px 8px',borderRadius:'4px'});
+ }
+ restoreCaption(){
+  if(this.caption){if(this.captionStyle===null)this.caption.removeAttribute('style');else this.caption.setAttribute('style',this.captionStyle);}
+  this.caption=null;this.captionStyle=null;
+ }
  prepare(scene){
   if(this.disposed)return;
   if(scene!=='horizon'){if(this.pending||this.renderer)this.release();return;}
@@ -26,7 +39,7 @@ class UndertoneBlackHoleBridge {
    await renderer.ready;
    if(generation!==this.generation||this.disposed)return;
    this.pendingRenderer=null;this.renderer=renderer;this.pending=false;
-   this.status('ready');this.invalidate();
+   this.protectCaption();this.status('ready');this.invalidate();
   }).catch(fail);
  }
  draw(parameters){
@@ -35,8 +48,6 @@ class UndertoneBlackHoleBridge {
    const bounds=this.base.getBoundingClientRect?.();
    const still=parameters.motion===0||parameters.reducedMotion;
    const key=still?JSON.stringify([bounds?.width,bounds?.height,parameters.width,parameters.height,parameters.seed,parameters.brightness,parameters.eco,parameters.palette]):'';
-   // Focus/visibility can invalidate the app even with motion off. Keep the
-   // existing GPU image rather than resubmitting an unchanged expensive scene.
    if(!still||key!==this.stillKey){
     const submitted=this.renderer.update(parameters);
     if(submitted===false)throw new Error('Event horizon did not submit a frame');
@@ -51,7 +62,7 @@ class UndertoneBlackHoleBridge {
  }
  hide(){if(this.layer)this.layer.style.display='none';}
  release(){
-  ++this.generation;this.pending=false;this.stillKey='';this.hide();
+  ++this.generation;this.pending=false;this.stillKey='';this.hide();this.restoreCaption();
   const renderer=this.renderer||this.pendingRenderer;this.renderer=null;this.pendingRenderer=null;
   try{renderer?.dispose();}finally{this.layer?.remove();this.layer=null;}
   if(this.base.dataset)this.base.dataset.renderer='canvas2d';this.status('idle');
