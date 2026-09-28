@@ -13,6 +13,7 @@
     "build": "pnpm build:orbit && node scripts/build-site.mjs"
   },
   "devDependencies": {
+    "@vgpu/wgsl": "0.5.0",
     "esbuild": "0.25.12",
     "vgpu": "0.5.0"
   },
