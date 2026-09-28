@@ -1,13 +1,23 @@
+import { execFileSync } from 'node:child_process';
 import { build } from 'esbuild';
-import { resolveShader } from '@vgpu/wgsl/runtime';
+
+const resolveWgsl=(entry)=>{
+ const stdout=execFileSync('pnpm',['exec','vgpu','check',entry],{
+  encoding:'utf8',
+  stdio:['ignore','pipe','inherit'],
+ });
+ const payload=JSON.parse(stdout);
+ if(!payload?.wgsl)throw new Error(`vgpu check did not return resolved WGSL for ${entry}`);
+ return payload.wgsl;
+};
 
 const wgslPlugin={
  name:'vgpu-wgsl-modules',
  setup(builder){
-  builder.onLoad({filter:/\.wgsl$/},async args=>{
-   const resolved=await resolveShader({entry:args.path});
-   return {contents:`export default ${JSON.stringify(resolved.wgsl)};`,loader:'js'};
-  });
+  builder.onLoad({filter:/\.wgsl$/},args=>({
+   contents:`export default ${JSON.stringify(resolveWgsl(args.path))};`,
+   loader:'js',
+  }));
  }
 };
 
