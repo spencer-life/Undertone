@@ -117,6 +117,22 @@ pnpm dlx "$PW" screenshot \
   --wait-for-timeout=1200 \
   "$BASE/" "$OUT/pages/mobile/default-graphite-orbit.png" >/dev/null
 
+mkdir -p "$OUT/pages/layout-audit"
+for spec in \
+  "iphone-wide:430,932" \
+  "ipad-portrait:834,1194" \
+  "ipad-landscape:1194,834" \
+  "desktop-compact:1366,768" \
+  "desktop-wide:1728,900"; do
+  label="${spec%%:*}"
+  viewport="${spec#*:}"
+  pnpm dlx "$PW" screenshot \
+    --browser=chromium \
+    --viewport-size="$viewport" \
+    --wait-for-timeout=1200 \
+    "$BASE/" "$OUT/pages/layout-audit/$label.png" >/dev/null
+done
+
 GIT_SHA="${GITHUB_SHA:-unknown}" RUN_ID="${GITHUB_RUN_ID:-local}" BASE_URL="$BASE" node <<'NODE'
 const fs=require('fs');
 const scenes=[
@@ -163,6 +179,23 @@ captures.push({
   viewport:{width:390,height:844},
   screenshot:'pages/mobile/default-graphite-orbit.png'
 });
+for(const [route,width,height] of [
+  ['iphone-wide',430,932],
+  ['ipad-portrait',834,1194],
+  ['ipad-landscape',1194,834],
+  ['desktop-compact',1366,768],
+  ['desktop-wide',1728,900],
+]){
+  captures.push({
+    route:`layout-${route}`,
+    name:`Responsive layout audit · ${route}`,
+    theme:'mono',
+    motion:60,
+    timing:'settled',
+    viewport:{width,height},
+    screenshot:`pages/layout-audit/${route}.png`
+  });
+}
 fs.writeFileSync('.visual-review/manifest.json',JSON.stringify({
   commit:process.env.GIT_SHA,
   runId:process.env.RUN_ID,
