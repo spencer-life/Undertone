@@ -22,9 +22,14 @@ class UndertoneVisuals {
   this.canvasFrame={time:0,viewport:{width:0,height:0,dpr:1},seed:604,palette:null,motion:0,brightness:1,reducedMotion:false,audio:this.audioState};
   this.lastPaint=0; this.energy=0; this.dirty=true; this.activeScene=null;
   this.orbitGPU=typeof UndertoneOrbitBridge==='function'?new UndertoneOrbitBridge(canvas,()=>{this.dirty=true;}):null;
-  // BFCache releases the GPU device; a restored page lazily acquires a new one.
-  window.addEventListener('pagehide',()=>{this.orbitGPU?.dispose();});
-  window.addEventListener('pageshow',()=>{if(this.orbitGPU?.disposed){this.orbitGPU=new UndertoneOrbitBridge(canvas,()=>{this.dirty=true;});this.dirty=true;}});
+  this.blackHoleGPU=typeof UndertoneBlackHoleBridge==='function'?new UndertoneBlackHoleBridge(canvas,()=>{this.dirty=true;}):null;
+  // BFCache releases GPU devices; a restored page lazily reacquires only the active scene.
+  window.addEventListener('pagehide',()=>{this.orbitGPU?.dispose();this.blackHoleGPU?.dispose();});
+  window.addEventListener('pageshow',()=>{
+   if(this.orbitGPU?.disposed)this.orbitGPU=new UndertoneOrbitBridge(canvas,()=>{this.dirty=true;});
+   if(this.blackHoleGPU?.disposed)this.blackHoleGPU=new UndertoneBlackHoleBridge(canvas,()=>{this.dirty=true;});
+   this.dirty=true;
+  });
   this.reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
   this.reduced.addEventListener?.('change',()=>{this.dirty=true;});
   this.resize=()=>{
