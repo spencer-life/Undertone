@@ -84,14 +84,13 @@ class UndertoneVisuals {
   // than the old 1.08x ceiling. Music adds a restrained temporary lift.
   const base=.12+2.88*Math.pow(m,1.20);
   const reactive=1+audio.energy*.10+audio.bass*.12+audio.pulse*.24;
-  const sceneBoost=s.scene==='orbit'?1.22:1;
+  const sceneBoost=s.scene==='orbit'?1.65:s.scene==='horizon'?1.18:1;
   return Math.min(4,base*sceneBoost*reactive);
  }
  frame(ms){
   requestAnimationFrame(this.frame);const s=this.settings(),dt=this.last?Math.min((ms-this.last)/1000,.1):0;this.last=ms;
-  if(s.scene!=='orbit')this.orbitGPU?.prepare(s.scene);
+  this.orbitGPU?.prepare(s.scene);this.blackHoleGPU?.prepare(s.scene);
   if(document.hidden||s.blackout)return;
-  this.orbitGPU?.prepare(s.scene);
   const still=s.motion===0||this.reduced.matches;
   let audio=this.audioState;
   if(still){
