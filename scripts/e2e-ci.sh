@@ -44,6 +44,66 @@ echo "==> Open stable Canvas path"
 agent-browser --session "$SESSION" open "$BASE/?renderer=canvas"
 agent-browser --session "$SESSION" wait 1200
 
+audit_overflow() {
+  local name="$1" width="$2" height="$3"
+  echo "==> Responsive overflow audit: $name ($width x $height)"
+  agent-browser --session "$SESSION" set viewport "$width" "$height" >/dev/null
+  agent-browser --session "$SESSION" wait 250
+  agent-browser --session "$SESSION" eval '(()=>{
+    const tol=2;
+    const visible=(el)=>{
+      const style=getComputedStyle(el);
+      return style.display!=="none"&&style.visibility!=="hidden"&&el.getClientRects().length>0;
+    };
+    const name=(el)=>el.id?"#"+el.id:"."+String(el.className||"").trim().split(/\s+/).filter(Boolean).join(".");
+    const dock=document.querySelector("#transportDock");
+    const dr=dock.getBoundingClientRect();
+    const issues=[];
+    const documentWidth=Math.max(document.documentElement.scrollWidth,document.body?.scrollWidth||0);
+    if(documentWidth>innerWidth+tol) issues.push({type:"document-width",documentWidth,innerWidth});
+    if(dr.left<-tol||dr.right>innerWidth+tol) issues.push({type:"dock-viewport",left:dr.left,right:dr.right,innerWidth});
+    if(dock.scrollWidth>dock.clientWidth+tol) issues.push({type:"dock-scroll-width",scrollWidth:dock.scrollWidth,clientWidth:dock.clientWidth});
+    const candidates=[...dock.querySelectorAll("button,input[type=range],.dock-visual-picks,.playback,.transport-end,.volume-control")].filter(visible);
+    for(const el of candidates){
+      const r=el.getBoundingClientRect();
+      if(r.left<dr.left-tol||r.right>dr.right+tol) issues.push({type:"dock-child",element:name(el),left:r.left,right:r.right,dockLeft:dr.left,dockRight:dr.right});
+      if(r.left<-tol||r.right>innerWidth+tol) issues.push({type:"viewport-child",element:name(el),left:r.left,right:r.right,innerWidth});
+    }
+    const pickerBounds=[];
+    for(const picker of document.querySelectorAll(".dock-picker")){
+      const wasHidden=picker.hidden;
+      const oldAnimation=picker.style.animation;
+      picker.style.animation="none";
+      picker.hidden=false;
+      const r=picker.getBoundingClientRect();
+      pickerBounds.push({id:picker.id,left:r.left,right:r.right,top:r.top,bottom:r.bottom});
+      if(r.left<-tol||r.right>innerWidth+tol||r.top<-tol||r.bottom>innerHeight+tol) issues.push({type:"picker-viewport",id:picker.id,left:r.left,right:r.right,top:r.top,bottom:r.bottom,innerWidth,innerHeight});
+      const overlap=Math.min(r.bottom,dr.bottom)-Math.max(r.top,dr.top);
+      if(overlap>tol) issues.push({type:"picker-dock-overlap",id:picker.id,overlap,dockTop:dr.top,pickerBottom:r.bottom});
+      picker.hidden=wasHidden;
+      picker.style.animation=oldAnimation;
+    }
+    const result={viewport:{width:innerWidth,height:innerHeight},dock:{left:dr.left,right:dr.right,top:dr.top,bottom:dr.bottom,clientWidth:dock.clientWidth,scrollWidth:dock.scrollWidth},pickerBounds,issues};
+    if(issues.length) throw new Error("Responsive overflow: "+JSON.stringify(result));
+    return JSON.stringify(result);
+  })()' | tee "$OUT/overflow-$name.json"
+}
+
+for spec in \
+  "iphone:390:844" \
+  "iphone-wide:430:932" \
+  "ipad-portrait:834:1194" \
+  "ipad-pro-portrait:1024:1366" \
+  "ipad-landscape:1194:834" \
+  "desktop-compact:1366:768" \
+  "desktop:1440:900" \
+  "desktop-wide:1728:900"; do
+  IFS=: read -r name width height <<<"$spec"
+  audit_overflow "$name" "$width" "$height"
+done
+agent-browser --session "$SESSION" set viewport 1280 720 >/dev/null
+agent-browser --session "$SESSION" wait 250
+
 run_a11y() {
   local name="$1"
   echo "==> Axe audit: $name"
