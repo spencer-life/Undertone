@@ -360,25 +360,17 @@ button[aria-pressed=true].choice,
  }
 }
 
-
-/* Undertone identity: vector lockup avoids raster corruption and stays subordinate to the scene. */
+/* Undertone identity: selected generated wordmark with cleaned transparency. */
 .brand{min-width:0}
-.undertone-lockup{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;line-height:1}
-.undertone-glyph{width:32px;height:32px;flex:0 0 auto;overflow:visible;filter:drop-shadow(0 0 10px rgba(167,139,250,.16))}
-.undertone-word{font-size:20px;font-weight:500;letter-spacing:-.045em;color:#f3f0f4}
-.brand-lockup{opacity:.94}
+.brand-logo{display:block;width:clamp(148px,12vw,184px);height:auto;object-fit:contain;object-position:left center;opacity:.94;filter:saturate(.86) brightness(.98)}
 .stage-identity{display:flex;flex-direction:column;align-items:flex-start;gap:3px;pointer-events:none;min-width:0}
-.stage-lockup{display:none;opacity:.76}
-.stage-lockup .undertone-glyph{width:28px;height:28px}
-.stage-lockup .undertone-word{font-size:17px;color:#f0edf2}
-.cinema .stage-lockup{display:inline-flex}
-.cinema .stage-identity .scene-id{padding-left:1px}
+.stage-logo{display:none;width:clamp(145px,11vw,178px);height:auto;object-fit:contain;object-position:left center;opacity:.82;filter:saturate(.82) brightness(.96)}
+.cinema .stage-logo{display:block}
+.cinema .stage-identity{gap:1px}
+.cinema .stage-identity .scene-id{padding-left:2px}
 @media(max-width:640px){
- .brand-lockup .undertone-glyph{width:29px;height:29px}
- .brand-lockup .undertone-word{font-size:18px}
- .cinema .stage-lockup{opacity:.72}
- .cinema .stage-lockup .undertone-glyph{width:25px;height:25px}
- .cinema .stage-lockup .undertone-word{font-size:15px}
- .cinema .stage-identity{gap:1px}
+ .brand-logo{width:138px}
+ .cinema .stage-logo{width:142px;opacity:.82}
+ .cinema .stage-identity{gap:0}
  .cinema .stage-identity .scene-id{font-size:10px}
 }
