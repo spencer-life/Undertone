@@ -2,7 +2,7 @@
 class UndertoneBlackHoleBridge {
  constructor(canvas,invalidate,options={}) {
   this.base=canvas;this.invalidate=invalidate;this.renderer=null;this.pendingRenderer=null;this.layer=null;
-  this.pending=false;this.failed=false;this.generation=0;this.disposed=false;
+  this.pending=false;this.failed=false;this.generation=0;this.disposed=false;this.stillKey='';
   this.load=options.load||(()=>import('./vendor/black-hole.js'));
   this.enabled=options.enabled??(!!globalThis.navigator?.gpu&&new URLSearchParams(globalThis.location?.search||'').get('renderer')!=='canvas');
   this.status(this.enabled?'idle':'canvas');
@@ -24,7 +24,6 @@ class UndertoneBlackHoleBridge {
    const renderer=module.createBlackHoleRenderer(layer,{onFailure:fail});
    this.pendingRenderer=renderer;
    await renderer.ready;
-   // release already disposes pending initialization; never revive or dispose twice.
    if(generation!==this.generation||this.disposed)return;
    this.pendingRenderer=null;this.renderer=renderer;this.pending=false;
    this.status('ready');this.invalidate();
@@ -33,8 +32,16 @@ class UndertoneBlackHoleBridge {
  draw(parameters){
   if(!this.renderer||this.disposed)return false;
   try{
-   const submitted=this.renderer.update(parameters);
-   if(submitted===false)throw new Error('Event horizon did not submit a frame');
+   const bounds=this.base.getBoundingClientRect?.();
+   const still=parameters.motion===0||parameters.reducedMotion;
+   const key=still?JSON.stringify([bounds?.width,bounds?.height,parameters.width,parameters.height,parameters.seed,parameters.brightness,parameters.eco,parameters.palette]):'';
+   // Focus/visibility can invalidate the app even with motion off. Keep the
+   // existing GPU image rather than resubmitting an unchanged expensive scene.
+   if(!still||key!==this.stillKey){
+    const submitted=this.renderer.update(parameters);
+    if(submitted===false)throw new Error('Event horizon did not submit a frame');
+    this.stillKey=key;
+   }
    if(!this.layer||!this.renderer)return false;
    const first=this.layer.style.display==='none';this.layer.style.display='block';
    if(first){const layer=this.layer,next=globalThis.requestAnimationFrame||((fn)=>fn());layer.style.opacity='0';next(()=>{if(this.layer===layer)layer.style.opacity='1';});}
@@ -44,7 +51,7 @@ class UndertoneBlackHoleBridge {
  }
  hide(){if(this.layer)this.layer.style.display='none';}
  release(){
-  ++this.generation;this.pending=false;this.hide();
+  ++this.generation;this.pending=false;this.stillKey='';this.hide();
   const renderer=this.renderer||this.pendingRenderer;this.renderer=null;this.pendingRenderer=null;
   try{renderer?.dispose();}finally{this.layer?.remove();this.layer=null;}
   if(this.base.dataset)this.base.dataset.renderer='canvas2d';this.status('idle');

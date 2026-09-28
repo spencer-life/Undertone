@@ -1,5 +1,6 @@
 import { effect, frame, init, sampler, surface, target } from 'vgpu';
 import { orbitPalette } from './palettes.js';
+import { orbitRenderSize } from './render-budget.mjs';
 import ORBIT_SHADER from './orbit.wgsl';
 import BRIGHT_SHADER from './orbit-bright.wgsl';
 import BLUR_SHADER from './orbit-blur.wgsl';
@@ -17,32 +18,25 @@ const BLURS = [
   { direction: [0, 1], radius: 2.25 },
 ];
 
-/**
- * Creates the optional Energy Orbit GPU renderer. The caller owns scheduling;
- * this module never creates an animation loop or DOM listener.
- */
+/** The caller owns scheduling; this module owns only GPU resources. */
 export async function createOrbitRenderer(canvas, { onFailure } = {}) {
   if (!canvas || typeof canvas.getContext !== 'function') {
     throw new TypeError('createOrbitRenderer requires a canvas');
   }
-
   const gpu = await init({ powerPreference: 'low-power' });
   let canvasSurface;
   let disposed = false;
   let failureDelivered = false;
-
   const stats = {
     backend: 'WebGPU · vgpu', frameCount: 0, width: 1, height: 1, dpr: 1,
     lastSubmitMs: 0, averageSubmitMs: 0, lastError: null,
   };
-
   const disposeResources = () => {
     if (disposed) return;
     disposed = true;
     try { canvasSurface?.dispose?.(); } catch {}
     try { gpu.dispose(); } catch {}
   };
-
   const fail = (reason) => {
     if (failureDelivered || disposed) return;
     failureDelivered = true;
@@ -51,7 +45,6 @@ export async function createOrbitRenderer(canvas, { onFailure } = {}) {
     disposeResources();
     try { onFailure?.(error); } catch {}
   };
-
   try {
     canvasSurface = surface(gpu, canvas, {
       autoResize: false, size: [1, 1], alphaMode: 'opaque', label: 'undertone-orbit-surface',
@@ -86,19 +79,16 @@ export async function createOrbitRenderer(canvas, { onFailure } = {}) {
         post: { center: [0.5, 0.43], bloomStrength: 0.74, pad: 0 },
       },
     });
-
     await Promise.all([
       orbitEffect.compile(sceneTarget), brightEffect.compile(bloomTargets[0]),
       ...blurEffects.map((blur, index) => blur.compile(bloomTargets[(index + 1) % 2])),
       postEffect.compile({ colors: [canvasSurface.format], sampleCount: 1 }),
     ]);
     await gpu.settled();
-
     gpu.onError((error) => fail(error));
     gpu.gpu.lost.then((info) => {
       if (!disposed) fail(new Error(`WebGPU device lost: ${info?.message || info?.reason || 'unknown reason'}`));
     });
-
     const resize = (pixelWidth, pixelHeight) => {
       if (canvasSurface.size[0] === pixelWidth && canvasSurface.size[1] === pixelHeight) return;
       canvasSurface.resize([pixelWidth, pixelHeight]);
@@ -112,25 +102,13 @@ export async function createOrbitRenderer(canvas, { onFailure } = {}) {
         blur: { texelSize: bloomTargets[index % 2].texelSize, ...BLURS[index] },
       }));
     };
-
-    // vgpu merges partial uniform structs. Keep static fields out of the hot path;
-    // target/resource identities and the seven-pass submission remain unchanged.
-    let previousViewport = [];
-    let previousDynamics = [];
-    let previousStyle = [];
-    let previousPalette;
-    const draw = ({ width, height, dpr = 1, time = 0, seed = 604, theme = 'ocean', brightness = 80, energy = 0 } = {}) => {
+    let previousViewport = [], previousDynamics = [], previousStyle = [], previousPalette;
+    const draw = ({ width, height, dpr = 1, time = 0, seed = 604, theme = 'ocean', brightness = 80, energy = 0, eco = false } = {}) => {
       if (disposed) return false;
       const started = performance.now();
       try {
-        const requestedWidth = Math.max(1, Number(width) || 1);
-        const requestedHeight = Math.max(1, Number(height) || 1);
-        const safeDpr = clamp(dpr, 0.5, 1.5);
-        const renderScale = Math.min(safeDpr, 4096 / requestedWidth, 4096 / requestedHeight);
-        const pixelWidth = Math.max(1, Math.round(requestedWidth * renderScale));
-        const pixelHeight = Math.max(1, Math.round(requestedHeight * renderScale));
+        const [pixelWidth, pixelHeight, renderScale] = orbitRenderSize(width, height, dpr, eco);
         resize(pixelWidth, pixelHeight);
-
         const palette = orbitPalette(theme);
         const style = orbitStyle(theme);
         const viewport = [pixelWidth, pixelHeight, pixelWidth / pixelHeight, renderScale];
@@ -144,32 +122,21 @@ export async function createOrbitRenderer(canvas, { onFailure } = {}) {
           primary: rgba(palette.primary), secondary: rgba(palette.secondary), highlight: rgba(palette.highlight),
         });
         if (Object.keys(params).length) orbitEffect.set({ params });
-        previousViewport = viewport;
-        previousDynamics = dynamics;
-        previousStyle = style;
-        previousPalette = palette;
-
+        previousViewport = viewport; previousDynamics = dynamics;
+        previousStyle = style; previousPalette = palette;
         frame(gpu, (currentFrame) => {
           currentFrame.pass(sceneTarget, orbitEffect);
           currentFrame.pass(bloomTargets[0], brightEffect);
           blurEffects.forEach((blur, index) => currentFrame.pass(bloomTargets[(index + 1) % 2], blur));
           currentFrame.pass(canvasSurface, postEffect);
         });
-
         const elapsed = performance.now() - started;
         stats.frameCount += 1; stats.width = pixelWidth; stats.height = pixelHeight; stats.dpr = renderScale;
         stats.lastSubmitMs = elapsed;
         stats.averageSubmitMs += (elapsed - stats.averageSubmitMs) / Math.min(stats.frameCount, 120);
         return true;
-      } catch (error) {
-        fail(error);
-        return false;
-      }
+      } catch (error) { fail(error); return false; }
     };
-
     return { draw, dispose: disposeResources, stats };
-  } catch (error) {
-    disposeResources();
-    throw error;
-  }
+  } catch (error) { disposeResources(); throw error; }
 }
