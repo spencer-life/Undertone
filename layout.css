@@ -374,3 +374,129 @@ button[aria-pressed=true].choice,
  .cinema .stage-identity{gap:0}
  .cinema .stage-identity .scene-id{font-size:10px}
 }
+
+
+/* Approved player-bar direction: graphite glass, rounded shell, split control cards. */
+.cinema .stage-dock{
+ max-width:1320px;
+ min-height:92px;
+ grid-template-columns:minmax(185px,1fr) minmax(190px,1fr) auto minmax(270px,1.25fr) minmax(300px,1.35fr);
+ gap:14px;
+ padding:12px 16px;
+ border:1px solid #8eb8dc35;
+ border-radius:32px;
+ background:linear-gradient(100deg,rgba(24,25,32,.88),rgba(13,20,29,.91));
+ box-shadow:inset 0 1px 0 #ffffff0c,0 10px 34px #0005;
+ backdrop-filter:blur(24px) saturate(115%)
+}
+.cinema .stage-dock .sound-quick,
+.cinema .stage-dock .music-quick,
+.cinema .stage-dock .dock-visual-picks .dock-pick{
+ min-height:64px;
+ border:1px solid #ffffff0d;
+ border-radius:18px;
+ background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018));
+ box-shadow:inset 0 1px 0 #ffffff08;
+ padding:7px 10px
+}
+.cinema .stage-dock .sound-quick:hover,
+.cinema .stage-dock .music-quick:hover,
+.cinema .stage-dock .dock-visual-picks .dock-pick:hover{background:rgba(255,255,255,.055)}
+.cinema .stage-dock .dock-pick-copy small{font-size:10px;color:#a7a4aa}
+.cinema .stage-dock .dock-pick-copy strong{font-size:12px;color:#f4f1f4}
+.cinema .stage-dock .dock-pick-copy>span{font-size:10px;color:#99969d}
+.cinema .stage-dock .playback{gap:10px;justify-content:center}
+.cinema .stage-dock .timer-button{min-width:74px}
+.cinema .stage-dock .play-main{
+ width:60px;height:60px;
+ background:rgba(14,18,27,.94);
+ color:#f7f5f2;
+ border:2px solid transparent;
+ background-image:linear-gradient(rgba(14,18,27,.94),rgba(14,18,27,.94)),linear-gradient(135deg,#e37ad7,#746cff 48%,#35b7ff);
+ background-origin:border-box;
+ background-clip:padding-box,border-box;
+ box-shadow:0 0 22px rgba(111,101,255,.16)
+}
+.cinema .stage-dock .play-main:hover{background-image:linear-gradient(rgba(24,28,38,.96),rgba(24,28,38,.96)),linear-gradient(135deg,#e37ad7,#746cff 48%,#35b7ff)}
+.cinema .stage-dock .dock-visual-picks{gap:10px}
+.cinema .stage-dock .transport-end{gap:12px}
+.cinema .stage-dock .route-quick{min-width:42px}
+.cinema .stage-dock .volume-control{width:124px}
+.cinema .stage-dock .dock-controls{min-width:70px}
+.cinema .dock-progress{left:28px;right:28px;bottom:5px}
+
+@media(min-width:641px) and (max-width:1100px){
+ .cinema .stage-dock{
+  max-width:calc(100% - 28px);
+  grid-template-columns:minmax(150px,1fr) minmax(150px,1fr) auto;
+  gap:9px;
+  border-radius:28px
+ }
+ .cinema .stage-dock .dock-visual-picks{grid-column:1/3}
+ .cinema .stage-dock .transport-end{grid-column:1/-1}
+}
+
+@media(max-width:640px){
+ .cinema .stage-dock{
+  left:10px;right:10px;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:7px;
+  padding:9px 10px 11px;
+  border-radius:24px;
+  background:linear-gradient(145deg,rgba(21,24,32,.93),rgba(10,18,28,.94));
+  border-color:#8eb8dc32
+ }
+ .cinema .stage-dock .sound-quick{grid-column:1/3;grid-row:1}
+ .cinema .stage-dock .music-quick{grid-column:3/5;grid-row:1}
+ .cinema .stage-dock .sound-quick,
+ .cinema .stage-dock .music-quick{
+  min-height:54px;
+  border-radius:15px;
+  padding:5px 7px
+ }
+ .cinema .stage-dock .dock-pick-copy small{display:none}
+ .cinema .stage-dock .dock-pick-copy strong{font-size:11px;max-width:116px}
+ .cinema .stage-dock .dock-pick-copy>span{font-size:9px;max-width:116px}
+ .cinema .stage-dock .playback,
+ .cinema .stage-dock .transport-end{display:contents}
+ .cinema .stage-dock .timer-button{
+  grid-column:1;grid-row:2;
+  min-width:0;width:100%;min-height:46px;
+  border:1px solid #ffffff0b;border-radius:14px;
+  background:rgba(255,255,255,.025)
+ }
+ .cinema .stage-dock .play-main{
+  grid-column:2;grid-row:2;
+  width:48px;height:48px;
+  justify-self:center
+ }
+ .cinema .stage-dock .route-quick{
+  grid-column:3;grid-row:2;
+  width:100%;min-width:0;min-height:46px;
+  border:1px solid #ffffff0b;border-radius:14px;
+  background:rgba(255,255,255,.025)
+ }
+ .cinema .stage-dock .route-quick .button-text{display:none}
+ .cinema .stage-dock .dock-controls{
+  grid-column:4;grid-row:2;
+  width:100%;min-width:0;min-height:46px;
+  border:1px solid #ffffff0b;border-radius:14px;
+  background:rgba(255,255,255,.025)
+ }
+ .cinema .stage-dock .dock-visual-picks{
+  grid-column:1/5;grid-row:3;
+  display:grid;grid-template-columns:1fr 1fr;gap:7px
+ }
+ .cinema .stage-dock .dock-visual-picks .dock-pick{
+  min-height:50px;border-radius:15px;padding:4px 7px
+ }
+ .cinema .stage-dock .volume-control{
+  grid-column:1/5;grid-row:4;
+  width:100%;max-width:none;min-height:38px;
+  display:grid;grid-template-columns:34px minmax(0,1fr);
+  gap:8px;align-items:center;
+  border-top:1px solid #ffffff0b;padding-top:5px
+ }
+ .cinema .dock-progress{left:18px;right:18px;bottom:4px}
+ .compact-picker,.dock-picker{bottom:calc(max(10px,env(safe-area-inset-bottom)) + 244px)}
+}
