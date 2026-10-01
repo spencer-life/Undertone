@@ -14,11 +14,11 @@ full SHA pins for checkout, mise-action, Gitleaks, actionlint, and zizmor. The
 shared repository is private, so a public Undertone workflow cannot call its
 reusable workflows directly.
 
-Core CI and the security baseline run for pull requests targeting `main`, direct
-pushes to `main` (including the initial publication), and manual dispatches.
-Pull request runs use cancellable concurrency. Netlify's existing native Git
-integration remains the deployment authority; GitHub Actions does not add a
-second deploy hook or CLI deployment path.
+Core CI and the security baseline run for pull requests targeting `main` and
+manual dispatches; they do not run automatically on pushes. Pull request runs
+use cancellable concurrency. Netlify's existing native Git integration remains
+the deployment authority; GitHub Actions does not add a second deploy hook or
+CLI deployment path.
 
 `renovate.json` contains the public Renovate preset rules adapted from the same
 source revision. The Mend Renovate GitHub App must still be installed with
