@@ -4,6 +4,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+pnpm install --frozen-lockfile >/dev/null
+pnpm build:orbit >/dev/null
+
 OUT=".visual-review"
 PORT="${VISUAL_REVIEW_PORT:-4178}"
 BASE="${TARGET_URL:-}"
@@ -46,8 +49,8 @@ PW="playwright@1.55.0"
 pnpm dlx "$PW" install chromium >/dev/null
 
 mix_url() {
-  node - "$BASE" "$1" "$2" <<'NODE'
-const [base,scene,motion]=process.argv.slice(2);
+  node - "$BASE" "$1" "$2" "$3" <<'NODE'
+const [base,scene,motion,theme='violet']=process.argv.slice(2);
 const mix={
   musicSource:'library',
   track:'broken-glimmers',
@@ -67,10 +70,10 @@ const mix={
   noise:8,
   noiseType:'pink',
   score:'horizon',
-  theme:'violet',
+  theme,
   scene,
   motion:Number(motion),
-  brightness:80,
+  brightness:theme==='mono'?100:80,
   eco:false,
   breathing:false,
   keepAwake:false,
@@ -83,11 +86,11 @@ NODE
 }
 
 capture() {
-  local scene="$1" motion="$2" wait_ms="$3" label="$4"
+  local scene="$1" motion="$2" wait_ms="$3" label="$4" theme="${5:-violet}"
   local dir="$OUT/pages/$scene"
   mkdir -p "$dir"
   local url
-  url="$(mix_url "$scene" "$motion")"
+  url="$(mix_url "$scene" "$motion" "$theme")"
   pnpm dlx "$PW" screenshot \
     --browser=chromium \
     --viewport-size="1440,1100" \
@@ -97,11 +100,40 @@ capture() {
 
 # Two timing samples at everyday pace and two at max pace for the scenes whose
 # motion is easiest to evaluate from still-frame displacement.
-for scene in tides dunes orbit rain; do
+for scene in tides dunes orbit horizon rain; do
   capture "$scene" 40 600  "motion40-early"
   capture "$scene" 40 5600 "motion40-late"
   capture "$scene" 100 600  "motion100-early"
   capture "$scene" 100 5600 "motion100-late"
+done
+
+# Graphite uses scene-specific prismatic lighting across the full scene set.
+for scene in tides dunes orbit horizon rain; do
+  capture "$scene" 60 600  "graphite-early" "mono"
+  capture "$scene" 60 5600 "graphite-late"  "mono"
+done
+
+mkdir -p "$OUT/pages/mobile"
+pnpm dlx "$PW" screenshot \
+  --browser=chromium \
+  --viewport-size="390,844" \
+  --wait-for-timeout=1200 \
+  "$BASE/" "$OUT/pages/mobile/default-graphite-orbit.png" >/dev/null
+
+mkdir -p "$OUT/pages/layout-audit"
+for spec in \
+  "iphone-wide:430,932" \
+  "ipad-portrait:834,1194" \
+  "ipad-landscape:1194,834" \
+  "desktop-compact:1366,768" \
+  "desktop-wide:1728,900"; do
+  label="${spec%%:*}"
+  viewport="${spec#*:}"
+  pnpm dlx "$PW" screenshot \
+    --browser=chromium \
+    --viewport-size="$viewport" \
+    --wait-for-timeout=1200 \
+    "$BASE/" "$OUT/pages/layout-audit/$label.png" >/dev/null
 done
 
 GIT_SHA="${GITHUB_SHA:-unknown}" RUN_ID="${GITHUB_RUN_ID:-local}" BASE_URL="$BASE" node <<'NODE'
@@ -110,6 +142,7 @@ const scenes=[
   ['tides','Living Contours'],
   ['dunes','Silk Drift'],
   ['orbit','Energy Orbit'],
+  ['horizon','Event Horizon'],
   ['rain','Wet Glass'],
 ];
 const captures=[];
@@ -119,6 +152,7 @@ for(const [route,name] of scenes){
       captures.push({
         route,
         name,
+        theme:'violet',
         motion,
         timing,
         viewport:{width:1440,height:1100},
@@ -127,11 +161,50 @@ for(const [route,name] of scenes){
     }
   }
 }
+for(const [route,name] of scenes){
+  for(const timing of ['early','late']){
+    captures.push({
+      route,
+      name:`${name} · Graphite`,
+      theme:'mono',
+      motion:60,
+      timing,
+      viewport:{width:1440,height:1100},
+      screenshot:`pages/${route}/graphite-${timing}.png`
+    });
+  }
+}
+captures.push({
+  route:'mobile-default',
+  name:'Fresh mobile default · Graphite Energy Orbit',
+  theme:'mono',
+  motion:60,
+  timing:'settled',
+  viewport:{width:390,height:844},
+  screenshot:'pages/mobile/default-graphite-orbit.png'
+});
+for(const [route,width,height] of [
+  ['iphone-wide',430,932],
+  ['ipad-portrait',834,1194],
+  ['ipad-landscape',1194,834],
+  ['desktop-compact',1366,768],
+  ['desktop-wide',1728,900],
+]){
+  captures.push({
+    route:`layout-${route}`,
+    name:`Responsive layout audit · ${route}`,
+    theme:'mono',
+    motion:60,
+    timing:'settled',
+    viewport:{width,height},
+    screenshot:`pages/layout-audit/${route}.png`
+  });
+}
 fs.writeFileSync('.visual-review/manifest.json',JSON.stringify({
   commit:process.env.GIT_SHA,
   runId:process.env.RUN_ID,
   baseUrl:process.env.BASE_URL,
-  purpose:'Undertone audio-reactive motion pre-merge review',
+  purpose:'Undertone immersive layout and audio-reactive motion pre-merge review',
   note:'Static timing samples validate motion displacement. Audio-reactive spectral mapping is covered by deterministic tests; screenshots do not autoplay audio.',
   routes:scenes.map(([route,name])=>({route,name})),
   captures

@@ -1,16 +1,17 @@
-# Specialized GPU validation following the shared catalog's trigger/security policy.
-name: vgpu Render CI
+# Adapted from spencer-life/github-workflows/.github/workflows/web-e2e.yml
+# Source revision: 742d149b1e75ef50184861f984fcfe82dfe9d833
+name: Web E2E + A11y
 on:
   pull_request:
     branches: [main]
   workflow_dispatch:
 concurrency:
-  group: vgpu-${{ github.event.pull_request.number || github.ref }}
+  group: web-e2e-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 permissions:
   contents: read
 jobs:
-  vgpu:
+  e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -27,20 +28,14 @@ jobs:
           path: ${{ steps.cache-paths.outputs.pnpm }}
           key: pnpm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('pnpm-lock.yaml', 'pnpm-workspace.yaml') }}
           restore-keys: pnpm-${{ runner.os }}-${{ runner.arch }}-
-      - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
-        with:
-          path: ~/.cache/vgpu/software-renderer
-          key: vgpu-software-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('package.json', 'pnpm-lock.yaml') }}
-      - run: mise run vgpu:ci
+      - run: mise run e2e:ci
       - if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: vgpu-render-review
+          name: web-e2e-a11y
           path: |
-            .vgpu-ci/
-            artifacts/orbit-t0.ppm
-            artifacts/orbit-t25.ppm
-          include-hidden-files: true
+            playwright-report/
+            test-results/
           if-no-files-found: warn
           compression-level: 0
           retention-days: 14

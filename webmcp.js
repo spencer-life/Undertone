@@ -17,7 +17,7 @@
 
   const FALLBACK_OPTIONS = Object.freeze({
     presets: ['focus', 'soft', 'relax', 'ambient'],
-    scenes: ['tides', 'dunes', 'orbit', 'rain'],
+    scenes: ['tides', 'dunes', 'orbit', 'horizon', 'rain'],
     themes: ['noir', 'slate', 'frost', 'rose', 'ocean', 'moss', 'ember', 'violet', 'mono'],
     tracks: ['broken-glimmers', 'safe-space'],
     sources: ['library', 'generated'],

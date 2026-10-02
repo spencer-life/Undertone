@@ -3,26 +3,67 @@
 node = "24.18.0"
 "npm:vgpu" = "0.5.0"
 
-[tasks.ci]
-description = "Install dependencies and run the repository CI contract"
+[tasks.deps]
+description = "Restore exact locked dependencies and verify the shader resolver"
 run = '''
 set -eu
 pnpm install --frozen-lockfile
-pnpm check
-pnpm test
-pnpm build
+node --input-type=module -e "await import('@vgpu/wgsl/runtime'); await import('esbuild');"
 '''
 
+[tasks.lint]
+description = "Run existing JavaScript syntax checks (workflow lint is in Security Baseline)"
+depends = ["deps"]
+run = "pnpm check"
+
+[tasks."build:gpu"]
+description = "Build both WebGPU scene bundles from source"
+depends = ["deps"]
+run = "pnpm build:orbit"
+
+[tasks.build]
+description = "Assemble the runtime-only release directory"
+depends = ["build:gpu"]
+run = "node scripts/build-site.mjs"
+
+[tasks.test]
+description = "Run Node regressions after generated precache assets exist"
+depends = ["build:gpu"]
+run = "pnpm test"
+
+[tasks.ci]
+description = "Locked install, syntax, GPU build, production build, and tests"
+depends = ["lint", "build", "test"]
+
+[tasks."deps:outdated"]
+description = "Report available dependency updates; never changes the lockfile"
+run = "pnpm outdated"
+
+[tasks."deps:audit"]
+description = "Manual registry advisory audit, including browser-bundled dev dependencies"
+depends = ["deps"]
+run = "pnpm audit --audit-level high"
+
+[tasks."cache:paths"]
+description = "Export the actual pnpm cache path for GitHub Actions"
+hide = true
+run = '''
+set -eu
+test -n "${GITHUB_OUTPUT:-}"
+printf 'pnpm=%s\n' "$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+'''
 
 [tasks."visual:ci"]
-description = "Capture deterministic Playwright screenshots for rendered QA"
+description = "Capture the existing responsive visual review manifest"
+depends = ["deps"]
 run = "bash scripts/visual-review.sh"
 
-
 [tasks."vgpu:ci"]
-description = "Validate Undertone WebGPU shaders, deterministic pixels, and browser WebGPU rendering"
-run = '''
-set -eu
-pnpm install --frozen-lockfile
-bash scripts/vgpu-ci.sh
-'''
+description = "Validate shaders, render actual pixels, and verify browser scene lifecycles"
+depends = ["deps"]
+run = "bash scripts/vgpu-ci.sh"
+
+[tasks."e2e:ci"]
+description = "Run responsive overflow, interaction, and accessibility regressions"
+depends = ["build:gpu"]
+run = "bash scripts/e2e-ci.sh"

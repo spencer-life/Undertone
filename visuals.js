@@ -9,7 +9,7 @@ const UT_THEMES={
  moss:{name:'Moss',bg:'#141815',bg2:'#151c17',surface:'#1e2821',raised:'#28342b',text:'#f4f6ee',secondary:'#c5d2bd',muted:'#a1b09b',line:'#414e3d',accent:'#bdddab',strong:'#94c37d',ink:'#1e2a18',art:['#141b17','#2c3d32','#51654a','#859774','#c6d8b0']},
  ember:{name:'Ember',bg:'#191513',bg2:'#201915',surface:'#2a211b',raised:'#35291f',text:'#fff5ea',secondary:'#dfc9b1',muted:'#b59d83',line:'#524233',accent:'#f4c194',strong:'#eba76e',ink:'#2c1d13',art:['#1d1713','#493226','#7e5139','#b27a51','#e6b887']},
  violet:{name:'Night violet',bg:'#17141c',bg2:'#1c1723',surface:'#251e2e',raised:'#30273b',text:'#f7f1fb',secondary:'#d3c2e4',muted:'#ad98bd',line:'#4a3c59',accent:'#d5b4ed',strong:'#ba91db',ink:'#271c32',art:['#19151f','#372b46','#62507c','#9982b2','#d8bde9']},
- mono:{name:'Graphite',bg:'#151516',bg2:'#19191a',surface:'#222224',raised:'#2d2d30',text:'#f7f5f0',secondary:'#d2d0ca',muted:'#a9a6a0',line:'#47474c',accent:'#e4dfd5',strong:'#c3bdb0',ink:'#232220',art:['#171719','#303033','#57565b','#939096','#d6d0d5']}
+ mono:{name:'Graphite',bg:'#151516',bg2:'#19191a',surface:'#222224',raised:'#2d2d30',text:'#f7f5f0',secondary:'#d2d0ca',muted:'#a9a6a0',line:'#47474c',accent:'#e4dfd5',strong:'#c3bdb0',ink:'#232220',art:['#171719','#303033','#57565b','#939096','#d6d0d5'],contourAccents:['#62e3cf','#63b9ff','#d58be5','#efa36f'],silkAccents:['#4e8fda','#5dd8cb','#93d6c8','#ef8c98','#c17de5','#718fe8'],glassAccents:['#5edfd0','#66b8f3','#d58cdd','#f0aa76'],orbitAccents:['#071719','#2f7f9f','#58a7e4','#b567d6','#e3a080']}
 };
 // Original Canvas rendering, informed by the Figma scene board and React Bits'
 // layered motion / restrained lighting. No framework or graphics dependencies.
@@ -22,9 +22,14 @@ class UndertoneVisuals {
   this.canvasFrame={time:0,viewport:{width:0,height:0,dpr:1},seed:604,palette:null,motion:0,brightness:1,reducedMotion:false,audio:this.audioState};
   this.lastPaint=0; this.energy=0; this.dirty=true; this.activeScene=null;
   this.orbitGPU=typeof UndertoneOrbitBridge==='function'?new UndertoneOrbitBridge(canvas,()=>{this.dirty=true;}):null;
-  // BFCache releases the GPU device; a restored page lazily acquires a new one.
-  window.addEventListener('pagehide',()=>{this.orbitGPU?.dispose();});
-  window.addEventListener('pageshow',()=>{if(this.orbitGPU?.disposed){this.orbitGPU=new UndertoneOrbitBridge(canvas,()=>{this.dirty=true;});this.dirty=true;}});
+  this.blackHoleGPU=typeof UndertoneBlackHoleBridge==='function'?new UndertoneBlackHoleBridge(canvas,()=>{this.dirty=true;}):null;
+  // BFCache releases GPU devices; a restored page lazily reacquires only the active scene.
+  window.addEventListener('pagehide',()=>{this.orbitGPU?.dispose();this.blackHoleGPU?.dispose();});
+  window.addEventListener('pageshow',()=>{
+   if(this.orbitGPU?.disposed)this.orbitGPU=new UndertoneOrbitBridge(canvas,()=>{this.dirty=true;});
+   if(this.blackHoleGPU?.disposed)this.blackHoleGPU=new UndertoneBlackHoleBridge(canvas,()=>{this.dirty=true;});
+   this.dirty=true;
+  });
   this.reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
   this.reduced.addEventListener?.('change',()=>{this.dirty=true;});
   this.resize=()=>{
@@ -47,7 +52,7 @@ class UndertoneVisuals {
   this.offset=seed*.0037;this.glassKey='';this.dirty=true;
  }
  hex(h){return [1,3,5].map(i=>parseInt(h.slice(i,i+2),16));}
- rgba(h,a){return `rgba(${this.hex(h).join(',')},${a})`;}
+ rgba(h,a){if(typeof h==='string'&&h.startsWith('rgb('))return h.replace('rgb(','rgba(').replace(')',','+a+')');return `rgba(${this.hex(h).join(',')},${a})`;}
  blend(a,b,f){const x=this.hex(a),y=this.hex(b);return `rgb(${x.map((v,i)=>Math.round(v+(y[i]-v)*f)).join(',')})`;}
  color(p,x){const n=Math.max(0,Math.min(.999,x))*(p.length-1),i=Math.floor(n);return this.blend(p[i],p[i+1],n-i);}
  updateAudio(raw,dt){
@@ -79,13 +84,15 @@ class UndertoneVisuals {
   // than the old 1.08x ceiling. Music adds a restrained temporary lift.
   const base=.12+2.88*Math.pow(m,1.20);
   const reactive=1+audio.energy*.10+audio.bass*.12+audio.pulse*.24;
-  return Math.min(4,base*reactive);
+  const sceneBoost=s.scene==='orbit'?1.65:s.scene==='horizon'?1.18:1;
+  return Math.min(4,base*sceneBoost*reactive);
  }
  frame(ms){
   requestAnimationFrame(this.frame);const s=this.settings(),dt=this.last?Math.min((ms-this.last)/1000,.1):0;this.last=ms;
   if(s.scene!=='orbit')this.orbitGPU?.prepare(s.scene);
+  if(s.scene!=='horizon')this.blackHoleGPU?.prepare(s.scene);
   if(document.hidden||s.blackout)return;
-  this.orbitGPU?.prepare(s.scene);
+  this.orbitGPU?.prepare(s.scene);this.blackHoleGPU?.prepare(s.scene);
   const still=s.motion===0||this.reduced.matches;
   let audio=this.audioState;
   if(still){
@@ -101,21 +108,24 @@ class UndertoneVisuals {
  }
  render(s){
   const g=this.g,w=this.width,h=this.height;if(!g||!w||!h)return;
+  const sceneTheme=UT_THEMES[s.theme]||UT_THEMES.mono;
+  if(s.scene==='horizon'&&this.transition>=1&&this.blackHoleGPU?.draw({width:w,height:h,time:this.time,seed:this.seed,motion:s.motion,brightness:s.brightness,energy:this.energy,reducedMotion:this.reduced.matches,eco:s.eco,palette:sceneTheme.orbitAccents||sceneTheme.art}))return;
+  this.blackHoleGPU?.hide();
   if(s.scene==='orbit'&&this.transition>=1&&this.orbitGPU?.draw({width:w,height:h,dpr:Math.min(window.devicePixelRatio||1,1.5),time:this.time,seed:this.seed,theme:s.theme,brightness:s.brightness,eco:s.eco,energy:this.energy}))return;
   this.orbitGPU?.hide();
-  const contract=this.canvasContract(s),p=contract.palette.art,t=contract.time;g.globalAlpha=1;g.fillStyle=p[0];g.fillRect(0,0,w,h);
+  const contract=this.canvasContract(s),p=contract.palette.art,t=contract.time;g.globalAlpha=1;g.fillStyle='#090a0c';g.fillRect(0,0,w,h);
   if(this.previousScene&&this.transition<1){this.renderScene(this.previousScene,g,w,h,t,p,1-this.transition);this.renderScene(this.activeScene,g,w,h,t,p,this.transition);}
   else{this.renderScene(this.activeScene,g,w,h,t,p,1);this.previousScene=null;}
   // Dark corners keep controls legible, without masking the central art.
   const vignetteKey=[w,h,contract.viewport.dpr].join(':');
   if(this.vignetteKey!==vignetteKey){this.vignette=g.createRadialGradient(w*.5,h*.42,h*.12,w*.5,h*.45,Math.max(w*.62,h*.74));this.vignette.addColorStop(0,'#0000');this.vignette.addColorStop(1,'#0009');this.vignetteKey=vignetteKey;}
   g.fillStyle=this.vignette;g.fillRect(0,0,w,h);
-  g.globalAlpha=1-s.brightness/100;g.fillStyle=p[0];g.fillRect(0,0,w,h);g.globalAlpha=1;
+  g.globalAlpha=1-s.brightness/100;g.fillStyle='#090a0c';g.fillRect(0,0,w,h);g.globalAlpha=1;
  }
  canvasContract(s){
   const c=this.canvasFrame;c.time=this.time+this.offset;c.viewport.width=this.width;c.viewport.height=this.height;c.viewport.dpr=Math.min(window.devicePixelRatio||1,1.5);c.seed=this.seed;c.palette=UT_THEMES[s.theme];c.motion=s.motion/100;c.brightness=s.brightness/100;c.reducedMotion=this.reduced.matches;c.audio=this.audioState;return c;
  }
- renderScene(scene,g,w,h,t,p,a){g.save();g.globalAlpha=a;if(scene==='rain')this.wetGlass(g,w,h,t,p,a);else if(scene==='dunes')this.silk(g,w,h,t,p,a);else if(scene==='orbit')this.orbit(g,w,h,t,p,a);else this.contours(g,w,h,t,p,a);g.restore();}
+ renderScene(scene,g,w,h,t,p,a){g.save();g.globalAlpha=a;if(scene==='rain')this.wetGlass(g,w,h,t,p,a);else if(scene==='dunes')this.silk(g,w,h,t,p,a);else if(scene==='orbit')this.orbit(g,w,h,t,p,a);else if(scene==='horizon')this.blackHole(g,w,h,t,p,a);else this.contours(g,w,h,t,p,a);g.restore();}
  glow(g,x,y,r,color,opacity){const v=g.createRadialGradient(x,y,0,x,y,r);v.addColorStop(0,this.rgba(color,opacity));v.addColorStop(.45,this.rgba(color,opacity*.4));v.addColorStop(1,this.rgba(color,0));g.fillStyle=v;g.fillRect(x-r,y-r,r*2,r*2);}
  contours(g,w,h,t,p,a){
   const c=this.canvasFrame,theme=c.palette||UT_THEMES.ocean,audio=c.audio||this.audioState;
@@ -138,7 +148,7 @@ class UndertoneVisuals {
    const gradients=makeGradients(g),glowGradients=makeGradients(light);
    const cos=new Float32Array(segments+1),sin=new Float32Array(segments+1);
    for(let i=0;i<=segments;i++){cos[i]=Math.cos(i/segments*Math.PI*2);sin[i]=Math.sin(i/segments*Math.PI*2);}
-   cache=this.contourCache={key,glow,light,phase,gradients,glowGradients,accents,cos,sin,points:new Float32Array(count*(segments+1)*2),colors:Array.from({length:count},(_,j)=>this.color(p,.29+.24*(1-j/count))),dark:this.blend(p[0],'#000000',.77)};
+   cache=this.contourCache={key,glow,light,phase,gradients,glowGradients,accents,cos,sin,points:new Float32Array(count*(segments+1)*2),colors:Array.from({length:count},(_,j)=>this.color(p,.29+.24*(1-j/count))),dark:this.blend('#090a0c',p[1],.08)};
   }
   const {points,phase,cos,sin,light,glow,gradients}=cache;
   const rx=w*.48,ry=h*.43,cx=w*.50,cy=h*.46;
@@ -162,7 +172,7 @@ class UndertoneVisuals {
   for(let n=0;n<6;n++){
    const j=Math.round(count*(.18+n*.105)),base=j*(segments+1)*2;
    light.beginPath();for(let i=0;i<=segments;i++){const x=points[base+i*2],y=points[base+i*2+1];i?light.lineTo(x,y):light.moveTo(x,y);}light.closePath();
-   light.strokeStyle=cache.glowGradients[n%3];light.lineWidth=3;light.shadowColor=cache.accents[n%3];light.shadowBlur=9;light.globalAlpha=Math.min(1,.55+audio.mid*.08+audio.pulse*.10);light.stroke();
+   const accentIndex=n%cache.accents.length;light.strokeStyle=cache.glowGradients[accentIndex];light.lineWidth=3;light.shadowColor=cache.accents[accentIndex];light.shadowBlur=9;light.globalAlpha=Math.min(1,.55+audio.mid*.08+audio.pulse*.10);light.stroke();
   }
   light.shadowBlur=0;g.globalAlpha=a*.8;g.drawImage(glow,0,0,w,h);
   g.lineJoin='round';g.lineCap='round';
@@ -171,7 +181,7 @@ class UndertoneVisuals {
    g.beginPath();for(let i=0;i<=segments;i++){const x=points[base+i*2],y=points[base+i*2+1];i?g.lineTo(x,y):g.moveTo(x,y);}g.closePath();
    const depth=.5+.5*Math.sin(d*8+phase[2]);
    g.strokeStyle=cache.colors[j];g.globalAlpha=a*(.18+depth*.20)*(1-Math.pow(d,5)*.65);g.lineWidth=.55+depth*.40;g.stroke();
-   for(let n=0;n<6;n++)if(j===Math.round(count*(.18+n*.105))){g.strokeStyle=gradients[n%3];g.globalAlpha=a*Math.min(1,.78+.12*Math.sin(t*.09+n)+audio.mid*.08+audio.pulse*.08);g.lineWidth=1.25+depth*.4+audio.high*.12;g.stroke();}
+   for(let n=0;n<6;n++)if(j===Math.round(count*(.18+n*.105))){g.strokeStyle=gradients[n%gradients.length];g.globalAlpha=a*Math.min(1,.78+.12*Math.sin(t*.09+n)+audio.mid*.08+audio.pulse*.08);g.lineWidth=1.25+depth*.4+audio.high*.12;g.stroke();}
   }
   g.globalAlpha=a;
  }
@@ -191,7 +201,7 @@ class UndertoneVisuals {
    const baseY=new Float32Array(layers),tilt=new Float32Array(layers),amp=new Float32Array(layers);
    const amp2=new Float32Array(layers),freq=new Float32Array(layers),phase=new Float32Array(layers);
    const speed=new Float32Array(layers),widths=new Float32Array(layers),opacity=new Float32Array(layers);
-   const colors=[],gradients=[];
+   const colors=[],gradients=[],prism=theme.silkAccents||null;
    const rgbaColor=(color,alpha)=>color[0]==='r'?color.replace('rgb(','rgba(').replace(')',','+alpha+')'):this.rgba(color,alpha);
    for(let j=0;j<layers;j++){
     const d=j/(layers-1);
@@ -206,13 +216,16 @@ class UndertoneVisuals {
     widths[j]=.040+random()*.055*(j===1||j===layers-2?1.25:.8);
     opacity[j]=.54+random()*.26;
     const shade=.22+d*.26+(random()-.5)*.04;
-    const color=this.color(p,shade);colors[j]=color;
+    const color=prism?prism[j%prism.length]:this.color(p,shade);colors[j]=color;
+    const lowColor=prism?this.blend(color,p[0],.34):this.color(p,Math.max(.16,shade-.04));
+    const highColor=prism?this.blend(color,'#ffffff',.16):this.color(p,Math.min(.98,shade+.18));
+    const edgeColor=prism?this.blend(color,p[0],.52):this.color(p,Math.max(.12,shade-.16));
     const gradient=g.createLinearGradient(0,h*(baseY[j]-.17),0,h*(baseY[j]+.17));
-    gradient.addColorStop(0,rgbaColor(this.color(p,Math.max(.12,shade-.16)),0));
-    gradient.addColorStop(.22,rgbaColor(this.color(p,Math.max(.16,shade-.04)),.20));
-    gradient.addColorStop(.50,rgbaColor(this.color(p,Math.min(.98,shade+.18)),.34));
-    gradient.addColorStop(.72,rgbaColor(this.color(p,Math.min(.98,shade+.06)),.16));
-    gradient.addColorStop(1,rgbaColor(this.color(p,Math.max(.12,shade-.14)),0));
+    gradient.addColorStop(0,rgbaColor(edgeColor,0));
+    gradient.addColorStop(.22,rgbaColor(lowColor,prism ? .14 : .20));
+    gradient.addColorStop(.50,rgbaColor(highColor,prism ? .30 : .34));
+    gradient.addColorStop(.72,rgbaColor(color,prism ? .15 : .16));
+    gradient.addColorStop(1,rgbaColor(edgeColor,0));
     gradients[j]=gradient;
    }
    const supportY=new Float32Array(supports),supportTilt=new Float32Array(supports);
@@ -229,10 +242,10 @@ class UndertoneVisuals {
     supportSpeed[j]=speed[parent]*(.82+random()*.42);
     supportWidth[j]=.45+random()*.72;
     supportOpacity[j]=.18+random()*.26;
-    supportColors[j]=this.color(p,.27+d*.46+(random()-.5)*.06);
+    supportColors[j]=prism?prism[(j+2)%prism.length]:this.color(p,.27+d*.46+(random()-.5)*.06);
    }
    const glowGradients=[];
-   const glowStops=[p[2],p[3],p[4]];
+   const glowStops=prism?[prism[0],prism[Math.floor(prism.length/2)],prism[prism.length-1]]:[p[2],p[3],p[4]];
    for(let j=0;j<3;j++){
     const x=w*(.23+j*.27),y=h*(.30+(j%2)*.28),r=Math.min(w,h)*(.38+.08*(j%2));
     const gradient=light.createRadialGradient(x,y,0,x,y,r);
@@ -241,7 +254,7 @@ class UndertoneVisuals {
    }
    cache=this.silkCache={key,glow,light,baseY,tilt,amp,amp2,freq,phase,speed,widths,opacity,colors,gradients,
     supportY,supportTilt,supportAmp,supportFreq,supportPhase,supportSpeed,supportWidth,supportOpacity,supportColors,
-    glowGradients,points:new Float32Array(layers*(samples+1)*4),supportPoints:new Float32Array(supports*(samples+1)*2),dark:this.blend(p[0],'#000000',.72),layers,samples,supports};
+    glowGradients,points:new Float32Array(layers*(samples+1)*4),supportPoints:new Float32Array(supports*(samples+1)*2),dark:this.blend('#090a0c',p[1],.08),layers,samples,supports};
   }
   const {light,glow,glowGradients,points,supportPoints}=cache;
   g.globalAlpha=a;g.fillStyle=cache.dark;g.fillRect(0,0,w,h);
@@ -286,12 +299,26 @@ class UndertoneVisuals {
   }
   g.globalAlpha=a;
  }
+ blackHole(g,w,h,t,p,a){
+  const theme=this.canvasFrame.palette||UT_THEMES.mono,q=theme.orbitAccents||p,audio=this.canvasFrame.audio||this.audioState;
+  const cx=w*.5,cy=h*.44,r=Math.min(w,h)*.115;
+  this.glow(g,cx,cy,r*2.5,q[Math.min(2,q.length-1)],.12+.06*audio.mid);
+  g.save();g.translate(cx,cy);g.rotate(-.10+Math.sin(t*.055)*.025);
+  for(let j=0;j<18;j++){const d=j/17,phase=t*(.42+d*.16)+j*.37;g.beginPath();g.ellipse(0,0,r*(1.62+d*.92),r*(.34+d*.20),Math.sin(phase)*.035,0,Math.PI*2);g.strokeStyle=q[(j+1)%q.length];g.globalAlpha=a*(.025+d*.055+.035*audio.energy);g.lineWidth=.55+d*.75;g.stroke();}
+  const ring=g.createRadialGradient(0,0,r*.78,0,0,r*1.72);
+  ring.addColorStop(0,'rgba(0,0,0,0)');ring.addColorStop(.48,this.rgba(q[Math.min(1,q.length-1)],.05));ring.addColorStop(.72,this.rgba(q[Math.min(3,q.length-1)],.24));ring.addColorStop(.88,this.rgba(q[q.length-1],.10));ring.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle=ring;g.globalAlpha=a*(.82+.12*audio.pulse);g.fillRect(-r*2.4,-r*1.5,r*4.8,r*3);
+  g.fillStyle='#010102';g.globalAlpha=a;g.beginPath();g.ellipse(0,0,r*.90,r*.90,0,0,Math.PI*2);g.fill();
+  g.strokeStyle=this.rgba(q[q.length-1],.28);g.lineWidth=1.1;g.globalAlpha=a*(.42+.18*audio.high);g.beginPath();g.ellipse(0,0,r*1.05,r*.76,-.12,0,Math.PI*2);g.stroke();
+  g.restore();g.globalAlpha=a;
+ }
  orbit(g,w,h,t,p,a){
+  const theme=this.canvasFrame.palette||UT_THEMES.ocean,q=theme.orbitAccents||p;
   const cx=w*.5,cy=h*.43,r=Math.min(w*.33,h*.32);
-  this.glow(g,cx,cy,r*1.65,p[2],.28);
+  this.glow(g,cx,cy,r*1.65,q[2],.28);
   // Dark core and luminous atmospheric limb give the orbit actual volume.
   const sphere=g.createRadialGradient(cx-r*.22,cy-r*.3,r*.04,cx,cy,r);
-  sphere.addColorStop(0,this.rgba(p[2],.1));sphere.addColorStop(.65,this.rgba(p[1],.25));sphere.addColorStop(.92,this.rgba(p[3],.17));sphere.addColorStop(1,this.rgba(p[0],0));g.fillStyle=sphere;g.fillRect(cx-r,cy-r,r*2,r*2);
+  sphere.addColorStop(0,this.rgba(q[2],.1));sphere.addColorStop(.65,this.rgba(q[1],.25));sphere.addColorStop(.92,this.rgba(q[3],.17));sphere.addColorStop(1,this.rgba(q[0],0));g.fillStyle=sphere;g.fillRect(cx-r,cy-r,r*2,r*2);
   g.translate(cx,cy);g.rotate(-.4+t*.075);
   for(let j=0;j<68;j++){
    const d=j/67,inclination=d*Math.PI+t*.18,phase=t*.32+d*4.5;
@@ -302,32 +329,36 @@ class UndertoneVisuals {
     const y=Math.sin(q)*r*Math.cos(inclination)*.85+Math.sin(q*2+phase)*r*.035;
     i?g.lineTo(x,y):g.moveTo(x,y);
    }
-   g.strokeStyle=this.color(p,.28+.53*Math.pow(Math.sin(d*Math.PI),2));g.globalAlpha=a*(.06+.19*Math.pow(Math.sin(d*9+t*.12)*.5+.5,3));g.lineWidth=.7;g.stroke();
+   g.strokeStyle=this.color(q,.28+.53*Math.pow(Math.sin(d*Math.PI),2));g.globalAlpha=a*(.06+.19*Math.pow(Math.sin(d*9+t*.12)*.5+.5,3));g.lineWidth=.7;g.stroke();
   }
   // A few close elliptical paths carry broad, softly graduated highlights.
   for(let j=0;j<4;j++){
    g.save();g.rotate(.25+j*.31+Math.sin(t*.12+j)*.16);
    for(let k=0;k<80;k++){
-    const q=k/80*Math.PI*2,head=t*(.32+j*.04)+j*1.8;
-    const light=Math.pow(Math.max(0,Math.cos(q-head)),14);
-    g.beginPath();g.ellipse(0,0,r*(1.13+j*.025),r*(.39+j*.12),0,q,q+Math.PI*2/80+.003);
-    g.strokeStyle=p[3];g.globalAlpha=a*(.025+light*.38);g.lineWidth=.8+light*.65;g.stroke();
+    const angle=k/80*Math.PI*2,head=t*(.32+j*.04)+j*1.8;
+    const light=Math.pow(Math.max(0,Math.cos(angle-head)),14);
+    g.beginPath();g.ellipse(0,0,r*(1.13+j*.025),r*(.39+j*.12),0,angle,angle+Math.PI*2/80+.003);
+    g.strokeStyle=q[3];g.globalAlpha=a*(.025+light*.38);g.lineWidth=.8+light*.65;g.stroke();
    }g.restore();
   }
   g.globalAlpha=a;
  }
  glassBackground(w,h,p){
-  const key=[Math.round(w),Math.round(h),this.seed,p.join('')].join(':');if(this.glassKey===key)return;
+  const theme=this.canvasFrame.palette||UT_THEMES.ocean,prism=theme.glassAccents||null;
+  const key=[Math.round(w),Math.round(h),this.seed,theme.name,p.join('')].join(':');if(this.glassKey===key)return;
   this.glassKey=key;const c=this.glass||document.createElement('canvas');c.width=Math.ceil(w);c.height=Math.ceil(h);const g=c.getContext('2d');
-  const bg=g.createLinearGradient(0,0,w,h);bg.addColorStop(0,p[0]);bg.addColorStop(.48,p[1]);bg.addColorStop(1,p[0]);g.fillStyle=bg;g.fillRect(0,0,w,h);
-  const scale=Math.min(w,h);
-  this.glow(g,w*.25,h*.38,scale*.65,p[2],.28);this.glow(g,w*.72,h*.57,scale*.55,p[3],.20);
+  const alphaColor=(value,alpha)=>value[0]==='r'?value.replace('rgb(','rgba(').replace(')',','+alpha+')'):this.rgba(value,alpha);
+  const bg=g.createLinearGradient(0,0,w,h),neutralMid=this.blend('#111419',p[1],.12);bg.addColorStop(0,'#090b0d');bg.addColorStop(.48,neutralMid);bg.addColorStop(1,'#090b0d');g.fillStyle=bg;g.fillRect(0,0,w,h);
+  const scale=Math.min(w,h),glowA=prism?prism[0]:p[2],glowB=prism?prism[2%prism.length]:p[3];
+  this.glow(g,w*.25,h*.38,scale*.65,glowA,prism ? .22 : .28);this.glow(g,w*.72,h*.57,scale*.55,glowB,prism ? .17 : .20);
   // Defocused lamps and their vertical reflections; no skyline or window grid.
-  for(const light of this.lights){
-   const x=light.x*w,y=light.y*h,r=scale*light.r;
-   const color=light.warm?this.blend(p[3],'#ddc7a2',p===UT_THEMES.noir.art?0:.28):p[3];
-   g.save();g.translate(x,y);g.scale(1,1.15);const halo=g.createRadialGradient(0,0,r*.15,0,0,r*2.6);halo.addColorStop(0,color);halo.addColorStop(.18,this.rgba(p[4],.7));halo.addColorStop(.44,this.rgba(p[3],.28));halo.addColorStop(1,this.rgba(p[3],0));g.globalAlpha=light.alpha*.68;g.fillStyle=halo;g.fillRect(-r*3,-r*3,r*6,r*6);g.restore();
-   g.save();g.translate(x,y+r*2);g.scale(1,4);this.glow(g,0,0,r*1.1,p[3],light.alpha*.045);g.restore();
+  for(let li=0;li<this.lights.length;li++){
+   const light=this.lights[li],x=light.x*w,y=light.y*h,r=scale*light.r;
+   const baseColor=prism?prism[li%prism.length]:p[3];
+   const color=prism?baseColor:(light.warm?this.blend(p[3],'#ddc7a2',p===UT_THEMES.noir.art?0:.28):p[3]);
+   const bright=prism?this.blend(color,'#ffffff',.22):p[4];
+   g.save();g.translate(x,y);g.scale(1,1.15);const halo=g.createRadialGradient(0,0,r*.15,0,0,r*2.6);halo.addColorStop(0,bright);halo.addColorStop(.18,alphaColor(bright,.66));halo.addColorStop(.44,alphaColor(color,.25));halo.addColorStop(1,alphaColor(color,0));g.globalAlpha=light.alpha*(prism ? .58 : .68);g.fillStyle=halo;g.fillRect(-r*3,-r*3,r*6,r*6);g.restore();
+   g.save();g.translate(x,y+r*2);g.scale(1,4);this.glow(g,0,0,r*1.1,color,light.alpha*(prism ? .035 : .045));g.restore();
   }
   this.glass=c;
   // Small drop sprites avoid rebuilding hundreds of gradients every frame.
@@ -342,12 +373,13 @@ class UndertoneVisuals {
   for(let i=0;i<this.drops.length;i++){const d=this.drops[i];if(!d.moving)this.glassDrop(pg,d,i,w,h,0,1);}
   this.glassPlate=plate;
   // Two reusable alpha-gradient sprites replace dozens of gradients per frame.
+  const rainColor=prism?prism[1%prism.length]:p[3],rainHighlight=prism?prism[0]:p[4];
   const streak=this.rainStreak||document.createElement('canvas');streak.width=8;streak.height=128;
   const sg=streak.getContext('2d'),rain=sg.createLinearGradient(0,0,0,128);
-  rain.addColorStop(0,this.rgba(p[4],0));rain.addColorStop(.8,this.rgba(p[3],.15));rain.addColorStop(1,this.rgba(p[4],.27));sg.fillStyle=rain;sg.fillRect(3,0,1.5,128);this.rainStreak=streak;
+  rain.addColorStop(0,this.rgba(rainHighlight,0));rain.addColorStop(.8,this.rgba(rainColor,prism ? .11 : .15));rain.addColorStop(1,this.rgba(rainHighlight,prism ? .22 : .27));sg.fillStyle=rain;sg.fillRect(3,0,1.5,128);this.rainStreak=streak;
   const trail=this.dropTrail||document.createElement('canvas');trail.width=24;trail.height=128;
   const tg=trail.getContext('2d'),wet=tg.createLinearGradient(0,0,0,128);
-  wet.addColorStop(0,this.rgba(p[3],0));wet.addColorStop(.60,this.rgba(p[3],.045));wet.addColorStop(1,this.rgba(p[4],.17));tg.strokeStyle=wet;tg.lineWidth=2;
+  wet.addColorStop(0,this.rgba(rainColor,0));wet.addColorStop(.60,this.rgba(rainColor,prism ? .035 : .045));wet.addColorStop(1,this.rgba(rainHighlight,prism ? .13 : .17));tg.strokeStyle=wet;tg.lineWidth=2;
   tg.beginPath();for(let i=0;i<=32;i++){const y=i*4,x=12+Math.sin(i*.20)*2;i?tg.lineTo(x,y):tg.moveTo(x,y);}tg.stroke();this.dropTrail=trail;
  }
  glassDrop(g,d,index,w,h,t,a){
