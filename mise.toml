@@ -1,3 +1,8 @@
+min_version = "2026.10.3"
+
+[settings]
+lockfile = true
+
 [tools]
 "aqua:pnpm/pnpm" = "12.5.1"
 node = "24.18.0"
