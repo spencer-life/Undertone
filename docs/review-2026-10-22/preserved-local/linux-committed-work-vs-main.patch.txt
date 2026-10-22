@@ -1,0 +1,1088 @@
+diff --git a/.github/workflows/ci-mise.yml b/.github/workflows/ci-mise.yml
+index e3e505e..f33dcea 100644
+--- a/.github/workflows/ci-mise.yml
++++ b/.github/workflows/ci-mise.yml
+@@ -5,6 +5,8 @@ name: Core CI
+ on:
+   pull_request:
+     branches: [main]
++  push:
++    branches: [main]
+   workflow_dispatch:
+ 
+ concurrency:
+diff --git a/.github/workflows/security-baseline.yml b/.github/workflows/security-baseline.yml
+index ab65ce6..661df82 100644
+--- a/.github/workflows/security-baseline.yml
++++ b/.github/workflows/security-baseline.yml
+@@ -5,6 +5,8 @@ name: Security Baseline
+ on:
+   pull_request:
+     branches: [main]
++  push:
++    branches: [main]
+   workflow_dispatch:
+ 
+ concurrency:
+diff --git a/.github/workflows/vgpu-render.yml b/.github/workflows/vgpu-render.yml
+deleted file mode 100644
+index bf26280..0000000
+--- a/.github/workflows/vgpu-render.yml
++++ /dev/null
+@@ -1,41 +0,0 @@
+-name: vgpu Render CI
+-
+-on:
+-  pull_request:
+-    branches: [main]
+-  workflow_dispatch:
+-
+-concurrency:
+-  group: vgpu-${{ github.event.pull_request.number || github.ref }}
+-  cancel-in-progress: true
+-
+-permissions:
+-  contents: read
+-
+-jobs:
+-  vgpu:
+-    runs-on: ubuntu-latest
+-    timeout-minutes: 15
+-    steps:
+-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+-        with:
+-          persist-credentials: false
+-
+-      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+-        with:
+-          cache: true
+-
+-      - run: mise run vgpu:ci
+-
+-      - if: always()
+-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+-        with:
+-          name: vgpu-render-review
+-          path: |
+-            .vgpu-ci/
+-            artifacts/orbit-t0.ppm
+-            artifacts/orbit-t25.ppm
+-          include-hidden-files: true
+-          if-no-files-found: warn
+-          compression-level: 0
+-          retention-days: 30
+diff --git a/.github/workflows/visual-review.yml b/.github/workflows/visual-review.yml
+deleted file mode 100644
+index 3c5a3dd..0000000
+--- a/.github/workflows/visual-review.yml
++++ /dev/null
+@@ -1,34 +0,0 @@
+-name: Visual Review
+-
+-on:
+-  pull_request:
+-    branches: [main]
+-  workflow_dispatch:
+-
+-concurrency:
+-  group: visual-review-${{ github.event.pull_request.number || github.ref }}
+-  cancel-in-progress: true
+-
+-permissions:
+-  contents: read
+-
+-jobs:
+-  visual:
+-    runs-on: ubuntu-latest
+-    steps:
+-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+-        with:
+-          persist-credentials: false
+-      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+-        with:
+-          cache: true
+-      - run: mise run visual:ci
+-      - if: always()
+-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+-        with:
+-          name: visual-review
+-          path: .visual-review/
+-          include-hidden-files: true
+-          if-no-files-found: error
+-          compression-level: 0
+-          retention-days: 30
+diff --git a/.mise/locks/npm-vgpu/0.5.0/aube-lock.yaml b/.mise/locks/npm-vgpu/0.5.0/aube-lock.yaml
+new file mode 100644
+index 0000000..6b99e40
+--- /dev/null
++++ b/.mise/locks/npm-vgpu/0.5.0/aube-lock.yaml
+@@ -0,0 +1,158 @@
++lockfileVersion: '9.0'
++
++settings:
++  autoInstallPeers: true
++  excludeLinksFromLockfile: false
++
++importers:
++
++  .:
++    dependencies:
++      vgpu:
++        specifier: 0.5.0
++        version: 0.5.0
++
++packages:
++
++  '@modelcontextprotocol/core@2.0.0':
++    resolution: {integrity: sha512-pJCEwGG7Lfr/+PQp9ZTwKXNeO5wzbfKL7H3MYpCorM4oFBoQrdjnBgEoqG+RjhsvS1FKrDbKux+M1HhlnGWqcA==}
++    engines: {node: '>=20'}
++
++  '@modelcontextprotocol/server@2.0.0':
++    resolution: {integrity: sha512-YhHWdHfpFMQfd0prsEnxKeS3Qz3ytIGmsS0sth4KDjnacIT7hxk6hXHkJ9KysxlkvTM+WZAtQbbcUhdoP4Hvtw==}
++    engines: {node: '>=20'}
++
++  '@vgpu/adapter-mock@0.5.0':
++    resolution: {integrity: sha512-YtgXOFn1qI+8oTJenG2wWbQPA28V0CfE5UJs5Xqbt6qyR/xaZ5LHH2XWTwFcjnqn2b1xQCyTatJCMyyOdweUnw==}
++
++  '@vgpu/adapter-node@0.5.0':
++    resolution: {integrity: sha512-lgzqFcLDejwRgwlaNStzkwLNU9b4aN2OoPpWqT1UyPmK521BSw2OIQKzAuDIkzNlREla6KNC12G6bthhOzZKzw==}
++
++  '@vgpu/core@0.5.0':
++    resolution: {integrity: sha512-z80DHRHViv6+FKKkPzggEtT1ZZs/WCKRQbzJuwYdA135DZaSbCMoRK4anhM+I/nOHuDpf7H3xjkwE6rfolWZUw==}
++
++  '@vgpu/wgsl-std@0.5.0':
++    resolution: {integrity: sha512-NjMyJxwy4evFNCSqFQy4EqAbZ7iU+NUyJYyG9tLUhbdDLzBmfZlk1S3PyRZ9olBFFfEiVW2JNVw10maPKLEs1A==}
++
++  '@vgpu/wgsl@0.5.0':
++    resolution: {integrity: sha512-PDlDJem7J28C9bk+vPy2kYZEoW8+nYIx2oN4nu7/WF2V7ETx32BtmWcawwMbhiu/CVsobFafML0h0eqLRBNa3Q==}
++    peerDependencies:
++      '@vgpu/adapter-node': '>=0.1.6 <1.0.0 || ^0.5.0-rc.0'
++    peerDependenciesMeta:
++      '@vgpu/adapter-node':
++        optional: true
++
++  '@webgpu/types@0.1.74':
++    resolution: {integrity: sha512-lgiI4hbuLcI9unnm2cL/tvCaQU45dp0xcLWJh5uB/9MBGvIA4F8XIk7nSiBeg+K4xWGYwgZKn80LmERI5CxoTA==}
++
++  debug@4.4.3:
++    resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
++    engines: {node: '>=6.0'}
++    peerDependencies:
++      supports-color: '*'
++    peerDependenciesMeta:
++      supports-color:
++        optional: true
++
++  ms@2.1.3:
++    resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
++
++  pixelmatch@7.2.0:
++    resolution: {integrity: sha512-xhcb4yHu9sM/G7foGzoLtXYcC0zHEaOXXjRKhGup0fw78Nf2Tkiapv4EQyMzrbcmQPsllAI7DbFY2UT7PlI9Pg==}
++    hasBin: true
++
++  pngjs@7.0.0:
++    resolution: {integrity: sha512-LKWqWJRhstyYo9pGvgor/ivk2w94eSjE3RGVuzLGlr3NmD8bf7RcYGze1mNdEHRP6TRP6rMuDHk5t44hnTRyow==}
++    engines: {node: '>=14.19.0'}
++
++  vgpu@0.5.0:
++    resolution: {integrity: sha512-isQfMHRTysYFfT8UWTzqQI/ROw2L7lVkj7xoUJlvIF6FjYxBNS/YNG7qp3tZ7ZvZZ3uwYjso+geQv/bEq5Hl3w==}
++    hasBin: true
++    peerDependencies:
++      three: '>=0.180.0 <0.200.0'
++    peerDependenciesMeta:
++      three:
++        optional: true
++
++  webgpu@0.4.0:
++    resolution: {integrity: sha512-F5pimn3Aoi0zWjuRdiVs5TnrUwSzD2lESBohsIUsqyitWkGRQlXU2fhV6ycXlQTa1bvAf3sjqiUpBEpmSQ5ptA==}
++
++  wgpu-matrix@3.4.2:
++    resolution: {integrity: sha512-IfZFbG7olEYBD76VCZy2TzqM57GKy3LT++AZh37tMHPPByO6R2h61zXGBZFNPi2IzxNivNi8y5dvze5PjaczjA==}
++
++  zod@4.6.5:
++    resolution: {integrity: sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q==}
++
++snapshots:
++
++  '@modelcontextprotocol/core@2.0.0':
++    dependencies:
++      zod: 4.6.5
++
++  '@modelcontextprotocol/server@2.0.0':
++    dependencies:
++      '@modelcontextprotocol/core': 2.0.0
++      zod: 4.6.5
++
++  '@vgpu/adapter-mock@0.5.0(@vgpu/adapter-node@0.5.0)':
++    dependencies:
++      '@vgpu/core': 0.5.0(@vgpu/adapter-node@0.5.0)
++
++  '@vgpu/adapter-node@0.5.0':
++    dependencies:
++      '@vgpu/core': 0.5.0(@vgpu/adapter-node@0.5.0)
++      webgpu: 0.4.0
++    transitivePeerDependencies:
++      - supports-color
++
++  '@vgpu/core@0.5.0(@vgpu/adapter-node@0.5.0)':
++    dependencies:
++      '@vgpu/wgsl': 0.5.0(@vgpu/adapter-node@0.5.0)
++
++  '@vgpu/wgsl-std@0.5.0': {}
++
++  '@vgpu/wgsl@0.5.0(@vgpu/adapter-node@0.5.0)':
++    dependencies:
++      '@vgpu/adapter-node': 0.5.0
++      '@vgpu/wgsl-std': 0.5.0
++
++  '@webgpu/types@0.1.74': {}
++
++  debug@4.4.3:
++    dependencies:
++      ms: 2.1.3
++
++  ms@2.1.3: {}
++
++  pixelmatch@7.2.0:
++    dependencies:
++      pngjs: 7.0.0
++
++  pngjs@7.0.0: {}
++
++  vgpu@0.5.0:
++    dependencies:
++      '@modelcontextprotocol/server': 2.0.0
++      '@vgpu/adapter-mock': 0.5.0(@vgpu/adapter-node@0.5.0)
++      '@vgpu/adapter-node': 0.5.0
++      '@vgpu/core': 0.5.0(@vgpu/adapter-node@0.5.0)
++      '@vgpu/wgsl': 0.5.0(@vgpu/adapter-node@0.5.0)
++      '@vgpu/wgsl-std': 0.5.0
++      '@webgpu/types': 0.1.74
++      pixelmatch: 7.2.0
++      pngjs: 7.0.0
++      wgpu-matrix: 3.4.2
++      zod: 4.6.5
++    transitivePeerDependencies:
++      - supports-color
++
++  webgpu@0.4.0:
++    dependencies:
++      '@webgpu/types': 0.1.74
++      debug: 4.4.3
++    transitivePeerDependencies:
++      - supports-color
++
++  wgpu-matrix@3.4.2: {}
++
++  zod@4.6.5: {}
+diff --git a/.mise/locks/npm-vgpu/0.5.0/package.json b/.mise/locks/npm-vgpu/0.5.0/package.json
+new file mode 100644
+index 0000000..b333aaa
+--- /dev/null
++++ b/.mise/locks/npm-vgpu/0.5.0/package.json
+@@ -0,0 +1,7 @@
++{
++  "name": "mise-npm-install",
++  "private": true,
++  "dependencies": {
++    "vgpu": "0.5.0"
++  }
++}
+diff --git a/app.js b/app.js
+index 9898c77..eb742c2 100644
+--- a/app.js
++++ b/app.js
+@@ -67,7 +67,7 @@
+  for(const [key,theme] of Object.entries(UT_THEMES)){const b=button('', 'theme');b.dataset.theme=key;b.setAttribute('aria-pressed','false');const swatches=document.createElement('span');swatches.className='theme-swatches';swatches.setAttribute('aria-hidden','true');[theme.bg,theme.line,theme.accent].forEach(color=>{const i=document.createElement('i');i.style.background=color;swatches.appendChild(i);});b.appendChild(swatches);b.appendChild(document.createTextNode(theme.name));$('themeGrid').appendChild(b);}
+  const drawings={tides:'<path d="M0 39Q30 5 70 33T170 30M0 44Q30 10 70 38T170 35M0 49Q30 15 70 43T170 40M0 54Q30 20 70 48T170 45M0 59Q30 25 70 53T170 50"/>',dunes:'<path d="M0 22C50 55 80 -6 170 28M0 27C50 60 80 -1 170 33M0 32C50 65 80 4 170 38M0 37C50 70 80 9 170 43M0 42C50 75 80 14 170 48"/>',orbit:'<ellipse cx="85" cy="34" rx="53" ry="20"/><ellipse cx="85" cy="34" rx="47" ry="16"/><ellipse cx="85" cy="34" rx="40" ry="12"/><ellipse cx="85" cy="34" rx="32" ry="8"/>',rain:'<g opacity=".25"><circle cx="30" cy="32" r="12"/><circle cx="120" cy="42" r="18"/></g><path d="M45 0v24M93 16v30M140 0v17"/><ellipse cx="45" cy="27" rx="2" ry="4"/><ellipse cx="93" cy="48" rx="3" ry="5"/><ellipse cx="140" cy="20" rx="2" ry="4"/><ellipse cx="68" cy="14" rx="2" ry="3"/>'};
+  for(const[key,name]of Object.entries(SCENES)){const b=button('','scene-option');b.dataset.scene=key;b.setAttribute('aria-pressed','false');b.innerHTML=`<svg viewBox="0 0 170 66" aria-hidden="true">${drawings[key]}</svg><span>${name}</span>`;$('sceneOptions').appendChild(b);}
+- const visual=new UndertoneVisuals($('visual'),()=>state,()=>state.musicSource==='library'&&trackPlayer?.playing?trackPlayer.visualLevels():audio.visualLevels());visual.reseed(state.seed);visual.reduced.addEventListener?.('change',()=>sync());
++ const visual=new UndertoneVisuals($('visual'),()=>state,()=>audio.level());visual.reseed(state.seed);visual.reduced.addEventListener?.('change',()=>sync());
+  function applyTheme(){const t=UT_THEMES[state.theme],root=document.documentElement;for(const k of ['bg','bg2','surface','raised','text','secondary','muted','line','accent','strong','ink'])root.style.setProperty('--'+k,t[k]);document.querySelector('meta[name=theme-color]').content=t.bg;visual.dirty=true;}
+  function sync(){const p=PRESETS[state.preset];$('intentionTitle').textContent=p.title;$('intentionDescription').textContent=p.description;$$('[data-preset]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.preset===state.preset)));$$('[data-route]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.route===state.route)));$$('[data-theme]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.theme===state.theme)));$$('[data-scene]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.scene===state.scene)));$$('[data-timer]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.timer===state.timer)));$$('[data-hz]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.hz===state.hz)));
+   $('heroFrequency').textContent=state.beats?fmtHz(state.hz):'Just be.';$('heroUnit').hidden=!state.beats;$('heroNote').textContent=state.beats?(state.route==='headphones'?'Stereo binaural · headphones required':'Gentle speaker pulse · not binaural'):'Ambient music · no beat layer';$('stageState').textContent=state.preset==='ambient'?'No targets. No rush.':`A space for ${p.label.toLowerCase()}`;
+diff --git a/audio.js b/audio.js
+index f8f1b4d..1d68c59 100644
+--- a/audio.js
++++ b/audio.js
+@@ -23,7 +23,7 @@ class UndertoneAudio {
+   this.limiter=c.createDynamicsCompressor();this.limiter.threshold.value=-8;this.limiter.knee.value=12;this.limiter.ratio.value=10;this.limiter.attack.value=.012;this.limiter.release.value=.38;
+   this.highpass=c.createBiquadFilter();this.highpass.type='highpass';this.highpass.frequency.value=25;this.highpass.Q.value=.5;
+   this.input.connect(this.highpass);this.highpass.connect(this.limiter);this.limiter.connect(this.master);this.master.connect(this.session);this.session.connect(this.transport);this.transport.connect(c.destination);
+-  this.analyser=c.createAnalyser();this.analyser.fftSize=1024;this.analyser.smoothingTimeConstant=.45;this.analyser.minDecibels=-90;this.analyser.maxDecibels=-20;this.transport.connect(this.analyser);this.meterData=new Float32Array(this.analyser.fftSize);this.meterFreq=new Uint8Array(this.analyser.frequencyBinCount||this.analyser.fftSize/2);
++  this.analyser=c.createAnalyser();this.analyser.fftSize=256;this.transport.connect(this.analyser);this.meterData=new Float32Array(256);
+   this.pad=this.gain();this.melody=this.gain();this.rain=this.gain();this.ocean=this.gain();this.noise=this.gain();
+   this.musicFilter=c.createBiquadFilter();this.musicFilter.type='lowpass';this.musicFilter.frequency.value=950;this.musicFilter.Q.value=.45;
+   this.pad.connect(this.musicFilter);this.musicFilter.connect(this.input);this.melody.connect(this.input);
+@@ -84,23 +84,6 @@ class UndertoneAudio {
+  clearTimer(){if(!this.ctx)return;this.endAt=null;const p=this.session.gain,t=this.ctx.currentTime;p.cancelScheduledValues(t);p.setValueAtTime(1,t);}
+  remaining(){return this.endAt===null?null:Math.max(0,this.endAt-this.ctx.currentTime);}
+  level(){if(!this.analyser||!this.running)return 0;this.analyser.getFloatTimeDomainData(this.meterData);let sum=0;for(const x of this.meterData)sum+=x*x;return Math.sqrt(sum/this.meterData.length);}
+- visualLevels(){
+-  if(!this.analyser||!this.running)return{energy:0,bass:0,mid:0,high:0};
+-  if(typeof this.analyser.getByteFrequencyData!=='function'){
+-   const energy=clamp(this.level()*6,0,1);
+-   return{energy,bass:energy,mid:energy*.75,high:energy*.45};
+-  }
+-  this.analyser.getByteFrequencyData(this.meterFreq);
+-  const binHz=(this.ctx.sampleRate/2)/this.meterFreq.length;
+-  const band=(low,high)=>{
+-   const start=Math.max(0,Math.floor(low/binHz)),end=Math.min(this.meterFreq.length-1,Math.ceil(high/binHz));
+-   let sum=0,count=0;
+-   for(let i=start;i<=end;i++){sum+=this.meterFreq[i];count++;}
+-   return count?Math.pow(sum/(count*255),.72):0;
+-  };
+-  const bass=band(45,180),mid=band(180,2200),high=band(2200,9000);
+-  return{energy:clamp(bass*.38+mid*.44+high*.18,0,1),bass,mid,high};
+- }
+  async testChannel(side){if(this.testBusy)return;this.testBusy=true;const wasRunning=this.running;try{await this.init(this.liveSettings||{score:'velvet',noiseType:'brown'});await this.ctx.resume();const c=this.ctx,t=c.currentTime,o=c.createOscillator(),g=this.gain(),m=c.createChannelMerger(2);o.frequency.value=330;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.025,t+.05);g.gain.setValueAtTime(.025,t+.6);g.gain.exponentialRampToValueAtTime(.0001,t+.8);o.connect(g);g.connect(m,0,side==='left'?0:1);m.connect(c.destination);o.start(t);o.stop(t+.85);await new Promise(r=>setTimeout(r,950));try{o.disconnect();g.disconnect();m.disconnect();}catch(_){}if(!wasRunning)await c.suspend();}finally{this.testBusy=false;}}
+  async destroy(){clearInterval(this.scheduler);this.scheduler=null;for(const n of this.nodes){try{n.disconnect();}catch(_){} }if(this.ctx)await this.ctx.close();this.ctx=null;this.ready=false;}
+ }
+diff --git a/docs/canvas-scenes.md b/docs/canvas-scenes.md
+index 94f5d9e..6eb3853 100644
+--- a/docs/canvas-scenes.md
++++ b/docs/canvas-scenes.md
+@@ -18,19 +18,6 @@ The existing renderers were inspected before implementation: nested contours, op
+ 
+ The legacy render dispatch passes the same time, viewport and art palette to all Canvas scenes. The common vignette is now cached by dimensions/DPR with unchanged gradient stops. The shared clock still owns30/20FPS, visibility/blackout pauses, transitions, and reduced motion.
+ 
+-## Audio-reactive motion
+-
+-The scene visuals keep their approved geometry and palettes, but their motion is now driven by one shared controller rather than separate per-scene analysers.
+-
+-- The authored FLAC player exposes a parallel, music-only analyser tap; it does not create a second audible route.
+-- Generated/fallback audio uses the existing Undertone analyser.
+-- The shared visual envelope exposes smoothed `energy`, `bass`, `mid`, `high`, and a short `pulse` derived from rising spectral energy.
+-- Attack is deliberately faster than release so changes feel musical without flicker.
+-- The motion slider now uses a nonlinear scene-time curve: motion 40 is roughly the everyday 1× pace, while motion 100 reaches about 3× before temporary music reactivity. Reactive lift is capped at 4×.
+-- Motion 0 and OS reduced motion remain fully still, even while music plays.
+-
+-Scene mappings stay restrained and product-specific: Living Contours uses bass/mids for field deformation and highlighted elevations; Silk Drift uses bass/mids for sheet amplitude with highs on fine edges; Wet Glass gets only small rain/luminance nudges because the shared clock already supplies most of its speed response. Energy Orbit receives the same music-reactive clock plus the existing composite energy uniform, so its approved Pass 7 shader structure is unchanged.
+-
+ ## Living Contours
+ 
+ 64 contours on narrow viewports,88 otherwise, with160 segments per closed path. A seeded smooth field makes broad asymmetric lobes and saddles. Slowly drifting deformation uses several distinct periods without rotation. Many fine subdued lines establish depth; only six selected elevations receive localized color/glow.
+diff --git a/docs/design-decisions.md b/docs/design-decisions.md
+index 5acdd89..122a48d 100644
+--- a/docs/design-decisions.md
++++ b/docs/design-decisions.md
+@@ -17,7 +17,6 @@ trapping, keyboard and remote control behavior remain available.
+ | Contours | Regular nested ellipses | Shared warped organic field and slowly moving ridges | More natural continuous motion |
+ | Silk | Dunes and moon | Dense flowing ribbons with narrow lighting ridges | Fabric-like layered flow |
+ | Orbit | Similar elliptical line rings | Spherical core, atmospheric edge, inclined paths with graduated light | A distinct volumetric scene |
+-| Motion | Slow shared drift with a low maximum speed | Nonlinear speed range plus restrained music-reactive motion | Make the scenes visibly alive while keeping reduced-motion and calm-product constraints |
+ | Layout | Accumulated overrides and hidden mobile routing | Single inset dock with routing and volume on phone | Keep the scene central without losing useful controls |
+ | Themes | Six palettes | Nine palettes, including neutral Noir, Midnight slate, Frost | Useful dark variety |
+ 
+@@ -30,8 +29,5 @@ The code here uses original Canvas techniques and does not copy these components
+ 
+ Rendering is capped at 30 fps / 1.5 device pixels, or 20 fps in low-power mode.
+ Hidden pages and blackout stop drawing. Zero movement and system reduced motion
+-produce a still composition. While audio is playing, one shared spectral envelope
+-can modestly accelerate scene time and shape scene-specific motion; this is reactive
+-visual accompaniment, not a neurological measurement or a literal binaural-frequency
+-visualization. Droplet sprites and the defocused background are cached by size, seed
+-and theme.
++produce a still composition; no visual is synchronized to beat frequencies.
++Droplet sprites and the defocused background are cached by size, seed and theme.
+diff --git a/mise.lock b/mise.lock
+index ac7ad55..edf69a9 100644
+--- a/mise.lock
++++ b/mise.lock
+@@ -1,6 +1,6 @@
+ # @generated - this file is auto-generated by `mise lock` https://mise.jdx.dev/dev-tools/mise-lock.html
+ 
+-lockfile_version = 1
++lockfile_version = 3
+ 
+ [[tools."aqua:pnpm/pnpm"]]
+ version = "12.5.1"
+@@ -50,39 +50,16 @@ url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/573486214"
+ provenance = "github-attestations"
+ 
+ [[tools.node]]
+-version = "24.18.0"
++version = "24.22.1"
+ backend = "core:node"
+-specifiers = ["24.18.0"]
+-
+-[tools.node."platforms.linux-arm64"]
+-checksum = "sha256:6b4484c2190274175df9aa8f28e2d758a819cb1c1fe6ab481e2f95b463ab8508"
+-url = "https://nodejs.org/dist/v24.18.0/node-v24.18.0-linux-arm64.tar.gz"
+-
+-[tools.node."platforms.linux-arm64-musl"]
+-checksum = "sha256:b1c6c2dc31b46dd8fb2322f4fe75b07e775c5120bc37251deeea28f529d4567b"
+-url = "https://unofficial-builds.nodejs.org/download/release/v24.18.0/node-v24.18.0-linux-arm64-musl.tar.gz"
++specifiers = ["24.22.1"]
+ 
+ [tools.node."platforms.linux-x64"]
+-checksum = "sha256:783130984963db7ba9cbd01089eaf2c2efb055c7c1693c943174b967b3050cb8"
+-url = "https://nodejs.org/dist/v24.18.0/node-v24.18.0-linux-x64.tar.gz"
+-
+-[tools.node."platforms.linux-x64-musl"]
+-checksum = "sha256:ea58409911e141ec6b19d9178efa2d9185a13295005b1cbf5521b3157eed1d95"
+-url = "https://unofficial-builds.nodejs.org/download/release/v24.18.0/node-v24.18.0-linux-x64-musl.tar.gz"
+-
+-[tools.node."platforms.macos-arm64"]
+-checksum = "sha256:e1a97e14c99c803e96c7339403282ea05a499c32f8d83defe9ef5ec66f979ed1"
+-url = "https://nodejs.org/dist/v24.18.0/node-v24.18.0-darwin-arm64.tar.gz"
+-
+-[tools.node."platforms.macos-x64"]
+-checksum = "sha256:dfd0dbd3e721503434df7b7205e719f61b3a3a31b2bcf9729b8b91fea240f080"
+-url = "https://nodejs.org/dist/v24.18.0/node-v24.18.0-darwin-x64.tar.gz"
+-
+-[tools.node."platforms.windows-x64"]
+-checksum = "sha256:0ae68406b42d7725661da979b1403ec9926da205c6770827f33aac9d8f26e821"
+-url = "https://nodejs.org/dist/v24.18.0/node-v24.18.0-win-x64.zip"
++checksum = "sha256:eb6728e77c576a35162c122c45ccadf224d89ff00abc8dae46cc2897c6002d7c"
++url = "https://nodejs.org/dist/v24.22.1/node-v24.22.1-linux-x64.tar.gz"
+ 
+ [[tools."npm:vgpu"]]
+ version = "0.5.0"
++aube = { path = ".mise/locks/npm-vgpu/0.5.0", digest = "sha256:7ef122065aa9e63351e5c551bf743729e5e63207291ea21303bca9b43d4ae38b" }
+ backend = "npm:vgpu"
+ specifiers = ["0.5.0"]
+diff --git a/mise.toml b/mise.toml
+index 4d5ae09..f699a7c 100644
+--- a/mise.toml
++++ b/mise.toml
+@@ -1,6 +1,11 @@
++min_version = "2026.10.3"
++
++[settings]
++lockfile = true
++
+ [tools]
+ "aqua:pnpm/pnpm" = "12.5.1"
+-node = "24.18.0"
++node = "24.22.1"
+ "npm:vgpu" = "0.5.0"
+ 
+ [tasks.ci]
+@@ -12,17 +17,3 @@ pnpm check
+ pnpm test
+ pnpm build
+ '''
+-
+-
+-[tasks."visual:ci"]
+-description = "Capture deterministic Playwright screenshots for rendered QA"
+-run = "bash scripts/visual-review.sh"
+-
+-
+-[tasks."vgpu:ci"]
+-description = "Validate Undertone WebGPU shaders, deterministic pixels, and browser WebGPU rendering"
+-run = '''
+-set -eu
+-pnpm install --frozen-lockfile
+-bash scripts/vgpu-ci.sh
+-'''
+diff --git a/netlify.toml b/netlify.toml
+index 420564c..6488022 100644
+--- a/netlify.toml
++++ b/netlify.toml
+@@ -3,5 +3,5 @@
+   publish = "dist"
+ 
+ [build.environment]
+-  NODE_VERSION = "24.18.0"
++  NODE_VERSION = "24.22.1"
+   PNPM_FLAGS = "--frozen-lockfile"
+diff --git a/scripts/vgpu-ci.sh b/scripts/vgpu-ci.sh
+deleted file mode 100644
+index 1cfeb00..0000000
+--- a/scripts/vgpu-ci.sh
++++ /dev/null
+@@ -1,112 +0,0 @@
+-#!/usr/bin/env bash
+-set -euo pipefail
+-
+-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+-cd "$ROOT"
+-
+-OUT=".vgpu-ci"
+-PORT="${VGPU_CI_PORT:-4182}"
+-BASE="http://127.0.0.1:$PORT"
+-SESSION="undertone-vgpu-ci"
+-
+-rm -rf "$OUT"
+-mkdir -p "$OUT"
+-
+-echo "==> Verify vgpu can acquire an adapter and render"
+-if ! pnpm exec vgpu doctor --pretty >"$OUT/doctor.txt" 2>&1; then
+-  cat "$OUT/doctor.txt"
+-  echo "vgpu doctor failed; installing the documented software renderer fallback"
+-  pnpm exec vgpu install-software-renderer | tee "$OUT/install-software-renderer.txt"
+-  pnpm exec vgpu doctor --pretty | tee "$OUT/doctor-after-fallback.txt"
+-else
+-  cat "$OUT/doctor.txt"
+-fi
+-
+-echo "==> Validate every WGSL module with device-backed validation"
+-pnpm check:orbit | tee "$OUT/check-orbit.txt"
+-
+-echo "==> Deterministic seven-pass Node render + pixel assertions"
+-pnpm render:orbit | tee "$OUT/render-orbit.txt"
+-cp -f artifacts/orbit-t0.ppm "$OUT/" 2>/dev/null || true
+-cp -f artifacts/orbit-t25.ppm "$OUT/" 2>/dev/null || true
+-
+-echo "==> Rebuild browser bundle"
+-pnpm build:orbit | tee "$OUT/build-orbit.txt"
+-
+-echo "==> Install the browser harness documented by vgpu"
+-npm install --global agent-browser@0.33.0 >/dev/null
+-sudo apt-get update -qq
+-sudo apt-get install -y -qq libvulkan1 mesa-vulkan-drivers xvfb xauth imagemagick >/dev/null
+-agent-browser doctor --webgpu --headed | tee "$OUT/agent-browser-doctor.txt"
+-
+-echo "==> Start Undertone preview"
+-python3 scripts/preview.py --port "$PORT" >"$OUT/preview.log" 2>&1 &
+-PREVIEW_PID=$!
+-cleanup() {
+-  agent-browser --session "$SESSION" close >/dev/null 2>&1 || true
+-  kill "$PREVIEW_PID" >/dev/null 2>&1 || true
+-  wait "$PREVIEW_PID" >/dev/null 2>&1 || true
+-}
+-trap cleanup EXIT
+-
+-node - "$BASE" <<'NODE'
+-const base=process.argv[2],deadline=Date.now()+15000;
+-(async()=>{
+-  while(Date.now()<deadline){
+-    try{
+-      const r=await fetch(base,{cache:'no-store'});
+-      if(r.ok) process.exit(0);
+-    }catch{}
+-    await new Promise(r=>setTimeout(r,200));
+-  }
+-  console.error('Preview server did not become ready:',base);
+-  process.exit(1);
+-})();
+-NODE
+-
+-URL="$(node - "$BASE" <<'NODE'
+-const base=process.argv[2];
+-const mix={
+-  musicSource:'generated',track:'broken-glimmers',music:70,autoMix:false,
+-  preset:'focus',route:'speakers',hz:40,carrier:340,beats:true,beatVolume:14,
+-  master:35,pad:76,melody:20,rain:0,ocean:0,noise:8,noiseType:'pink',
+-  score:'horizon',theme:'violet',scene:'orbit',motion:100,brightness:80,
+-  eco:false,breathing:false,keepAwake:false,blackout:false,timer:0,seed:604
+-};
+-console.log(base+'/?renderer=webgpu#mix='+encodeURIComponent(JSON.stringify(mix)));
+-NODE
+-)"
+-
+-echo "==> Verify the real browser WebGPU path through SwiftShader"
+-agent-browser --session "$SESSION" --webgpu --headed open "$URL"
+-agent-browser --session "$SESSION" --webgpu --headed wait 6000
+-agent-browser --session "$SESSION" --webgpu --headed eval 'new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))' >/dev/null
+-
+-META="$(agent-browser --session "$SESSION" --webgpu --headed eval 'new Promise((resolve)=>{const deadline=Date.now()+10000;const tick=()=>{const base=document.querySelector("#visual");const result={hasGpu:Boolean(navigator.gpu),renderer:base?.dataset?.renderer||null,orbitStatus:base?.dataset?.orbitStatus||null,orbitError:base?.dataset?.orbitError||null,gpuLayerVisible:Boolean(base?.nextElementSibling?.tagName==="CANVAS"&&base.nextElementSibling.style.display!=="none")};if(result.renderer==="webgpu"&&result.orbitStatus==="ready")resolve(JSON.stringify(result));else if(Date.now()>deadline)resolve(JSON.stringify(result));else setTimeout(tick,100)};tick()})')"
+-printf '%s\n' "$META" | tee "$OUT/browser-meta-raw.txt"
+-CLEAN_META="$(printf '%s' "$META" | sed 's/\\"/"/g')"
+-printf '%s\n' "$CLEAN_META" | tee "$OUT/browser-meta.txt"
+-printf '%s' "$CLEAN_META" | grep -q '"hasGpu":true'
+-printf '%s' "$CLEAN_META" | grep -q '"renderer":"webgpu"'
+-printf '%s' "$CLEAN_META" | grep -q '"orbitStatus":"ready"'
+-printf '%s' "$CLEAN_META" | grep -q '"gpuLayerVisible":true'
+-if printf '%s' "$CLEAN_META" | grep -Eq 'Preview error|WebGPU is not available|No WebGPU adapter was found|"orbitError":"[^"]+'; then
+-  echo "Browser reported a WebGPU error"
+-  exit 1
+-fi
+-
+-SHOT_OUTPUT="$(agent-browser --session "$SESSION" --webgpu --headed screenshot)"
+-printf '%s\n' "$SHOT_OUTPUT" | tee "$OUT/screenshot-command.txt"
+-SHOT_PATH="$(printf '%s\n' "$SHOT_OUTPUT" | sed -n 's/.*Screenshot saved to \(.*\.png\)$/\1/p' | tail -1)"
+-if [[ -z "$SHOT_PATH" || ! -f "$SHOT_PATH" ]]; then
+-  echo "agent-browser did not return a usable screenshot path"
+-  exit 1
+-fi
+-cp "$SHOT_PATH" "$OUT/orbit-webgpu.png"
+-STDDEV="$(identify -format '%[fx:standard_deviation]' "$OUT/orbit-webgpu.png")"
+-printf '%s\n' "$STDDEV" | tee "$OUT/screenshot-standard-deviation.txt"
+-# ImageMagick 6 on GitHub-hosted Ubuntu reports standard deviation on a
+-# normalized 0..1 scale. Reject essentially uniform/black captures.
+-awk -v v="$STDDEV" 'BEGIN { exit !(v > 0.02) }'
+-
+-echo "vgpu CI passed: shader validation, doctor, deterministic pixels, and browser WebGPU path."
+diff --git a/scripts/visual-review.sh b/scripts/visual-review.sh
+deleted file mode 100644
+index a711949..0000000
+--- a/scripts/visual-review.sh
++++ /dev/null
+@@ -1,141 +0,0 @@
+-#!/usr/bin/env bash
+-set -euo pipefail
+-
+-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+-cd "$ROOT"
+-
+-OUT=".visual-review"
+-PORT="${VISUAL_REVIEW_PORT:-4178}"
+-BASE="${TARGET_URL:-}"
+-
+-rm -rf "$OUT"
+-mkdir -p "$OUT/pages"
+-
+-preview_pid=""
+-cleanup() {
+-  if [[ -n "$preview_pid" ]]; then
+-    kill "$preview_pid" >/dev/null 2>&1 || true
+-    wait "$preview_pid" >/dev/null 2>&1 || true
+-  fi
+-}
+-trap cleanup EXIT
+-
+-if [[ -z "$BASE" ]]; then
+-  python3 scripts/preview.py --port "$PORT" >"$OUT/preview.log" 2>&1 &
+-  preview_pid=$!
+-  BASE="http://127.0.0.1:$PORT"
+-
+-  node - "$BASE" <<'NODE'
+-const base=process.argv[2];
+-const deadline=Date.now()+15000;
+-(async()=>{
+-  while(Date.now()<deadline){
+-    try{
+-      const r=await fetch(base,{cache:'no-store'});
+-      if(r.ok) process.exit(0);
+-    }catch{}
+-    await new Promise(r=>setTimeout(r,200));
+-  }
+-  console.error('Preview server did not become ready:',base);
+-  process.exit(1);
+-})();
+-NODE
+-fi
+-
+-PW="playwright@1.55.0"
+-pnpm dlx "$PW" install chromium >/dev/null
+-
+-mix_url() {
+-  node - "$BASE" "$1" "$2" <<'NODE'
+-const [base,scene,motion]=process.argv.slice(2);
+-const mix={
+-  musicSource:'library',
+-  track:'broken-glimmers',
+-  music:70,
+-  autoMix:false,
+-  preset:'focus',
+-  route:'speakers',
+-  hz:40,
+-  carrier:340,
+-  beats:true,
+-  beatVolume:14,
+-  master:35,
+-  pad:76,
+-  melody:20,
+-  rain:0,
+-  ocean:0,
+-  noise:8,
+-  noiseType:'pink',
+-  score:'horizon',
+-  theme:'violet',
+-  scene,
+-  motion:Number(motion),
+-  brightness:80,
+-  eco:false,
+-  breathing:false,
+-  keepAwake:false,
+-  blackout:false,
+-  timer:0,
+-  seed:604
+-};
+-console.log(base+'/#mix='+encodeURIComponent(JSON.stringify(mix)));
+-NODE
+-}
+-
+-capture() {
+-  local scene="$1" motion="$2" wait_ms="$3" label="$4"
+-  local dir="$OUT/pages/$scene"
+-  mkdir -p "$dir"
+-  local url
+-  url="$(mix_url "$scene" "$motion")"
+-  pnpm dlx "$PW" screenshot \
+-    --browser=chromium \
+-    --viewport-size="1440,1100" \
+-    --wait-for-timeout="$wait_ms" \
+-    "$url" "$dir/$label.png" >/dev/null
+-}
+-
+-# Two timing samples at everyday pace and two at max pace for the scenes whose
+-# motion is easiest to evaluate from still-frame displacement.
+-for scene in tides dunes orbit rain; do
+-  capture "$scene" 40 600  "motion40-early"
+-  capture "$scene" 40 5600 "motion40-late"
+-  capture "$scene" 100 600  "motion100-early"
+-  capture "$scene" 100 5600 "motion100-late"
+-done
+-
+-GIT_SHA="${GITHUB_SHA:-unknown}" RUN_ID="${GITHUB_RUN_ID:-local}" BASE_URL="$BASE" node <<'NODE'
+-const fs=require('fs');
+-const scenes=[
+-  ['tides','Living Contours'],
+-  ['dunes','Silk Drift'],
+-  ['orbit','Energy Orbit'],
+-  ['rain','Wet Glass'],
+-];
+-const captures=[];
+-for(const [route,name] of scenes){
+-  for(const motion of [40,100]){
+-    for(const timing of ['early','late']){
+-      captures.push({
+-        route,
+-        name,
+-        motion,
+-        timing,
+-        viewport:{width:1440,height:1100},
+-        screenshot:`pages/${route}/motion${motion}-${timing}.png`
+-      });
+-    }
+-  }
+-}
+-fs.writeFileSync('.visual-review/manifest.json',JSON.stringify({
+-  commit:process.env.GIT_SHA,
+-  runId:process.env.RUN_ID,
+-  baseUrl:process.env.BASE_URL,
+-  purpose:'Undertone audio-reactive motion pre-merge review',
+-  note:'Static timing samples validate motion displacement. Audio-reactive spectral mapping is covered by deterministic tests; screenshots do not autoplay audio.',
+-  routes:scenes.map(([route,name])=>({route,name})),
+-  captures
+-},null,2));
+-NODE
+-
+-echo "Visual review captured $(find "$OUT/pages" -name '*.png' | wc -l | tr -d ' ') screenshots."
+diff --git a/sw.js b/sw.js
+index 41e3675..509f7ff 100644
+--- a/sw.js
++++ b/sw.js
+@@ -1,5 +1,5 @@
+ // An atomic, versioned app shell prevents offline HTML / module mismatches.
+-const CACHE = 'undertone-v20';
++const CACHE = 'undertone-v19';
+ const ASSETS = [
+  './','./index.html','./styles.css','./layout.css','./audio.js',
+  './audio-worklet.js','./music-library.js','./tracks.js','./orbit-bridge.js','./vendor/energy-orbit.js','./visuals.js','./webmcp.js','./app.js','./manifest.webmanifest',
+diff --git a/tests/pwa.test.js b/tests/pwa.test.js
+index 03f89d3..a8b338b 100644
+--- a/tests/pwa.test.js
++++ b/tests/pwa.test.js
+@@ -4,7 +4,7 @@ const root=path.resolve(__dirname,'..');
+ function serviceWorker(){
+  const handlers={},deleted=[],added=[],reads=[],network=[];
+  const cache={addAll:async assets=>added.push(...assets),match:async key=>{reads.push(key);return key==='./index.html'?'cached-html':undefined;}};
+- const context={URL,caches:{open:async()=>cache,keys:async()=>['undertone-v3','undertone-v11','undertone-v13','undertone-v14','undertone-v15','undertone-v16','undertone-v17','undertone-v18','undertone-v19','undertone-v20','unrelated-cache','undertone-library-v1'],delete:async key=>deleted.push(key)},fetch:async req=>{network.push(req);return 'network';},self:{location:{origin:'https://undertone.test'},clients:{claim:async()=>{}},addEventListener:(type,fn)=>handlers[type]=fn}};
++ const context={URL,caches:{open:async()=>cache,keys:async()=>['undertone-v3','undertone-v11','undertone-v13','undertone-v14','undertone-v15','undertone-v16','undertone-v17','undertone-v18','undertone-v19','unrelated-cache','undertone-library-v1'],delete:async key=>deleted.push(key)},fetch:async req=>{network.push(req);return 'network';},self:{location:{origin:'https://undertone.test'},clients:{claim:async()=>{}},addEventListener:(type,fn)=>handlers[type]=fn}};
+  vm.runInNewContext(fs.readFileSync(path.join(root,'sw.js'),'utf8'),context);return {handlers,deleted,added,reads,network};
+ }
+ test('PWA shell caches every app script/style and worklet before activation',async()=>{
+@@ -14,7 +14,7 @@ test('PWA shell caches every app script/style and worklet before activation',asy
+  for(const asset of sw.added)assert(fs.existsSync(path.resolve(root,asset)),`Missing precache file ${asset}`);
+ });
+ test('activation removes only obsolete Undertone caches',async()=>{
+- const sw=serviceWorker();let ready;sw.handlers.activate({waitUntil:p=>ready=p});await ready;assert.deepEqual(sw.deleted,['undertone-v3','undertone-v11','undertone-v13','undertone-v14','undertone-v15','undertone-v16','undertone-v17','undertone-v18','undertone-v19']);
++ const sw=serviceWorker();let ready;sw.handlers.activate({waitUntil:p=>ready=p});await ready;assert.deepEqual(sw.deleted,['undertone-v3','undertone-v11','undertone-v13','undertone-v14','undertone-v15','undertone-v16','undertone-v17','undertone-v18']);
+ });
+ test('offline shell stays versioned; missing modules do not receive HTML',async()=>{
+  const sw=serviceWorker();let response;sw.handlers.fetch({request:{method:'GET',mode:'navigate',url:'https://undertone.test/'},respondWith:p=>response=p});assert.equal(await response,'cached-html');
+diff --git a/tests/tracks.test.js b/tests/tracks.test.js
+index ec58b31..2238289 100644
+--- a/tests/tracks.test.js
++++ b/tests/tracks.test.js
+@@ -29,13 +29,6 @@ test('loads lazily, preserves stereo, and starts one idempotent seamless source'
+   player.setVolume(50);assert.equal(player._active.gain.gain.value,1);assert.equal(player.output.gain.value,.3);
+ });
+ 
+-test('music-only analyser exposes spectral levels without changing the audible route',async()=>{
+-  const ctx=new Context(),analyser=new Node();analyser.frequencyBinCount=512;analyser.getByteFrequencyData=data=>{const hz=(ctx.sampleRate/2)/data.length;for(let i=0;i<data.length;i++){const f=i*hz;data[i]=f<180?235:f<2200?132:f<9000?48:8;}};
+-  ctx.createAnalyser=()=>analyser;ctx.decodeQueue.push(decoded());const player=new UndertoneTrackPlayer(ctx,ctx.destination);await player.load(descriptor('reactive'));await player.play();
+-  const levels=player.visualLevels();assert(levels.bass>levels.mid&&levels.mid>levels.high,'bands should preserve the synthetic spectral slope');assert(levels.energy>0&&levels.energy<=1);assert(player.output.connections.includes(ctx.destination),'music must still reach the original destination');assert(player.output.connections.includes(analyser),'analyser should be a parallel tap');assert.equal(analyser.connections.length,0,'visual analyser must not feed a second audible path');
+-  await player.destroy();
+-});
+-
+ test('prepares one-time equal-power crossfade loop with a rotated continuous splice',async()=>{
+   const ctx=new Context(),source=decoded(48000*4);source.channels[0].fill(.4);source.channels[1].fill(-.4);ctx.decodeQueue.push(source);const player=new UndertoneTrackPlayer(ctx,ctx.destination);await player.load({...descriptor('broken-glimmers','crossfade'),crossfadeSeconds:2});const playable=player._loaded.playable;assert.equal(playable.length,source.length-96000);assert.equal(playable.numberOfChannels,2);
+   for(const channel of [0,1]){const data=playable.getChannelData(channel),start=Math.abs(data[0]),end=Math.abs(data[data.length-1]);assert(start>.1&&end>.1,'crossfade loop boundary faded to zero');assert(Math.abs(data[0]-data[data.length-1])<.25,'rotated crossfade splice is discontinuous');}
+diff --git a/tests/visuals.test.js b/tests/visuals.test.js
+index 011d10d..e1eb973 100644
+--- a/tests/visuals.test.js
++++ b/tests/visuals.test.js
+@@ -15,25 +15,6 @@ test('zero movement and system reduced motion render a still scene',()=>{
+  const h=visualHarness();h.settings.motion=0;h.visual.frame(1000);const t=h.visual.time;h.visual.frame(2000);assert.equal(h.paints(),1);assert.equal(h.visual.time,t);
+  h.settings.motion=40;h.media.matches=true;h.visual.dirty=true;h.visual.frame(3000);h.visual.frame(4000);assert.equal(h.paints(),2);assert.equal(h.visual.time,t);
+ });
+-test('still mode zeros audio reactivity even when a dirty repaint occurs during music',()=>{
+- const h=visualHarness();h.settings.motion=0;h.visual.audio=()=>({energy:1,bass:1,mid:1,high:1});
+- h.visual.audioState.energy=.8;h.visual.audioState.bass=.7;h.visual.audioState.mid=.6;h.visual.audioState.high=.5;h.visual.audioState.pulse=.9;h.visual.audioBaseline=.5;
+- h.visual.dirty=true;h.visual.frame(1000);
+- assert.deepEqual({...h.visual.audioState},{energy:0,bass:0,mid:0,high:0,pulse:0});assert.equal(h.visual.audioBaseline,0);
+-});
+-test('motion curve has a useful normal pace, a fast top end, and restrained music boost',()=>{
+- const h=visualHarness(),v=h.visual,idle={energy:0,bass:0,mid:0,high:0,pulse:0},music={energy:.7,bass:.8,mid:.6,high:.4,pulse:.75};
+- h.settings.motion=40;const normal=v.motionRate(h.settings,idle);assert(normal>1&&normal<1.2,`motion 40 should be near 1x, got ${normal}`);
+- h.settings.motion=100;const fast=v.motionRate(h.settings,idle),reactive=v.motionRate(h.settings,music);assert(fast>=2.9&&fast<=3.1,`motion 100 should reach about 3x, got ${fast}`);assert(reactive>fast&&reactive<=4,'music should lift speed without exceeding the cap');
+- h.settings.motion=0;assert.equal(v.motionRate(h.settings,music),0,'motion zero must stay still even with music');
+-});
+-test('audio envelope exposes smoothed bands and a decaying onset pulse',()=>{
+- const h=visualHarness(),v=h.visual;
+- for(let i=0;i<5;i++)v.updateAudio({energy:.8,bass:1,mid:.65,high:.35},.05);
+- assert(v.audioState.energy>.3);assert(v.audioState.bass>v.audioState.high);assert(v.audioState.pulse>0,'rising music should create an onset pulse');
+- const peak=v.audioState.pulse;for(let i=0;i<16;i++)v.updateAudio({energy:0,bass:0,mid:0,high:0},.05);
+- assert(v.audioState.pulse<peak,'pulse should release instead of sticking');
+-});
+ test('blackout and hidden document stop rendering work',()=>{
+  const h=visualHarness();h.settings.blackout=true;h.visual.frame(1000);assert.equal(h.paints(),0);h.settings.blackout=false;h.scope.document.hidden=true;h.visual.frame(2000);assert.equal(h.paints(),0);h.scope.document.hidden=false;h.visual.frame(3000);assert.equal(h.paints(),1);
+ });
+@@ -66,7 +47,7 @@ test('BFCache page lifecycle releases and recreates the GPU bridge without anoth
+ test('Canvas frame contract reuses storage and preserves theme, time and controls',()=>{
+  const h=visualHarness(),v=h.visual;v.time=7;v.reseed(42);
+  const a=v.canvasContract(h.settings),viewport=a.viewport;h.settings.motion=0;h.settings.brightness=30;h.media.matches=true;
+- const b=v.canvasContract(h.settings);assert.equal(a,b);assert.equal(b.viewport,viewport);assert.equal(b.audio,v.audioState);assert.equal(b.seed,42);assert.equal(b.time,7+42*.0037);assert.equal(b.motion,0);assert.equal(b.brightness,.3);assert.equal(b.reducedMotion,true);assert.equal(b.palette.name,'Noir');assert.equal(b.viewport.dpr,1.5);
++ const b=v.canvasContract(h.settings);assert.equal(a,b);assert.equal(b.viewport,viewport);assert.equal(b.seed,42);assert.equal(b.time,7+42*.0037);assert.equal(b.motion,0);assert.equal(b.brightness,.3);assert.equal(b.reducedMotion,true);assert.equal(b.palette.name,'Noir');assert.equal(b.viewport.dpr,1.5);
+ });
+ test('contours are seeded, finite, animated and reuse buffers and glow surface',()=>{
+  const h=visualHarness(),v=h.visual;let canvases=0;const alphas=[];
+diff --git a/tracks.js b/tracks.js
+index c60e24a..f597346 100644
+--- a/tracks.js
++++ b/tracks.js
+@@ -15,19 +15,6 @@ class UndertoneTrackPlayer {
+   if(!ctx||!destination)throw new TypeError('UndertoneTrackPlayer needs an AudioContext and a destination node.');
+   this.ctx=ctx;this.destination=destination;this.onStatus=typeof onStatus==='function'?onStatus:null;
+   this.output=ctx.createGain();this.output.gain.value=.6;this.output.connect(destination);
+-  // A music-only analyser feeds visuals without changing the authored audio path.
+-  // It is intentionally a parallel tap: the analyser is not connected onward,
+-  // so it cannot duplicate or color the audible signal.
+-  this.visualAnalyser=typeof ctx.createAnalyser==='function'?ctx.createAnalyser():null;
+-  this.visualBins=null;
+-  if(this.visualAnalyser){
+-   this.visualAnalyser.fftSize=1024;
+-   this.visualAnalyser.smoothingTimeConstant=.45;
+-   this.visualAnalyser.minDecibels=-90;
+-   this.visualAnalyser.maxDecibels=-20;
+-   this.visualBins=new Uint8Array(this.visualAnalyser.frequencyBinCount);
+-   this.output.connect(this.visualAnalyser);
+-  }
+   this._volume=100;this._currentTrack=null;this._loaded=null;this._active=null;this._retiring=new Set();this._playing=false;this._generation=0;this._abort=null;this._loadOrigin=null;this._destroyed=false;
+   this._autoTracks=[];this._autoEnabled=false;this._autoTimer=null;this._autoEpoch=0;this._autoRetryAt=null;
+   this.loading=false;this.error=null;this.status='idle';this.offline=false;this.offlineAvailable=false;
+@@ -36,19 +23,6 @@ class UndertoneTrackPlayer {
+  get playing(){return this._playing;}
+  get autoMix(){return this._autoEnabled;}
+  setVolume(value){if(this._destroyed)return;const next=trackClamp(Number(value)||0,0,100);this._volume=next;const target=.6*next/100,param=this.output.gain,t=this.ctx.currentTime;param.cancelScheduledValues(t);param.setTargetAtTime(target,t,.08);}
+- visualLevels(){
+-  if(this._destroyed||!this._playing||!this.visualAnalyser||!this.visualBins||typeof this.visualAnalyser.getByteFrequencyData!=='function')return{energy:0,bass:0,mid:0,high:0};
+-  this.visualAnalyser.getByteFrequencyData(this.visualBins);
+-  const binHz=(this.ctx.sampleRate/2)/this.visualBins.length;
+-  const band=(low,high)=>{
+-   const start=Math.max(0,Math.floor(low/binHz)),end=Math.min(this.visualBins.length-1,Math.ceil(high/binHz));
+-   let sum=0,count=0;
+-   for(let i=start;i<=end;i++){sum+=this.visualBins[i];count++;}
+-   return count?Math.pow(sum/(count*255),.72):0;
+-  };
+-  const bass=band(45,180),mid=band(180,2200),high=band(2200,9000);
+-  return{energy:trackClamp(bass*.38+mid*.44+high*.18,0,1),bass,mid,high};
+- }
+  _notify(status,error=null,meta={}){this.status=status;if(error)this.error=error;const payload={status:this.status,loading:this.loading,error:this.error,currentTrack:this._currentTrack,playing:this._playing,offline:this.offline,offlineAvailable:this.offlineAvailable,autoMix:this._autoEnabled,trackChanged:!!meta.trackChanged,transitionReason:meta.transitionReason||null};if(this.onStatus)try{this.onStatus(payload);}catch(_){} }
+  _validateTrack(track){if(!track||typeof track!=='object')throw new TypeError('A track descriptor is required.');if(typeof track.id!=='string'||!track.id)throw new TypeError('A track id is required.');if(typeof track.url!=='string'||!track.url)throw new TypeError('A track URL is required.');if(track.loop!=='seamless'&&track.loop!=='crossfade')throw new TypeError('Track loop must be “seamless” or “crossfade”.');return track;}
+  _clearAutoTimer(){if(this._autoTimer!==null){clearTimeout(this._autoTimer);this._autoTimer=null;}}
+@@ -132,7 +106,7 @@ class UndertoneTrackPlayer {
+  async play(){if(this._destroyed)throw new Error('The track player has been destroyed.');if(!this._loaded){this.error=new Error('Load a track before playing.');this._notify('error',this.error);return false;}if(this._playing)return true;if(!this._active)this._active=this._newSource(this._loaded,1);else{const param=this._active.gain.gain;param.setTargetAtTime(1,this.ctx.currentTime,.08);}this._playing=true;this.error=null;this._notify('playing');this._scheduleAutoMix();return true;}
+  pause(){if(this._destroyed)return;this._autoEpoch++;this._clearAutoTimer();this._cancelAutoLoad();this._playing=false;this._notify(this._currentTrack?'paused':'idle');}
+  stop(fadeSeconds=0){if(this._destroyed)return;this._autoEpoch++;this._clearAutoTimer();this._generation++;if(this._abort)try{this._abort.abort();}catch(_){}this._abort=null;this._loadOrigin=null;this.loading=false;this._playing=false;const fade=trackClamp(Number(fadeSeconds)||0,0,4),entry=this._active;if(entry&&fade>0){this._active=null;this._retiring.add(entry);const t=this.ctx.currentTime,param=entry.gain.gain;param.cancelScheduledValues(t);param.setValueAtTime(param.value,t);param.linearRampToValueAtTime(0,t+fade);this._deferStop(entry,fade+.2);try{entry.source.stop(t+fade+.03);}catch(_){} }else this._stopAll();this._notify(this._currentTrack?'ready':'idle');}
+- async destroy(){if(this._destroyed)return;this._destroyed=true;this._autoEpoch++;this._clearAutoTimer();this._generation++;if(this._abort)try{this._abort.abort();}catch(_){}this._abort=null;this._loadOrigin=null;this._playing=false;this._stopAll();try{this.visualAnalyser?.disconnect();}catch(_){}try{this.output.disconnect();}catch(_){}this._loaded=null;this._currentTrack=null;this.loading=false;this._notify('destroyed');}
++ async destroy(){if(this._destroyed)return;this._destroyed=true;this._autoEpoch++;this._clearAutoTimer();this._generation++;if(this._abort)try{this._abort.abort();}catch(_){}this._abort=null;this._loadOrigin=null;this._playing=false;this._stopAll();try{this.output.disconnect();}catch(_){}this._loaded=null;this._currentTrack=null;this.loading=false;this._notify('destroyed');}
+ }
+ 
+ if(typeof window!=='undefined')window.UndertoneTrackPlayer=UndertoneTrackPlayer;
+diff --git a/visuals.js b/visuals.js
+index 5dd36b2..3b456fe 100644
+--- a/visuals.js
++++ b/visuals.js
+@@ -17,9 +17,7 @@ class UndertoneVisuals {
+  constructor(canvas,getSettings,getAudio) {
+   this.canvas=canvas; this.g=canvas.getContext('2d',{alpha:false});
+   this.settings=getSettings; this.audio=getAudio; this.time=0; this.last=0;
+-  this.audioState={energy:0,bass:0,mid:0,high:0,pulse:0};
+-  this.audioBaseline=0;
+-  this.canvasFrame={time:0,viewport:{width:0,height:0,dpr:1},seed:604,palette:null,motion:0,brightness:1,reducedMotion:false,audio:this.audioState};
++  this.canvasFrame={time:0,viewport:{width:0,height:0,dpr:1},seed:604,palette:null,motion:0,brightness:1,reducedMotion:false};
+   this.lastPaint=0; this.energy=0; this.dirty=true; this.activeScene=null;
+   this.orbitGPU=typeof UndertoneOrbitBridge==='function'?new UndertoneOrbitBridge(canvas,()=>{this.dirty=true;}):null;
+   // BFCache releases the GPU device; a restored page lazily acquires a new one.
+@@ -50,54 +48,18 @@ class UndertoneVisuals {
+  rgba(h,a){return `rgba(${this.hex(h).join(',')},${a})`;}
+  blend(a,b,f){const x=this.hex(a),y=this.hex(b);return `rgb(${x.map((v,i)=>Math.round(v+(y[i]-v)*f)).join(',')})`;}
+  color(p,x){const n=Math.max(0,Math.min(.999,x))*(p.length-1),i=Math.floor(n);return this.blend(p[i],p[i+1],n-i);}
+- updateAudio(raw,dt){
+-  const clip=value=>Math.max(0,Math.min(1,Number(value)||0));
+-  const source=typeof raw==='number'?{energy:raw,bass:raw,mid:raw*.75,high:raw*.45}:(raw||{});
+-  const target={energy:clip(source.energy),bass:clip(source.bass),mid:clip(source.mid),high:clip(source.high)};
+-  const step=Math.max(0,Math.min(Number(dt)||0,.1));
+-  const follow=(current,next,attack,release)=>{
+-   if(step<=0)return current;
+-   const tau=next>current?attack:release;
+-   return current+(next-current)*(1-Math.exp(-step/tau));
+-  };
+-  const state=this.audioState;
+-  state.energy=follow(state.energy,target.energy,.055,.34);
+-  state.bass=follow(state.bass,target.bass,.045,.30);
+-  state.mid=follow(state.mid,target.mid,.060,.32);
+-  state.high=follow(state.high,target.high,.035,.24);
+-  const onset=state.bass*.50+state.mid*.35+state.high*.15;
+-  const positive=Math.max(0,onset-this.audioBaseline);
+-  if(step>0)this.audioBaseline+=(onset-this.audioBaseline)*(1-Math.exp(-step/.48));
+-  const pulseTarget=clip(positive*4.6+Math.max(0,onset-.60)*.18);
+-  state.pulse=follow(state.pulse,pulseTarget,.030,.24);
+-  return state;
+- }
+- motionRate(s,audio=this.audioState){
+-  const m=Math.max(0,Math.min(1,(Number(s.motion)||0)/100));
+-  if(m<=0)return 0;
+-  // Motion 40 is a useful everyday pace; 100 is intentionally much faster
+-  // than the old 1.08x ceiling. Music adds a restrained temporary lift.
+-  const base=.12+2.88*Math.pow(m,1.20);
+-  const reactive=1+audio.energy*.10+audio.bass*.12+audio.pulse*.24;
+-  return Math.min(4,base*reactive);
+- }
+  frame(ms){
+   requestAnimationFrame(this.frame);const s=this.settings(),dt=this.last?Math.min((ms-this.last)/1000,.1):0;this.last=ms;
+   if(s.scene!=='orbit')this.orbitGPU?.prepare(s.scene);
+   if(document.hidden||s.blackout)return;
+   this.orbitGPU?.prepare(s.scene);
+   const still=s.motion===0||this.reduced.matches;
+-  let audio=this.audioState;
+-  if(still){
+-   audio.energy=0;audio.bass=0;audio.mid=0;audio.high=0;audio.pulse=0;this.audioBaseline=0;
+-  }else audio=this.updateAudio(this.audio(),dt);
+-  if(!still)this.time+=dt*this.motionRate(s,audio);
++  if(!still)this.time+=dt*(.18+s.motion/100*.9);
+   if(!this.dirty&&(still||ms-this.lastPaint<1000/(s.eco?20:30)))return;
+   const paintDt=this.lastPaint?Math.min((ms-this.lastPaint)/1000,.2):0;this.lastPaint=ms;
+   if(s.scene!==this.activeScene){this.previousScene=this.activeScene;this.activeScene=s.scene;this.transition=still?1:0;}
+   this.transition=Math.min(1,(this.transition||0)+paintDt/.9);
+-  this.energy=Math.max(0,Math.min(1,audio.energy*.70+audio.bass*.18+audio.pulse*.32));
+-  this.render(s);this.dirty=false;
++  this.energy+=(this.audio()-this.energy)*.025;this.render(s);this.dirty=false;
+  }
+  render(s){
+   const g=this.g,w=this.width,h=this.height;if(!g||!w||!h)return;
+@@ -113,12 +75,12 @@ class UndertoneVisuals {
+   g.globalAlpha=1-s.brightness/100;g.fillStyle=p[0];g.fillRect(0,0,w,h);g.globalAlpha=1;
+  }
+  canvasContract(s){
+-  const c=this.canvasFrame;c.time=this.time+this.offset;c.viewport.width=this.width;c.viewport.height=this.height;c.viewport.dpr=Math.min(window.devicePixelRatio||1,1.5);c.seed=this.seed;c.palette=UT_THEMES[s.theme];c.motion=s.motion/100;c.brightness=s.brightness/100;c.reducedMotion=this.reduced.matches;c.audio=this.audioState;return c;
++  const c=this.canvasFrame;c.time=this.time+this.offset;c.viewport.width=this.width;c.viewport.height=this.height;c.viewport.dpr=Math.min(window.devicePixelRatio||1,1.5);c.seed=this.seed;c.palette=UT_THEMES[s.theme];c.motion=s.motion/100;c.brightness=s.brightness/100;c.reducedMotion=this.reduced.matches;return c;
+  }
+  renderScene(scene,g,w,h,t,p,a){g.save();g.globalAlpha=a;if(scene==='rain')this.wetGlass(g,w,h,t,p,a);else if(scene==='dunes')this.silk(g,w,h,t,p,a);else if(scene==='orbit')this.orbit(g,w,h,t,p,a);else this.contours(g,w,h,t,p,a);g.restore();}
+  glow(g,x,y,r,color,opacity){const v=g.createRadialGradient(x,y,0,x,y,r);v.addColorStop(0,this.rgba(color,opacity));v.addColorStop(.45,this.rgba(color,opacity*.4));v.addColorStop(1,this.rgba(color,0));g.fillStyle=v;g.fillRect(x-r,y-r,r*2,r*2);}
+  contours(g,w,h,t,p,a){
+-  const c=this.canvasFrame,theme=c.palette||UT_THEMES.ocean,audio=c.audio||this.audioState;
++  const c=this.canvasFrame,theme=c.palette||UT_THEMES.ocean;
+   const count=w<650?64:88,segments=160;
+   const key=[w,h,c.viewport.dpr,this.seed,theme.name].join(':');
+   let cache=this.contourCache;
+@@ -145,15 +107,14 @@ class UndertoneVisuals {
+   // Shared smooth elevation field: broad saddles and drifting asymmetric lobes.
+   // Irrationally related slow periods avoid a single repeating rotation.
+   const drift=Math.sin(t*.23+phase[0]),breath=Math.sin(t*.317+phase[1]);
+-  const bassShape=1+audio.bass*.28+audio.pulse*.16,midShape=1+audio.mid*.18,highShape=1+audio.high*.18;
+   for(let j=0;j<count;j++){
+    const d=j/(count-1),r=.12+d*1.20,base=j*(segments+1)*2;
+    for(let i=0;i<=segments;i++){
+     const q=i/segments*Math.PI*2;
+-    const fold=1+.19*bassShape*Math.sin(q*3+phase[2]+d*1.8+drift*.65)+.10*midShape*Math.cos(q*2-phase[3]+d*2.5)+.035*highShape*Math.sin(q*5+phase[4]+breath*.65);
++    const fold=1+.19*Math.sin(q*3+phase[2]+d*1.8+drift*.65)+.10*Math.cos(q*2-phase[3]+d*2.5)+.035*Math.sin(q*5+phase[4]+breath*.65);
+     const x=cos[i]*r*fold,y=sin[i]*r;
+-    points[base+i*2]=cx+rx*(x+.17*(1+audio.bass*.10)*Math.sin(y*2.8+phase[5]+drift*.55)+.06*Math.sin(d*4+phase[0]));
+-    points[base+i*2+1]=cy+ry*(y*(.82+.14*Math.cos(q*2+d*2+phase[1]))+.17*(1+audio.mid*.10)*Math.sin(x*2.7+phase[3]+breath*.48));
++    points[base+i*2]=cx+rx*(x+.17*Math.sin(y*2.8+phase[5]+drift*.55)+.06*Math.sin(d*4+phase[0]));
++    points[base+i*2+1]=cy+ry*(y*(.82+.14*Math.cos(q*2+d*2+phase[1]))+.17*Math.sin(x*2.7+phase[3]+breath*.48));
+    }
+   }
+   g.globalAlpha=a;g.fillStyle=cache.dark;g.fillRect(0,0,w,h);
+@@ -162,7 +123,7 @@ class UndertoneVisuals {
+   for(let n=0;n<6;n++){
+    const j=Math.round(count*(.18+n*.105)),base=j*(segments+1)*2;
+    light.beginPath();for(let i=0;i<=segments;i++){const x=points[base+i*2],y=points[base+i*2+1];i?light.lineTo(x,y):light.moveTo(x,y);}light.closePath();
+-   light.strokeStyle=cache.glowGradients[n%3];light.lineWidth=3;light.shadowColor=cache.accents[n%3];light.shadowBlur=9;light.globalAlpha=Math.min(1,.55+audio.mid*.08+audio.pulse*.10);light.stroke();
++   light.strokeStyle=cache.glowGradients[n%3];light.lineWidth=3;light.shadowColor=cache.accents[n%3];light.shadowBlur=9;light.globalAlpha=.55;light.stroke();
+   }
+   light.shadowBlur=0;g.globalAlpha=a*.8;g.drawImage(glow,0,0,w,h);
+   g.lineJoin='round';g.lineCap='round';
+@@ -171,7 +132,7 @@ class UndertoneVisuals {
+    g.beginPath();for(let i=0;i<=segments;i++){const x=points[base+i*2],y=points[base+i*2+1];i?g.lineTo(x,y):g.moveTo(x,y);}g.closePath();
+    const depth=.5+.5*Math.sin(d*8+phase[2]);
+    g.strokeStyle=cache.colors[j];g.globalAlpha=a*(.18+depth*.20)*(1-Math.pow(d,5)*.65);g.lineWidth=.55+depth*.40;g.stroke();
+-   for(let n=0;n<6;n++)if(j===Math.round(count*(.18+n*.105))){g.strokeStyle=gradients[n%3];g.globalAlpha=a*Math.min(1,.78+.12*Math.sin(t*.09+n)+audio.mid*.08+audio.pulse*.08);g.lineWidth=1.25+depth*.4+audio.high*.12;g.stroke();}
++   for(let n=0;n<6;n++)if(j===Math.round(count*(.18+n*.105))){g.strokeStyle=gradients[n%3];g.globalAlpha=a*(.82+.15*Math.sin(t*.09+n));g.lineWidth=1.25+depth*.4;g.stroke();}
+   }
+   g.globalAlpha=a;
+  }
+@@ -179,7 +140,7 @@ class UndertoneVisuals {
+   // Silk is built from a small number of broad translucent sheets and a
+   // quieter set of supporting strands. Geometry and all color/gradient work is
+   // cached by viewport, theme, and seed; only the typed point buffers move.
+-  const c=this.canvasFrame,theme=c.palette||UT_THEMES.ocean,audio=c.audio||this.audioState;
++  const c=this.canvasFrame,theme=c.palette||UT_THEMES.ocean;
+   const narrow=w<650,layers=narrow?7:9,samples=narrow?52:76,supports=narrow?18:28;
+   const key=[Math.round(w),Math.round(h),c.viewport.dpr,this.seed,theme.name].join(':');
+   let cache=this.silkCache;
+@@ -258,31 +219,31 @@ class UndertoneVisuals {
+    const base=j*stride,phase=cache.phase[j]+t*cache.speed[j],d=j/(cache.layers-1);
+    for(let i=0;i<=cache.samples;i++){
+     const u=i/cache.samples*span-.08,x=u*w;
+-    const wave=Math.sin(u*cache.freq[j]*Math.PI*2+phase)*cache.amp[j]*(1+audio.bass*.22+audio.pulse*.14)+Math.sin(u*3.7-phase*1.31+d*5.2+t*.075)*cache.amp2[j]*(1+audio.mid*.18);
++    const wave=Math.sin(u*cache.freq[j]*Math.PI*2+phase)*cache.amp[j]+Math.sin(u*3.7-phase*1.31+d*5.2+t*.075)*cache.amp2[j];
+     const center=h*(cache.baseY[j]+cache.tilt[j]*(u-.5)+wave);
+-    const half=h*cache.widths[j]*(.80+.16*Math.sin(u*2.2+phase*.57+d*4))*(1+audio.bass*.06);
++    const half=h*cache.widths[j]*(.80+.16*Math.sin(u*2.2+phase*.57+d*4));
+     const index=base+i*4;points[index]=x;points[index+1]=center-half;points[index+2]=x;points[index+3]=center+half;
+    }
+    g.beginPath();
+    for(let i=0;i<=cache.samples;i++){const index=base+i*4;i?g.lineTo(points[index],points[index+1]):g.moveTo(points[index],points[index+1]);}
+    for(let i=cache.samples;i>=0;i--){const index=base+i*4;g.lineTo(points[index+2],points[index+3]);}
+-   g.closePath();g.fillStyle=cache.gradients[j];g.globalAlpha=a*Math.min(1,.48+cache.opacity[j]*.34+audio.energy*.06+audio.pulse*.04);g.fill();
++   g.closePath();g.fillStyle=cache.gradients[j];g.globalAlpha=a*(.48+cache.opacity[j]*.34);g.fill();
+    // A soft center seam gives the sheet a fold direction without outlining it.
+    g.beginPath();
+    for(let i=0;i<=cache.samples;i++){const index=base+i*4;const y=(points[index+1]+points[index+3])*.5;i?g.lineTo(points[index],y):g.moveTo(points[index],y);}
+-   g.strokeStyle=cache.colors[j];g.globalAlpha=a*Math.min(1,.075+cache.opacity[j]*.07+audio.high*.055+audio.pulse*.035);g.lineWidth=.65+((j===1||j===cache.layers-2) ? .45 : 0)+audio.high*.10;g.stroke();
++   g.strokeStyle=cache.colors[j];g.globalAlpha=a*(.075+cache.opacity[j]*.07);g.lineWidth=.65+((j===1||j===cache.layers-2) ? .45 : 0);g.stroke();
+   }
+   const supportStride=(cache.samples+1)*2;
+   for(let j=0;j<cache.supports;j++){
+    const base=j*supportStride,phase=cache.supportPhase[j]+t*cache.supportSpeed[j];
+    for(let i=0;i<=cache.samples;i++){
+     const u=i/cache.samples*span-.08,x=u*w;
+-    const y=h*(cache.supportY[j]+cache.supportTilt[j]*(u-.5)+Math.sin(u*cache.supportFreq[j]*Math.PI*2+phase)*cache.supportAmp[j]*(1+audio.mid*.16)+Math.sin(u*5.1-phase*.73+j)*.008*(1+audio.high*.16));
++    const y=h*(cache.supportY[j]+cache.supportTilt[j]*(u-.5)+Math.sin(u*cache.supportFreq[j]*Math.PI*2+phase)*cache.supportAmp[j]+Math.sin(u*5.1-phase*.73+j)*.008);
+     supportPoints[base+i*2]=x;supportPoints[base+i*2+1]=y;
+    }
+    g.beginPath();
+    for(let i=0;i<=cache.samples;i++){const index=base+i*2;i?g.lineTo(supportPoints[index],supportPoints[index+1]):g.moveTo(supportPoints[index],supportPoints[index+1]);}
+-   g.strokeStyle=cache.supportColors[j];g.globalAlpha=a*Math.min(1,cache.supportOpacity[j]+audio.high*.035);g.lineWidth=cache.supportWidth[j]+audio.high*.06;g.stroke();
++   g.strokeStyle=cache.supportColors[j];g.globalAlpha=a*cache.supportOpacity[j];g.lineWidth=cache.supportWidth[j];g.stroke();
+   }
+   g.globalAlpha=a;
+  }
+@@ -362,15 +323,13 @@ class UndertoneVisuals {
+   g.globalAlpha=a*(d.moving?.94:.78);g.drawImage(this.bead,x-r,y-r*stretch,r*2,r*2*stretch);
+  }
+  wetGlass(g,w,h,t,p,a){
+-  const audio=this.canvasFrame.audio||this.audioState;
+   this.glassBackground(w,h,p);g.globalAlpha=a;g.drawImage(this.glass,0,0,w,h);
+-  // Distant rain stays restrained. The shared music-reactive clock supplies most
+-  // of the speed response; spectral energy only nudges length and luminance.
++  // Distant rain is restrained; the moving foreground beads carry the motion.
+   for(const drop of this.farRain){const y=((drop.y+t*drop.speed)%1.2)*h-h*.1,x=drop.x*w+Math.sin(t*.09+drop.y)*4;
+-   const len=drop.len*h*(1+audio.bass*.08);g.globalAlpha=a*Math.min(1,.65+audio.energy*.06+audio.pulse*.04);g.drawImage(this.rainStreak,x-2,y-len,4,len);
++   const len=drop.len*h;g.globalAlpha=a*.65;g.drawImage(this.rainStreak,x-2,y-len,4,len);
+   }
+   g.globalAlpha=a;g.drawImage(this.glassPlate,0,0,w,h);
+-  for(let i=0;i<this.drops.length;i++){const d=this.drops[i];if(d.moving)this.glassDrop(g,d,i,w,h,t,a*Math.min(1,1+audio.high*.06+audio.pulse*.04));}
++  for(let i=0;i<this.drops.length;i++){const d=this.drops[i];if(d.moving)this.glassDrop(g,d,i,w,h,t,a);}
+   g.globalAlpha=a;
+  }
+ }

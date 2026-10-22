@@ -12,10 +12,15 @@ async function show(name){
  if(!win.UNDERTONE_PREVIEW){status.textContent='Use scripts/preview.py on a fresh loopback port. Fixtures are disabled on hosted builds.';return;}
  if(original===undefined)original=win.localStorage.getItem('undertone.v1');
  const settings={...win.undertoneDebug.state,master:0};
- win.localStorage.setItem('undertone.v1',JSON.stringify({version:1,settings,saved:names[name].map((title,i)=>({id:'fixture-'+i,name:title,settings})),history:[]}));
+ const payload=JSON.stringify({version:1,settings,saved:names[name].map((title,i)=>({id:'fixture-'+i,name:title,settings})),history:[]});
  document.querySelectorAll('[data-fixture]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.fixture===name)));
- await new Promise(resolve=>{frame.onload=resolve;frame.contentWindow.location.reload();});
+ // Let the real app flush its old state on pagehide before installing fixtures.
+ await new Promise(resolve=>{frame.onload=resolve;frame.src='about:blank';});
  if(request!==revision)return;
+ localStorage.setItem('undertone.v1',payload);
+ await new Promise(resolve=>{frame.onload=resolve;frame.src='../?renderer=canvas';});
+ if(request!==revision)return;
+ if(frame.contentWindow.undertoneDebug.savedCount!==names[name].length){status.textContent='Fixture load failed';throw Error('Fixture count mismatch');}
  const doc=frame.contentDocument;doc.querySelector('#dockControls').click();doc.querySelector('#tab-sessions').click();
  status.textContent=name+': '+names[name].length+' synthetic saved mix(es). Actual app rendering; no production fixture code.';
 }
