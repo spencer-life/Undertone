@@ -38,8 +38,9 @@ software-renderer download. No node_modules, test verdicts or screenshots are
 reused as evidence. Browser installation remains explicit; Linux system libraries
 are not restored from a browser cache. Artifact retention is 14 days.
 
-All five checks run on PRs to main and manual dispatch. Core and security also
-retain main-push checks because direct-push restrictions were not verified.
+All five checks run on PRs to main and manual dispatch; they do not run
+automatically on pushes. This preserves the current main branch policy and the
+local documentation correction also recorded on `spencer-life-ci-pr-only`.
 Superseded PR runs are cancelled. No second feature-branch push trigger or second
 deployment workflow is installed. Slow GPU initialization is tested with a bounded
 readiness check, not an arbitrary screenshot delay. Current GPU integration tests

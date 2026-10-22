@@ -4,21 +4,29 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-OUT="test-results"
+OUT="${E2E_OUTPUT_DIR:-test-results}"
 PORT="${E2E_PORT:-4184}"
 BASE="http://127.0.0.1:$PORT"
-SESSION="undertone-e2e"
+SESSION="${E2E_SESSION:-undertone-e2e}"
 
-rm -rf "$OUT" playwright-report
 mkdir -p "$OUT"
+OUT="$(cd "$OUT" && pwd)"
 
 echo "==> Install browser QA harness"
-npm install --global agent-browser@0.33.0 >/dev/null
+if [[ -n "${AGENT_BROWSER_BIN:-}" ]]; then
+  agent-browser() { "$AGENT_BROWSER_BIN" "$@"; }
+else
+  # Keep the pinned QA tool task-local; never modify global applications.
+  npm install --prefix "$OUT/harness" --no-save agent-browser@0.33.0 >/dev/null
+  export PATH="$OUT/harness/node_modules/.bin:$PATH"
+fi
 
 echo "==> Start Undertone preview"
 python3 scripts/preview.py --port "$PORT" >"$OUT/preview.log" 2>&1 &
 PREVIEW_PID=$!
 cleanup() {
+  # Cleanup deliberately tolerates a browser that already exited.
+  # shellcheck disable=SC2310
   agent-browser --session "$SESSION" close >/dev/null 2>&1 || true
   kill "$PREVIEW_PID" >/dev/null 2>&1 || true
   wait "$PREVIEW_PID" >/dev/null 2>&1 || true
@@ -48,7 +56,7 @@ audit_overflow() {
   local name="$1" width="$2" height="$3"
   echo "==> Responsive overflow audit: $name ($width x $height)"
   agent-browser --session "$SESSION" set viewport "$width" "$height" >/dev/null
-  agent-browser --session "$SESSION" wait 250
+  agent-browser --session "$SESSION" wait 600
   agent-browser --session "$SESSION" eval '(()=>{
     const tol=2;
     const visible=(el)=>{
@@ -69,6 +77,8 @@ audit_overflow() {
       if(r.left<dr.left-tol||r.right>dr.right+tol) issues.push({type:"dock-child",element:name(el),left:r.left,right:r.right,dockLeft:dr.left,dockRight:dr.right});
       if(r.left<-tol||r.right>innerWidth+tol) issues.push({type:"viewport-child",element:name(el),left:r.left,right:r.right,innerWidth});
     }
+    const hero=document.querySelector("#stageCenter");
+    if(visible(hero)&&getComputedStyle(hero).opacity!=="0"&&hero.getBoundingClientRect().bottom>dr.top-8) issues.push({type:"hero-dock-overlap",heroBottom:hero.getBoundingClientRect().bottom,dockTop:dr.top});
     const pickerBounds=[];
     for(const picker of document.querySelectorAll(".dock-picker")){
       const wasHidden=picker.hidden;
@@ -77,6 +87,7 @@ audit_overflow() {
       picker.hidden=false;
       const r=picker.getBoundingClientRect();
       pickerBounds.push({id:picker.id,left:r.left,right:r.right,top:r.top,bottom:r.bottom});
+      if(picker.scrollWidth>picker.clientWidth+tol) issues.push({type:"picker-content-width",id:picker.id,scrollWidth:picker.scrollWidth,clientWidth:picker.clientWidth});
       if(r.left<-tol||r.right>innerWidth+tol||r.top<-tol||r.bottom>innerHeight+tol) issues.push({type:"picker-viewport",id:picker.id,left:r.left,right:r.right,top:r.top,bottom:r.bottom,innerWidth,innerHeight});
       const overlap=Math.min(r.bottom,dr.bottom)-Math.max(r.top,dr.top);
       if(overlap>tol) issues.push({type:"picker-dock-overlap",id:picker.id,overlap,dockTop:dr.top,pickerBottom:r.bottom});
@@ -90,11 +101,16 @@ audit_overflow() {
 }
 
 for spec in \
+  "phone-small:320:568" \
+  "phone-small-landscape:568:320" \
+  "phone-landscape:844:390" \
   "iphone:390:844" \
   "iphone-wide:430:932" \
   "ipad-portrait:834:1194" \
   "ipad-pro-portrait:1024:1366" \
   "ipad-landscape:1194:834" \
+  "laptop-small:1101:700" \
+  "laptop:1280:720" \
   "desktop-compact:1366:768" \
   "desktop:1440:900" \
   "desktop-wide:1728:900"; do
@@ -102,7 +118,7 @@ for spec in \
   audit_overflow "$name" "$width" "$height"
 done
 agent-browser --session "$SESSION" set viewport 1280 720 >/dev/null
-agent-browser --session "$SESSION" wait 250
+agent-browser --session "$SESSION" wait 600
 
 run_a11y() {
   local name="$1"
@@ -170,6 +186,18 @@ agent-browser --session "$SESSION" click "#routeQuick"
 agent-browser --session "$SESSION" click "#dockControls"
 agent-browser --session "$SESSION" wait 500
 run_a11y "tune"
+
+echo "==> Keyboard tabs and rapid selection keep the current pane consistent"
+agent-browser --session "$SESSION" focus '#tab-tune'
+agent-browser --session "$SESSION" press ArrowRight
+agent-browser --session "$SESSION" eval '(()=>{if(document.activeElement.id!=="tab-sessions"||document.querySelector("#pane-sessions").hidden)throw Error("Keyboard tab navigation failed");return true})()' >/dev/null
+agent-browser --session "$SESSION" eval 'document.querySelector("#tab-about").click();document.querySelector("#tab-sessions").click();true' >/dev/null
+agent-browser --session "$SESSION" wait 400
+agent-browser --session "$SESSION" eval '(()=>{if(document.querySelector("#pane-sessions").hidden||!document.querySelector("#pane-about").hidden||document.querySelector("#tab-sessions").getAttribute("aria-selected")!=="true")throw Error("Stale tab transition won");return true})()' >/dev/null
+run_a11y "sessions"
+agent-browser --session "$SESSION" click '#tab-about'
+agent-browser --session "$SESSION" wait 400
+run_a11y "about"
 agent-browser --session "$SESSION" click "#closePanel"
 agent-browser --session "$SESSION" wait 400
 
@@ -237,5 +265,12 @@ const [file,...values]=process.argv.slice(2);
 const [timerStart,timerMid,paused1,paused2,resume1,resume2,breathStart,breathMid]=values.map(Number);
 fs.writeFileSync(file,JSON.stringify({timerStart,timerMid,paused1,paused2,resume1,resume2,breathStart,breathMid},null,2));
 NODE
+
+echo "==> Reduced motion stops the breathing frame loop"
+agent-browser --session "$SESSION" set media reduced-motion
+agent-browser --session "$SESSION" click '#playButton'
+agent-browser --session "$SESSION" wait 300
+agent-browser --session "$SESSION" eval '(()=>{if(window.undertoneDebug.breathingActive)throw Error("Breathing loop continues under reduced motion");if(document.querySelector("#breathLabel").textContent!=="Breathe at your own pace")throw Error("Reduced-motion breathing hint missing");return true})()' >/dev/null
+agent-browser --session "$SESSION" click '#playButton'
 
 echo "Web E2E passed: WCAG 2.2 AA axe audits, timer lifecycle, and breathing motion."
