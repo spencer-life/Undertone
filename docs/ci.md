@@ -34,7 +34,11 @@ that syntax. Inline pinned provider actions satisfy both without disabling audit
 
 Mise caches locked tools. The actual `pnpm store path` is exported by a mise task
 and cached with OS/architecture/lockfile keys. GPU CI also caches the portable
-software-renderer download; Visual Review caches its pinned browser binary. No node_modules, test verdicts or screenshots are
+software-renderer download; Visual Review caches its pinned browser binary.
+E2E/GPU share an OS/architecture/version-keyed npm download cache for the pinned
+agent-browser package (`~/.npm/_cacache`, excluding npm configuration and logs).
+The QA harness is freshly installed with `--prefer-offline`; installed package
+trees, test verdicts and screenshots are never restored as evidence. No node_modules, test verdicts or screenshots are
 reused as evidence. Browser installation remains explicit; Linux system libraries
 are not restored from a browser cache. Artifact retention is 14 days.
 

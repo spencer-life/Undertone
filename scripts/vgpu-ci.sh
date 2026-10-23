@@ -36,7 +36,7 @@ if [[ -n "${AGENT_BROWSER_BIN:-}" ]]; then
   : "${AGENT_BROWSER_BIN}"
 else
   # Keep the pinned QA tool task-local; do not alter global applications.
-  npm install --prefix "$OUT/harness" --no-save agent-browser@0.33.0 >/dev/null
+  npm install --prefix "$OUT/harness" --prefer-offline --no-save agent-browser@0.33.0 >/dev/null
   AGENT_BROWSER_BIN="$OUT/harness/node_modules/.bin/agent-browser"
 fi
 
