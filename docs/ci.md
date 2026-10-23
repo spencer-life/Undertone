@@ -45,7 +45,7 @@ normal branch/PR cache-access rules still apply. After merge, a manual full run 
 main can warm default-branch caches without adding automatic push runs.
 
 App validation now uses one workflow with a small `changes` job and conditional
-`ci`, `e2e`, `visual`, and `vgpu` jobs. Security Baseline remains independent and
+`ci`, `e2e`, and `visual` jobs; `vgpu` is retained for manual dispatch only. Security Baseline remains independent and
 runs on every PR. Both workflows run only on PRs to main or manual dispatch;
 there is no duplicate feature-branch push trigger or deployment workflow.
 Superseded runs are cancelled together. Existing check job names are retained;
@@ -55,13 +55,14 @@ path-filtered required workflow pending.
 | PR changes | App checks |
 | --- | --- |
 | Documentation and archived review evidence only | None; scope tests and Security still run |
-| Shader source, GPU runtime, generated GPU bundles | Core and GPU |
+| Shader source, GPU runtime, generated GPU bundles | Core; GPU available manually |
 | Audio code, local music, service worker or WebMCP | Core and browser E2E |
 | Node unit tests only / lab source only | Core |
 | One browser harness | Its affected check; GPU harness also retains Core |
-| UI, shared visual clock/bridges, toolchain/build/deploy config | All four |
-| Check-selection/workflow structure or unknown files | All four |
-| Manual dispatch or unavailable merge diff | All four |
+| UI, shared visual clock/bridges, toolchain/build/deploy config | Core, E2E, Visual |
+| Check-selection/workflow structure or unknown files | Core, E2E, Visual |
+| Manual dispatch | All four, including GPU |
+| Unavailable merge diff | Core, E2E, Visual |
 
 The classifier reads the **complete PR merge diff** against its first parent,
 including deleted/renamed paths. A docs-only follow-up commit on a PR that still
@@ -78,14 +79,17 @@ Playwright 1.55.0 browser is cached by OS/architecture/version. Generated eviden
 is always fresh, and uploaded E2E/GPU artifacts exclude installed QA harness
 packages. No test verdict or screenshot cache is used.
 
-GPU CI installs only absent Vulkan-loader/display packages, first using the runner's
-existing package indexes. Node uses vgpu's verified portable renderer and the browser
-preset uses bundled SwiftShader; no system Mesa driver install is needed. Both
-device-backed checks and the browser preflight remain hard gates. Network/setup calls and scene readiness are bounded and
-name the failing stage. Software-adapter screenshots use Eco mode and a paused
-scene clock, restoring motion between captures; Node pixel checks and real
-hardware browser recordings supply separate motion evidence. Both scenes,
-stillness, viewport resize and resource teardown remain required.
+The owner requested removing the unreliable hosted GPU check from automatic PR
+runs. The `vgpu` job is now **manual-only** (`workflow_dispatch`); PRs explicitly
+report it as skipped. Main has no required-check protection or rulesets configured,
+and none were changed. Core, Security, E2E and Visual remain automatic when relevant.
+
+The manual GPU script retains all shader/device/browser/lifecycle assertions and
+the missing-only Vulkan/Mesa/display setup. During closeout, two attempts timed out
+installing Mesa and refreshing apt indexes; omitting Mesa then failed the actual
+Chrome `requestAdapter` preflight. These failures are recorded, not reported as
+render successes. Earlier passing software CI and installed NVIDIA Chrome evidence
+remain separate. Physical-device/listening/contrast limits still apply.
 
 ## Deployment boundary
 

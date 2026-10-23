@@ -124,7 +124,9 @@ jobs:
           retention-days: 14
   vgpu:
     needs: changes
-    if: ${{ needs.changes.outputs.vgpu == 'true' }}
+    # Owner requested removal of the unreliable hosted GPU check from PR runs.
+    # Keep the real device/browser check available through explicit manual dispatch.
+    if: ${{ github.event_name == 'workflow_dispatch' && needs.changes.outputs.vgpu == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

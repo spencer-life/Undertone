@@ -41,10 +41,10 @@ else
 fi
 
 echo '==> Check headed-browser system dependencies'
-# Node vgpu uses its verified portable renderer; agent-browser's Linux WebGPU
-# preset uses Chrome's bundled SwiftShader. Neither needs the system Mesa ICD.
-# Retain the loader/display requirements and the real browser probe below.
-required_packages=(libvulkan1 xvfb xauth)
+# Node vgpu uses its portable fallback. The hosted Chrome probe still needs
+# a discoverable system ICD, loader and virtual display; absence failed the real
+# requestAdapter probe. This provisioning-heavy check is manual-only in CI.
+required_packages=(libvulkan1 mesa-vulkan-drivers xvfb xauth)
 missing_packages=()
 for package in "${required_packages[@]}"; do
   package_status="$(dpkg-query -W -f='${db:Status-Status}' "$package" 2>/dev/null || true)"

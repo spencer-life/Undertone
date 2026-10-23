@@ -125,3 +125,14 @@ Run 39878460195 hit the 180-second package-index refresh deadline before exercis
 All app checks, Security and Vercel passed on `e716cb5`, including the repaired GPU run [39879032014](https://github.com/spencer-life/Undertone/actions/runs/39879032014). The owner then requested an efficiency audit. App jobs are consolidated behind one tested change selector; Security still runs on every PR. Docs-only PRs skip app runners, shader-only PRs run Core/GPU, and UI/toolchain/unknown changes keep full coverage. Manual runs always execute the full suite, and selection failure cannot produce a green Core check. Existing job names and PR-only triggers are preserved.
 
 Visual QA drops six responsive screenshots duplicated by the asserted E2E matrix, retains 30 scene/theme/motion captures, builds once through mise, and caches its pinned browser binary. E2E/GPU evidence excludes installed QA dependencies. Eight CI-scope tests include a real Git merge fixture proving cumulative changes and renamed/deleted runtime files cannot be hidden by a docs-only last commit. Full app verification is intentionally retained on this PR because it changes both runtime and CI routing. See [CI scope and commands](../ci.md).
+
+## Closeout CI decision — 23 October
+
+The owner explicitly requested removing CI that does not work. The hosted GPU
+job is manual-only after two Mesa installation/index timeouts and a subsequent
+failed Chrome adapter probe without Mesa. These are failed infrastructure checks,
+not successful renders. The shader/device/browser assertions and manual command
+remain available. Core, Security, E2E and Visual stay automatic with the scoped
+selection and caches described in [CI guidance](../ci.md). Earlier passing GPU
+snapshots and hardware Chrome evidence above are unaffected by this workflow-only
+decision; final PR results distinguish the manual GPU skip from passed checks.
