@@ -34,7 +34,7 @@ run = "node scripts/build-site.mjs"
 [tasks.test]
 description = "Run Node regressions after generated precache assets exist"
 depends = ["build:gpu"]
-run = "pnpm test"
+run = "pnpm test:unit"
 
 [tasks.ci]
 description = "Locked install, syntax, GPU build, production build, and tests"

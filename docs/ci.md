@@ -8,8 +8,9 @@ Run repository work through `mise`. `deps` restores the frozen pnpm lockfile and
 checks direct imports; it never upgrades packages automatically. `lint` runs the
 existing JavaScript syntax checks, not a full TypeScript or ESLint audit.
 `build:gpu` resolves WGSL modules once per bundle build. `build` assembles the
-runtime-only release directory. `test` requires generated GPU bundles because
-the offline-cache tests check actual assets. `ci` coordinates these dependencies;
+runtime-only release directory. Standalone `pnpm test` builds the GPU bundles before `test:unit`, so a fresh
+checkout has every precache asset. Mise `test` shares the `build:gpu` prerequisite
+and calls `test:unit` directly to avoid a duplicate build. `ci` coordinates these dependencies;
 shared prerequisites run once within a mise invocation.
 
 Manual `deps:outdated` and `deps:audit` report updates/advisories without changing
