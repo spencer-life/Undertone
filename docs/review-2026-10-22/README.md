@@ -12,6 +12,7 @@ Work was performed on Spencer-PC1 (WSL), in a separate clone and task worktrees.
 | 568×320 phone landscape left too little room above a four-row dock | Two-row six-column compact landscape dock | Frequency information and every control remain reachable |
 | Arrow navigation referenced nonexistent `$$$` | Correct helper and immediate keyboard tab selection | Settings are usable without a pointer |
 | Returning to the current tab could allow an old outgoing animation to win | Every selection cancels and invalidates earlier transitions | Rapid A→B→A remains consistent; covered by five tests |
+| Visiting a standalone lab could overwrite the main offline shell | Cache only app-directory/index navigations, pass lab routes through, and invalidate the old cache | Regression covers root and subdirectory installs, lab then offline app, and query-string shell refresh |
 | Reduced motion hid the breathing ring but kept its frame loop alive | Stop the loop and show “Breathe at your own pace” | Stillness includes background work, not just CSS |
 | Small labels, a wrapping timer, long saved names, touch hover and input zoom risks | 11px secondary-control floor, stable transport sizes, wrapping names, capability-gated hover, 16px phone inputs and safe-area treatment | Preserve hierarchy while improving legibility and mobile behavior |
 | E2E installed a global browser CLI and used shared fixed output/session names | Task-local install or explicit existing binary; configurable session/output | Repeatable checks without replacing global applications |
@@ -35,7 +36,7 @@ The initial-pass screenshots below are local Chromium fallback renders; the late
 
 Passed locally with Node 24.22.1 and pnpm 12.5.1:
 
-- Frozen locked dependency install; production JavaScript syntax checks; build into `dist`; test command; 89 individual Node tests, including tab/layout, dynamic playback-label and mid-transition stillness regressions. Node's `--test` summary groups files in this environment; each test file was also run directly to obtain the individual count.
+- Frozen locked dependency install; production JavaScript syntax checks; build into `dist`; test command; 90 individual Node tests, including tab/layout, dynamic playback-label and mid-transition stillness regressions. Node's `--test` summary groups files in this environment; each test file was also run directly to obtain the individual count.
 - 13 viewport audits: 320×568, 568×320, 844×390, 390×844, 430×932, 834×1194, 1024×1366, 1194×834, 1101×700, 1280×720, 1366×768, 1440×900 and 1728×900. No document/dock/picker overflow, picker/dock overlap or hero/dock overlap.
 - Real Chromium keyboard tabs, rapid selection, presets, output routing, timer countdown/pause/resume, breathing and reduced-motion behavior. Native-mobile CSS refinements were followed by another complete passing run.
 - Ten axe WCAG-tag audits: main, all six pickers, Tune, Sessions and About. **Zero reported violations; eight surfaces retain an incomplete contrast check.** This is not an unconditional WCAG-AA certification. Translucent/scene-backed text needs manual contrast acceptance.

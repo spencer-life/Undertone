@@ -1,11 +1,11 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const root=path.resolve(__dirname,'..');
-function serviceWorker(){
- const handlers={},deleted=[],added=[],reads=[],network=[];
- const cache={addAll:async assets=>added.push(...assets),put:async()=>{},match:async key=>{reads.push(key);return key==='./index.html'?'cached-html':undefined;}};
- const context={URL,caches:{open:async()=>cache,keys:async()=>['undertone-v3','undertone-v11','undertone-v13','undertone-v14','undertone-v15','undertone-v16','undertone-v17','undertone-v18','undertone-v19','undertone-v20','undertone-v21','undertone-v22','undertone-v23','undertone-v24','undertone-v25','undertone-v26','undertone-v27','undertone-v28','undertone-v29','undertone-v30','unrelated-cache','undertone-library-v1'],delete:async key=>deleted.push(key)},fetch:async req=>{network.push(req);return 'network';},self:{location:{origin:'https://undertone.test'},skipWaiting:async()=>{},clients:{claim:async()=>{}},addEventListener:(type,fn)=>handlers[type]=fn}};
- vm.runInNewContext(fs.readFileSync(path.join(root,'sw.js'),'utf8'),context);return {handlers,deleted,added,reads,network};
+function serviceWorker({fetchImpl=async()=>'network',workerUrl='https://undertone.test/sw.js'}={}){
+ const handlers={},deleted=[],added=[],reads=[],network=[],stored=new Map([['./index.html','cached-html']]);
+ const cache={addAll:async assets=>added.push(...assets),put:async(key,value)=>stored.set(key,value),match:async key=>{reads.push(key);return stored.get(key);}};
+ const context={URL,caches:{open:async()=>cache,keys:async()=>['undertone-v3','undertone-v11','undertone-v13','undertone-v14','undertone-v15','undertone-v16','undertone-v17','undertone-v18','undertone-v19','undertone-v20','undertone-v21','undertone-v22','undertone-v23','undertone-v24','undertone-v25','undertone-v26','undertone-v27','undertone-v28','undertone-v29','undertone-v30','undertone-v50','undertone-v51','unrelated-cache','undertone-library-v1'],delete:async key=>deleted.push(key)},fetch:async req=>{network.push(req);return fetchImpl(req);},self:{location:{origin:new URL(workerUrl).origin,href:workerUrl},skipWaiting:async()=>{},clients:{claim:async()=>{}},addEventListener:(type,fn)=>handlers[type]=fn}};
+ vm.runInNewContext(fs.readFileSync(path.join(root,'sw.js'),'utf8'),context);return {handlers,deleted,added,reads,network,stored};
 }
 test('PWA shell caches every app script/style and worklet before activation',async()=>{
  const sw=serviceWorker();let ready;sw.handlers.install({waitUntil:p=>ready=p});await ready;
@@ -14,9 +14,28 @@ test('PWA shell caches every app script/style and worklet before activation',asy
  for(const asset of sw.added)assert(fs.existsSync(path.resolve(root,asset)),`Missing precache file ${asset}`);
 });
 test('activation removes only obsolete Undertone caches',async()=>{
- const sw=serviceWorker();let ready;sw.handlers.activate({waitUntil:p=>ready=p});await ready;assert.deepEqual(sw.deleted,['undertone-v3','undertone-v11','undertone-v13','undertone-v14','undertone-v15','undertone-v16','undertone-v17','undertone-v18','undertone-v19','undertone-v20','undertone-v21','undertone-v22','undertone-v23','undertone-v24','undertone-v25','undertone-v26','undertone-v27','undertone-v28','undertone-v29','undertone-v30']);
+ const sw=serviceWorker();let ready;sw.handlers.activate({waitUntil:p=>ready=p});await ready;assert.deepEqual(sw.deleted,['undertone-v3','undertone-v11','undertone-v13','undertone-v14','undertone-v15','undertone-v16','undertone-v17','undertone-v18','undertone-v19','undertone-v20','undertone-v21','undertone-v22','undertone-v23','undertone-v24','undertone-v25','undertone-v26','undertone-v27','undertone-v28','undertone-v29','undertone-v30','undertone-v50']);
 });
 test('offline shell stays versioned; missing modules do not receive HTML',async()=>{
  const sw=serviceWorker();let response;sw.handlers.fetch({request:{method:'GET',mode:'navigate',url:'https://undertone.test/'},respondWith:p=>response=p});assert.equal(await response,'network');assert.equal(sw.network[0].url,'https://undertone.test/');
  const req={method:'GET',mode:'same-origin',url:'https://undertone.test/missing.js'};sw.handlers.fetch({request:req,respondWith:p=>response=p});assert.equal(await response,'network');assert.equal(sw.network.at(-1),req);
+});
+
+test('lab navigation cannot replace the main offline shell, including scoped installs',async()=>{
+ for(const base of ['https://undertone.test/','https://undertone.test/sub/']){
+  let online=true;
+  const fetchImpl=async req=>{if(!online)throw Error('offline');return {ok:true,clone:()=>req.url.includes('/labs/')?'lab-html':'app-html'};};
+  const sw=serviceWorker({fetchImpl,workerUrl:base+'sw.js'});
+  const navigate=async url=>{
+   const request={method:'GET',mode:'navigate',url};let response;
+   sw.handlers.fetch({request,respondWith:p=>response=p});
+   return response===undefined?fetchImpl(request):response;
+  };
+  await navigate(base+'labs/energy-orbit/');
+  assert.equal(sw.stored.get('./index.html'),'cached-html','lab poisoned the shell cache');
+  online=false;assert.equal(await navigate(base),'cached-html');
+  online=true;await navigate(base+'index.html?mix=focus');
+  assert.equal(sw.stored.get('./index.html'),'app-html');
+  online=false;assert.equal(await navigate(base),'app-html');
+ }
 });

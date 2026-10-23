@@ -1,5 +1,5 @@
 // An atomic, versioned app shell prevents offline HTML / module mismatches.
-const CACHE = 'undertone-v50';
+const CACHE = 'undertone-v51';
 const ASSETS = [
  './','./index.html','./styles.css','./layout.css','./audio.js',
  './audio-worklet.js','./music-library.js','./tracks.js','./orbit-bridge.js','./black-hole-bridge.js','./vendor/energy-orbit.js','./vendor/black-hole.js','./visuals.js','./webmcp.js','./app.js','./manifest.webmanifest',
@@ -14,6 +14,9 @@ self.addEventListener('activate', event => {
 });
 self.addEventListener('fetch', event => {
  if(event.request.method!=='GET'||new URL(event.request.url).origin!==self.location.origin)return;
+ const shellDirectory=new URL('./',self.location.href).pathname;
+ // Standalone labs and unknown routes must never replace or fall back to the app shell.
+ if(event.request.mode==='navigate'&&![shellDirectory,shellDirectory+'index.html'].includes(new URL(event.request.url).pathname))return;
  event.respondWith(caches.open(CACHE).then(async cache=>{
   const request=event.request;
   if(request.mode==='navigate'){
