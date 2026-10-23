@@ -1,6 +1,6 @@
 # Undertone end-to-end review — 22 October 2026
 
-Work was performed on Spencer-PC1 (WSL), in a separate clone and task worktrees. The design baseline is `energy-orbit-lab` at `b2eeac0c9b3526a494a53c503d779d0894c337bb`, rather than main's older interface. The selected wordmark, scene palettes, audio assets and lab-root rewrite are preserved. The owner subsequently requested a smaller logo, an icon-and-label dock and a sharper, larger Energy Orbit; those changes are now included. Visual acceptance and release approval remain separate.
+Work was performed on Spencer-PC1 (WSL), in a separate clone and task worktrees. The design baseline is `energy-orbit-lab` at `b2eeac0c9b3526a494a53c503d779d0894c337bb`, rather than main's older interface. The selected wordmark, scene palettes and audio assets are preserved. The owner subsequently requested a smaller logo, an icon-and-label dock and a sharper, larger Energy Orbit; those changes are now included. On 23 October the owner accepted the reviewed design and approved final closeout with automatic live publishing. The temporary lab-root rewrite is removed so production opens the full app at `/`; device/listening/contrast coverage limits below still apply.
 
 ## Changes and evidence
 
@@ -16,7 +16,7 @@ Work was performed on Spencer-PC1 (WSL), in a separate clone and task worktrees.
 | Small labels, a wrapping timer, long saved names, touch hover and input zoom risks | 11px secondary-control floor, stable transport sizes, wrapping names, capability-gated hover, 16px phone inputs and safe-area treatment | Preserve hierarchy while improving legibility and mobile behavior |
 | E2E installed a global browser CLI and used shared fixed output/session names | Task-local install or explicit existing binary; configurable session/output | Repeatable checks without replacing global applications |
 
-**Motion verdict:** the changed tab interaction is interruptible, uses transform/opacity, completes in 280ms, and is immediate for arrow-key selection. Reduced motion stops breathing animation work. No new feel-breaking motion issue was found by independent review. Existing ambient scene and dock-reveal timing is retained. Orbit uses the shared motion clock; hardware Chrome verified that motion zero stops submitted frames and animation time. Enabling motion zero or OS reduced motion also completes an in-flight scene fade immediately, preventing a frozen partial transition. Shader appearance still needs the owner’s acceptance.
+**Motion verdict:** the changed tab interaction is interruptible, uses transform/opacity, completes in 280ms, and is immediate for arrow-key selection. Reduced motion stops breathing animation work. No new feel-breaking motion issue was found by independent review. Existing ambient scene and dock-reveal timing is retained. Orbit uses the shared motion clock; hardware Chrome verified that motion zero stops submitted frames and animation time. Enabling motion zero or OS reduced motion also completes an in-flight scene fade immediately, preventing a frozen partial transition. Shader appearance was accepted by the owner for release on 23 October.
 
 ## Screenshots
 

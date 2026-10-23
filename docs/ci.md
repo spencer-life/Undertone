@@ -78,8 +78,10 @@ Playwright 1.55.0 browser is cached by OS/architecture/version. Generated eviden
 is always fresh, and uploaded E2E/GPU artifacts exclude installed QA harness
 packages. No test verdict or screenshot cache is used.
 
-GPU CI installs only absent Vulkan/Mesa/display packages, first using the runner's
-existing package indexes. Network/setup calls and scene readiness are bounded and
+GPU CI installs only absent Vulkan-loader/display packages, first using the runner's
+existing package indexes. Node uses vgpu's verified portable renderer and the browser
+preset uses bundled SwiftShader; no system Mesa driver install is needed. Both
+device-backed checks and the browser preflight remain hard gates. Network/setup calls and scene readiness are bounded and
 name the failing stage. Software-adapter screenshots use Eco mode and a paused
 scene clock, restoring motion between captures; Node pixel checks and real
 hardware browser recordings supply separate motion evidence. Both scenes,

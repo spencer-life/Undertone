@@ -41,9 +41,10 @@ else
 fi
 
 echo '==> Check headed-browser system dependencies'
-# Node vgpu can use its portable Mesa fallback, but Chrome’s WebGPU preset
-# also needs a system Vulkan loader + Mesa ICD, plus the virtual display.
-required_packages=(libvulkan1 mesa-vulkan-drivers xvfb xauth)
+# Node vgpu uses its verified portable renderer; agent-browser's Linux WebGPU
+# preset uses Chrome's bundled SwiftShader. Neither needs the system Mesa ICD.
+# Retain the loader/display requirements and the real browser probe below.
+required_packages=(libvulkan1 xvfb xauth)
 missing_packages=()
 for package in "${required_packages[@]}"; do
   package_status="$(dpkg-query -W -f='${db:Status-Status}' "$package" 2>/dev/null || true)"
@@ -57,7 +58,7 @@ if ((${#missing_packages[@]})); then
   apt_network_options=(-o Acquire::Retries=1 -o Acquire::http::Timeout=15 -o Acquire::https::Timeout=15)
   # Hosted images already include Ubuntu package indexes. Avoid a slow global
   # refresh (including unrelated third-party repos) unless installation needs it.
-  # Pass only absent packages so already-installed Mesa/Vulkan packages are not upgraded.
+  # Pass only absent packages so already-installed loader/display packages are not upgraded.
   if timeout --kill-after=10s "${apt_timeout_seconds}s" sudo apt-get "${apt_network_options[@]}" install -y -qq --no-install-recommends "${missing_packages[@]}"; then
     echo '==> Missing browser dependencies installed from existing indexes'
   else
