@@ -8,6 +8,7 @@ BASE="http://127.0.0.1:$PORT"
 SESSION="${VGPU_CI_SESSION:-undertone-vgpu-ci}"
 AB_CALL_TIMEOUT_SECONDS="${VGPU_CI_BROWSER_TIMEOUT_SECONDS:-20}"
 WAIT_SCENE_TIMEOUT_SECONDS="${VGPU_CI_SCENE_TIMEOUT_SECONDS:-90}"
+PREFLIGHT_TIMEOUT_SECONDS="${VGPU_CI_PREFLIGHT_TIMEOUT_SECONDS:-120}"
 if [[ -d "$OUT" ]]; then
   existing_evidence="$(find "$OUT" -mindepth 1 -maxdepth 1 -print -quit)"
   if [[ -n "$existing_evidence" ]]; then
@@ -60,7 +61,9 @@ else
   echo '==> Required headed-browser dependencies are already installed'
 fi
 
-timeout --kill-after=3s "${AB_CALL_TIMEOUT_SECONDS}s" "$AGENT_BROWSER_BIN" doctor --webgpu --headed >"$OUT/agent-browser-doctor.txt" 2>&1 || {
+# Cold preflight may provision Chrome and probe its GPU before the daemon is warm.
+# Give setup its own budget; normal browser operations retain their short cap.
+timeout --kill-after=3s "${PREFLIGHT_TIMEOUT_SECONDS}s" "$AGENT_BROWSER_BIN" doctor --webgpu --headed >"$OUT/agent-browser-doctor.txt" 2>&1 || {
   status=$?
   echo "Browser stage 'doctor --webgpu --headed' failed or timed out (exit $status); see $OUT/agent-browser-doctor.txt" >&2
   exit "$status"
