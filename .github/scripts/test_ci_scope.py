@@ -1,5 +1,7 @@
 import pathlib
+import os
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -58,6 +60,32 @@ class ScopeTests(unittest.TestCase):
             self.assertEqual(scope("pull_request", root)[0], ALL)
             git("checkout", "-q", "feature")
             self.assertEqual(scope("pull_request", root)[0], ALL, "head-only checkout must not skip from its docs-only last commit")
+
+    def test_docs_only_merge_skips_app_checks_even_when_base_runtime_changed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            def git(*args):
+                return subprocess.check_output(["git", *args], cwd=root, stderr=subprocess.DEVNULL)
+            git("init", "-q", "-b", "main")
+            git("config", "user.email", "ci-scope@example.invalid")
+            git("config", "user.name", "CI scope test")
+            (root / "app.js").write_text("base")
+            git("add", "."); git("commit", "-qm", "base")
+            git("checkout", "-qb", "docs")
+            (root / "README.md").write_text("documentation only")
+            git("add", "."); git("commit", "-qm", "docs")
+            git("checkout", "-q", "main")
+            (root / "app.js").write_text("unrelated base runtime change")
+            git("add", "."); git("commit", "-qm", "base runtime")
+            git("merge", "--no-ff", "-qm", "PR merge", "docs")
+            output = root / "job-outputs"
+            script = pathlib.Path(__file__).with_name("ci_scope.py").resolve()
+            subprocess.check_output([sys.executable, str(script)], cwd=root, env={
+                **os.environ, "GITHUB_EVENT_NAME": "pull_request", "GITHUB_OUTPUT": str(output)
+            })
+            self.assertEqual(output.read_text().splitlines(), [
+                "ci=false", "e2e=false", "vgpu=false", "visual=false"
+            ])
 
 
 if __name__ == "__main__":

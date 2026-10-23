@@ -40,7 +40,9 @@ agent-browser package (`~/.npm/_cacache`, excluding npm configuration and logs).
 The QA harness is freshly installed with `--prefer-offline`; installed package
 trees, test verdicts and screenshots are never restored as evidence. No node_modules, test verdicts or screenshots are
 reused as evidence. Browser installation remains explicit; Linux system libraries
-are not restored from a browser cache. Artifact retention is 14 days.
+are not restored from a browser cache. Artifact retention is 14 days. Cache misses are expected on first use; GitHub’s
+normal branch/PR cache-access rules still apply. After merge, a manual full run on
+main can warm default-branch caches without adding automatic push runs.
 
 App validation now uses one workflow with a small `changes` job and conditional
 `ci`, `e2e`, `visual`, and `vgpu` jobs. Security Baseline remains independent and
@@ -65,7 +67,7 @@ The classifier reads the **complete PR merge diff** against its first parent,
 including deleted/renamed paths. A docs-only follow-up commit on a PR that still
 changes app code therefore retains full relevant coverage. It does not borrow a
 passing result from an older commit or silently rely on the last push's paths.
-Seven Python regression tests cover selection, cumulative diffs, runtime-to-docs
+Eight Python regression tests cover selection, cumulative diffs, runtime-to-docs
 renames, manual events and missing merge history. A failed selector makes Core
 fail; it cannot yield an all-green skipped suite.
 
