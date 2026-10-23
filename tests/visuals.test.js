@@ -81,3 +81,17 @@ test('contours are seeded, finite, animated and reuse buffers and glow surface',
  for(const [w,h] of [[320,700],[1920,500]]){const points=sample(604,3,w,h);assert(points.every(Number.isFinite));assert(points.length<=88*161*2);}
  alphas.length=0;v.contours(g,1920,500,3,p,0);assert(alphas.every(a=>a===0),'zero crossfade opacity must suppress every main-canvas layer');
 });
+
+test('switching to stillness completes an in-flight scene transition immediately',()=>{
+ for(const reduced of [false,true]){
+  const h=visualHarness();h.visual.frame(1000);
+  h.settings.scene='horizon';h.visual.dirty=true;h.visual.frame(1100);
+  assert(h.visual.transition<1,'precondition: scene is still crossfading');
+  const frozenTime=h.visual.time;
+  if(reduced)h.media.matches=true;else h.settings.motion=0;
+  h.visual.dirty=true;h.visual.frame(1200);
+  assert.equal(h.visual.transition,1,'stillness must reveal the final scene instead of freezing the fade');
+  assert.equal(h.visual.activeScene,'horizon');assert.equal(h.visual.time,frozenTime);
+  const paints=h.paints();h.visual.frame(1300);assert.equal(h.paints(),paints,'still scene must stop repainting after completion');
+ }
+});

@@ -706,3 +706,39 @@ body.cinema,body.panel-open{overscroll-behavior:none}
  .cinema .stage-top{top:max(14px,env(safe-area-inset-top));left:max(14px,env(safe-area-inset-left));right:max(14px,env(safe-area-inset-right))}
  .cinema .stage-dock{left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right))}
 }
+
+/* Compact icon-and-label dock. Current selections stay in picker detail and accessible names. */
+.stage-dock,.cinema .stage-dock{width:min(850px,calc(100% - 32px));left:50%;right:auto;transform:translateX(-50%);min-height:64px;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;padding:8px 12px 12px;border-radius:24px}
+.stage-dock>.playback,.cinema .stage-dock>.playback,.stage-dock>.dock-visual-picks,.cinema .stage-dock>.dock-visual-picks,.stage-dock>.transport-end,.cinema .stage-dock>.transport-end{display:contents}
+.stage-dock .dock-action,.cinema .stage-dock .dock-action{grid-column:auto;grid-row:auto;position:relative;display:flex;align-items:center;justify-content:center;gap:5px;min-width:0;min-height:44px;width:100%;padding:6px 4px;border-radius:12px;color:var(--text);font-size:11px;line-height:1.1;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.stage-dock .dock-action>.icon,.cinema .stage-dock .dock-action>.icon{width:17px;height:17px;flex:0 0 auto}
+.stage-dock .dock-action:not(.play-main),.cinema .stage-dock .dock-action:not(.play-main){background:rgba(255,255,255,.025);border-color:#ffffff0b}
+.stage-dock .dock-action[aria-expanded=true],.cinema .stage-dock .dock-action[aria-expanded=true]{background:rgba(255,255,255,.075);border-color:#ffffff25}
+.stage-dock .timer-button,.cinema .stage-dock .timer-button{flex-direction:column;gap:1px}
+.stage-dock .timer-button>.icon,.cinema .stage-dock .timer-button>.icon{display:block;width:14px;height:14px}
+.stage-dock .timer-button>span:not(.timer-readout),.cinema .stage-dock .timer-button>span:not(.timer-readout){font-size:9px}
+.stage-dock .timer-button .timer-readout,.cinema .stage-dock .timer-button .timer-readout{position:static;max-width:100%;padding:0;border-radius:0;background:none;font-size:10px;font-variant-numeric:tabular-nums;line-height:1}
+.stage-dock .timer-button .timer-readout:empty,.cinema .stage-dock .timer-button .timer-readout:empty{display:none}
+.stage-dock .play-main,.cinema .stage-dock .play-main{width:100%;height:48px;min-height:48px;border-radius:14px;gap:4px;font-size:10px;box-shadow:0 0 20px color-mix(in srgb,var(--accent) 15%,transparent)}
+.stage-dock .play-main>.icon,.cinema .stage-dock .play-main>.icon{width:18px;height:18px}
+.stage-dock .route-quick,.stage-dock .dock-controls,.cinema .stage-dock .route-quick,.cinema .stage-dock .dock-controls{min-width:0}
+.stage-dock .dock-progress,.cinema .stage-dock .dock-progress{left:12px;right:12px;bottom:5px}
+.output-volume{display:flex;align-items:center;gap:14px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.output-volume .volume-control{display:grid;grid-template-columns:44px minmax(120px,1fr);align-items:center;width:min(280px,60%);gap:8px}
+.output-volume .volume-control .icon-only{width:44px;min-height:44px}
+.output-volume .volume-control input{width:100%;min-width:0}
+.output-volume-label{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}
+.output-volume-label output{color:var(--text);font-variant-numeric:tabular-nums}
+@media(max-width:640px){
+ .stage-dock,.cinema .stage-dock{left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));bottom:max(10px,env(safe-area-inset-bottom));width:auto;transform:none;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:8px 9px 13px;border-radius:20px}
+ .stage-dock .dock-action,.cinema .stage-dock .dock-action{grid-column:auto;grid-row:auto;min-height:46px;height:46px;gap:4px;padding:4px 2px;font-size:10px;border-radius:10px}
+ .stage-dock .dock-action>.icon,.cinema .stage-dock .dock-action>.icon{width:16px;height:16px}
+ .stage-dock .play-main,.cinema .stage-dock .play-main{height:46px;min-height:46px}
+ .stage-dock .timer-button,.cinema .stage-dock .timer-button{min-height:46px;height:46px}
+ .stage-dock .dock-progress,.cinema .stage-dock .dock-progress{left:9px;right:9px;bottom:5px}
+ .output-volume{align-items:flex-start;flex-direction:column;gap:8px}
+ .output-volume .volume-control{width:100%;grid-template-columns:44px minmax(0,1fr)}
+}
+.brand-logo{width:clamp(110px,8vw,120px)}
+.cinema .stage-logo{width:clamp(110px,8vw,120px)}
+@media(max-width:640px){.brand-logo{width:96px}.cinema .stage-logo{width:96px}}

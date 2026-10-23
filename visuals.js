@@ -102,7 +102,8 @@ class UndertoneVisuals {
   if(!this.dirty&&(still||ms-this.lastPaint<1000/(s.eco?20:30)))return;
   const paintDt=this.lastPaint?Math.min((ms-this.lastPaint)/1000,.2):0;this.lastPaint=ms;
   if(s.scene!==this.activeScene){this.previousScene=this.activeScene;this.activeScene=s.scene;this.transition=still?1:0;}
-  this.transition=Math.min(1,(this.transition||0)+paintDt/.9);
+  // Stillness must finish an in-flight crossfade: no later frame will advance it.
+  this.transition=still?1:Math.min(1,(this.transition||0)+paintDt/.9);
   this.energy=Math.max(0,Math.min(1,audio.energy*.70+audio.bass*.18+audio.pulse*.32));
   this.render(s);this.dirty=false;
  }

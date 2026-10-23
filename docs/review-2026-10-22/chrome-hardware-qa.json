@@ -1,0 +1,83 @@
+{
+  "hardwareChrome": true,
+  "desktop": [
+    1440,
+    900
+  ],
+  "phoneEmulation": [
+    390,
+    844
+  ],
+  "mutedPlaybackLabelsAndTimer": true,
+  "orbitStillMode": {
+    "first": {
+      "animationTime": "8.592319825556789",
+      "frameCount": "58",
+      "sceneRenderer": "orbit"
+    },
+    "last": {
+      "animationTime": "8.592319825556789",
+      "frameCount": "58",
+      "sceneRenderer": "orbit"
+    },
+    "pass": true
+  },
+  "cadence": {
+    "first": {
+      "frames": 64,
+      "wall": 4467.099999904633
+    },
+    "last": {
+      "frames": 233,
+      "wall": 10468.299999952316
+    },
+    "renderer": {
+      "blackHoleStatus": "idle",
+      "orbitStatus": "ready",
+      "renderer": "webgpu"
+    },
+    "submittedSceneFPS": 28.16103445955095
+  },
+  "restoredMaster": 35,
+  "sceneLifecycle": {
+    "adapter": {
+      "architecture": "blackwell",
+      "isFallbackAdapter": false,
+      "vendor": "nvidia"
+    },
+    "horizonStill": {
+      "first": {
+        "animationTime": "0",
+        "bakeCount": "1",
+        "frameCount": "1",
+        "sceneRenderer": "horizon"
+      },
+      "last": {
+        "animationTime": "0",
+        "bakeCount": "1",
+        "frameCount": "1",
+        "sceneRenderer": "horizon"
+      }
+    },
+    "horizonStillPositiveFrame": true,
+    "horizonTeardown": true,
+    "orbit": {
+      "blackHoleStatus": "idle",
+      "orbitStatus": "ready",
+      "renderer": "webgpu"
+    },
+    "visible": true
+  },
+  "axe": {
+    "version": "4.12.1",
+    "counts": {
+      "inapplicable": 41,
+      "incomplete": 1,
+      "passes": 22,
+      "violations": 0
+    },
+    "incompleteRuleIds": [
+      "color-contrast"
+    ]
+  }
+}

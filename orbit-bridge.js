@@ -19,6 +19,7 @@ class UndertoneOrbitBridge {
   this.pending=true;const generation=++this.generation;this.status('loading');
   // Separate contexts are essential: a Canvas 2D surface cannot become WebGPU.
   const layer=this.base.ownerDocument.createElement('canvas');
+  layer.setAttribute('data-scene-renderer','orbit');
   layer.setAttribute('aria-hidden','true');layer.style.pointerEvents='none';
   layer.style.display='none';layer.style.opacity='0';layer.style.transition=globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches?'none':'opacity .7s cubic-bezier(.22,1,.36,1)';this.base.after(layer);this.layer=layer;
   const fail=error=>{
@@ -37,6 +38,10 @@ class UndertoneOrbitBridge {
    const submitted=this.renderer.draw(parameters);
    if(!this.layer||!this.renderer)return false;
    if(submitted===false)throw new Error('WebGPU frame was not submitted');
+   if(this.layer.dataset){
+    this.layer.dataset.frameCount=String(this.renderer.stats?.frameCount||0);
+    this.layer.dataset.animationTime=String(parameters.time||0);
+   }
    const firstReveal=this.layer.style.display==='none';
    this.layer.style.display='block';
    if(firstReveal){const layer=this.layer,nextFrame=globalThis.requestAnimationFrame||((fn)=>fn());layer.style.opacity='0';nextFrame(()=>{if(this.layer===layer)layer.style.opacity='1';});}

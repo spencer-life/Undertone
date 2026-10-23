@@ -76,7 +76,7 @@ export async function createOrbitRenderer(canvas, { onFailure } = {}) {
       label: 'undertone-orbit-post',
       set: {
         src: sceneTarget, bloom: bloomTargets[0], samp: linearSampler,
-        post: { center: [0.5, 0.43], bloomStrength: 0.74, pad: 0 },
+        post: { center: [0.5, 0.43], bloomStrength: 0.36, pad: 0 },
       },
     });
     await Promise.all([
