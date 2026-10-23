@@ -1,6 +1,6 @@
 # CI and dependency automation
 
-Updated 2026-09-28 for the Energy Orbit / Event horizon integration.
+Updated 2026-10-23 for scoped validation and the Energy Orbit / Event horizon integration.
 
 ## Commands
 
@@ -34,17 +34,50 @@ that syntax. Inline pinned provider actions satisfy both without disabling audit
 
 Mise caches locked tools. The actual `pnpm store path` is exported by a mise task
 and cached with OS/architecture/lockfile keys. GPU CI also caches the portable
-software-renderer download. No node_modules, test verdicts or screenshots are
+software-renderer download; Visual Review caches its pinned browser binary. No node_modules, test verdicts or screenshots are
 reused as evidence. Browser installation remains explicit; Linux system libraries
 are not restored from a browser cache. Artifact retention is 14 days.
 
-All five checks run on PRs to main and manual dispatch; they do not run
-automatically on pushes. This preserves the current main branch policy and the
-local documentation correction also recorded on `spencer-life-ci-pr-only`.
-Superseded PR runs are cancelled. No second feature-branch push trigger or second
-deployment workflow is installed. Slow GPU initialization is tested with a bounded
-readiness check, not an arbitrary screenshot delay. Current GPU integration tests
-cover both scenes, actual shader compilation, still mode, viewport resize and teardown.
+App validation now uses one workflow with a small `changes` job and conditional
+`ci`, `e2e`, `visual`, and `vgpu` jobs. Security Baseline remains independent and
+runs on every PR. Both workflows run only on PRs to main or manual dispatch;
+there is no duplicate feature-branch push trigger or deployment workflow.
+Superseded runs are cancelled together. Existing check job names are retained;
+job-level conditions report irrelevant jobs as skipped rather than leaving a
+path-filtered required workflow pending.
+
+| PR changes | App checks |
+| --- | --- |
+| Documentation and archived review evidence only | None; scope tests and Security still run |
+| Shader source, GPU runtime, generated GPU bundles | Core and GPU |
+| Audio code, local music, service worker or WebMCP | Core and browser E2E |
+| Node unit tests only / lab source only | Core |
+| One browser harness | Its affected check; GPU harness also retains Core |
+| UI, shared visual clock/bridges, toolchain/build/deploy config | All four |
+| Check-selection/workflow structure or unknown files | All four |
+| Manual dispatch or unavailable merge diff | All four |
+
+The classifier reads the **complete PR merge diff** against its first parent,
+including deleted/renamed paths. A docs-only follow-up commit on a PR that still
+changes app code therefore retains full relevant coverage. It does not borrow a
+passing result from an older commit or silently rely on the last push's paths.
+Seven Python regression tests cover selection, cumulative diffs, runtime-to-docs
+renames, manual events and missing merge history. A failed selector makes Core
+fail; it cannot yield an all-green skipped suite.
+
+Visual Review builds through the shared mise prerequisite once and captures 30
+scene/theme/motion samples. The six duplicated responsive captures were removed;
+E2E owns the 13-viewport screenshots and asserted geometry/a11y matrix. The pinned
+Playwright 1.55.0 browser is cached by OS/architecture/version. Generated evidence
+is always fresh, and uploaded E2E/GPU artifacts exclude installed QA harness
+packages. No test verdict or screenshot cache is used.
+
+GPU CI installs only absent Vulkan/Mesa/display packages, first using the runner's
+existing package indexes. Network/setup calls and scene readiness are bounded and
+name the failing stage. Software-adapter screenshots use Eco mode and a paused
+scene clock, restoring motion between captures; Node pixel checks and real
+hardware browser recordings supply separate motion evidence. Both scenes,
+stillness, viewport resize and resource teardown remain required.
 
 ## Deployment boundary
 

@@ -4,8 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-pnpm install --frozen-lockfile >/dev/null
-pnpm build:orbit >/dev/null
+# Run through mise run visual:ci: shared deps and build:gpu are prerequisites.
 
 OUT=".visual-review"
 PORT="${VISUAL_REVIEW_PORT:-4178}"
@@ -113,29 +112,6 @@ for scene in tides dunes orbit horizon rain; do
   capture "$scene" 60 5600 "graphite-late"  "mono"
 done
 
-mkdir -p "$OUT/pages/mobile"
-pnpm dlx "$PW" screenshot \
-  --browser=chromium \
-  --viewport-size="390,844" \
-  --wait-for-timeout=1200 \
-  "$BASE/" "$OUT/pages/mobile/default-graphite-orbit.png" >/dev/null
-
-mkdir -p "$OUT/pages/layout-audit"
-for spec in \
-  "iphone-wide:430,932" \
-  "ipad-portrait:834,1194" \
-  "ipad-landscape:1194,834" \
-  "desktop-compact:1366,768" \
-  "desktop-wide:1728,900"; do
-  label="${spec%%:*}"
-  viewport="${spec#*:}"
-  pnpm dlx "$PW" screenshot \
-    --browser=chromium \
-    --viewport-size="$viewport" \
-    --wait-for-timeout=1200 \
-    "$BASE/" "$OUT/pages/layout-audit/$label.png" >/dev/null
-done
-
 GIT_SHA="${GITHUB_SHA:-unknown}" RUN_ID="${GITHUB_RUN_ID:-local}" BASE_URL="$BASE" node <<'NODE'
 const fs=require('fs');
 const scenes=[
@@ -174,32 +150,6 @@ for(const [route,name] of scenes){
     });
   }
 }
-captures.push({
-  route:'mobile-default',
-  name:'Fresh mobile default · Graphite Energy Orbit',
-  theme:'mono',
-  motion:60,
-  timing:'settled',
-  viewport:{width:390,height:844},
-  screenshot:'pages/mobile/default-graphite-orbit.png'
-});
-for(const [route,width,height] of [
-  ['iphone-wide',430,932],
-  ['ipad-portrait',834,1194],
-  ['ipad-landscape',1194,834],
-  ['desktop-compact',1366,768],
-  ['desktop-wide',1728,900],
-]){
-  captures.push({
-    route:`layout-${route}`,
-    name:`Responsive layout audit · ${route}`,
-    theme:'mono',
-    motion:60,
-    timing:'settled',
-    viewport:{width,height},
-    screenshot:`pages/layout-audit/${route}.png`
-  });
-}
 fs.writeFileSync('.visual-review/manifest.json',JSON.stringify({
   commit:process.env.GIT_SHA,
   runId:process.env.RUN_ID,
@@ -211,4 +161,5 @@ fs.writeFileSync('.visual-review/manifest.json',JSON.stringify({
 },null,2));
 NODE
 
-echo "Visual review captured $(find "$OUT/pages" -name '*.png' | wc -l | tr -d ' ') screenshots."
+screenshot_count="$(find "$OUT/pages" -name '*.png' | wc -l | tr -d ' ')"
+echo "Visual review captured $screenshot_count screenshots."

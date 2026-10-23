@@ -118,3 +118,10 @@ Run 39877738795 completed the preflight diagnostic and identified the actual mis
 Run 39878144423 installed the missing Mesa driver in seconds, passed browser preflight and reached Orbit readiness, then timed out taking the first screenshot while the CPU renderer was animating. The CI browser now uses the app’s Eco mode and pauses its scene clock while each screenshot is taken, restoring motion between captures. This is quiescent software-adapter screenshot coverage; the full-resolution NVIDIA recordings remain the browser motion evidence. The named screenshot deadline remains enforced.
 
 Run 39878460195 hit the 180-second package-index refresh deadline before exercising quiescent capture; the earlier run installed the same missing Mesa package in seconds. The harness now first installs missing packages from the hosted image’s existing indexes, refreshing only after an install failure, with bounded network timeouts and one retry. The screenshot adjustment remains pending actual CI execution.
+
+
+## CI efficiency follow-up
+
+All app checks, Security and Vercel passed on `e716cb5`, including the repaired GPU run [39879032014](https://github.com/spencer-life/Undertone/actions/runs/39879032014). The owner then requested an efficiency audit. App jobs are consolidated behind one tested change selector; Security still runs on every PR. Docs-only PRs skip app runners, shader-only PRs run Core/GPU, and UI/toolchain/unknown changes keep full coverage. Manual runs always execute the full suite, and selection failure cannot produce a green Core check. Existing job names and PR-only triggers are preserved.
+
+Visual QA drops six responsive screenshots duplicated by the asserted E2E matrix, retains 30 scene/theme/motion captures, builds once through mise, and caches its pinned browser binary. E2E/GPU evidence excludes installed QA dependencies. Seven CI-scope tests include a real Git merge fixture proving cumulative changes and renamed/deleted runtime files cannot be hidden by a docs-only last commit. Full app verification is intentionally retained on this PR because it changes both runtime and CI routing. See [CI scope and commands](../ci.md).

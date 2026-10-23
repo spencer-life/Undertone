@@ -59,8 +59,8 @@ printf 'pnpm=%s\n' "$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
 '''
 
 [tasks."visual:ci"]
-description = "Capture the existing responsive visual review manifest"
-depends = ["deps"]
+description = "Capture scene appearance and motion; responsive coverage belongs to E2E"
+depends = ["build:gpu"]
 run = "bash scripts/visual-review.sh"
 
 [tasks."vgpu:ci"]
