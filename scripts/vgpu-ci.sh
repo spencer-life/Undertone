@@ -83,7 +83,7 @@ while(Date.now()<deadline){try{if((await fetch(base)).ok)process.exit(0);}catch{
 throw Error('Preview did not start');
 NODE
 URL="$(node - "$BASE" <<'NODE'
-const mix={scene:'orbit',theme:'mono',motion:60,brightness:100,musicSource:'generated',keepAwake:false,seed:604};
+const mix={scene:'orbit',theme:'mono',motion:60,brightness:100,musicSource:'generated',keepAwake:false,eco:true,seed:604};
 console.log(process.argv[2]+'/?renderer=webgpu#mix='+encodeURIComponent(JSON.stringify(mix)));
 NODE
 )"
@@ -157,11 +157,17 @@ wait_scene(){
   return 1
 }
 capture(){
-  local name="$1" output path
+  local name="$1" output path previous_motion
+  # CI uses a CPU Vulkan adapter. Stop adding animated GPU work while the
+  # compositor snapshots a frame; resume the actual clock between captures.
+  previous_motion="$(ab "pause scene clock for $name" eval '(()=>{const motion=window.undertoneDebug.state.motion;window.undertoneDebug.change({motion:0});return motion;})()' | tail -1 | tr -d '\"\r')"
+  [[ "$previous_motion" =~ ^[0-9]+$ ]] || { echo "Missing motion state for $name" >&2; return 1; }
+  ab "settle still frame for $name" wait 1000 >/dev/null
   output="$(ab "capture $name" screenshot)"
   path="$(printf '%s\n' "$output" | sed -n 's/.*Screenshot saved to \(.*\.png\)$/\1/p' | tail -1)"
   [[ -n "$path" && -f "$path" ]] || { echo "Missing capture: $name" >&2; return 1; }
   cp "$path" "$OUT/$name.png"
+  ab "restore scene clock after $name" eval "window.undertoneDebug.change({motion:$previous_motion});true" >/dev/null
 }
 state_capture(){ ab "apply state for $1" eval "$2" >/dev/null; ab "settle state for $1" wait 600 >/dev/null; capture "$1"; }
 wait_scene
