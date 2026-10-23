@@ -36,7 +36,7 @@ The initial-pass screenshots below are local Chromium fallback renders; the late
 
 Passed locally with Node 24.22.1 and pnpm 12.5.1:
 
-- Frozen locked dependency install; production JavaScript syntax checks; build into `dist`; test command; 90 individual Node tests, including tab/layout, dynamic playback-label and mid-transition stillness regressions. Node's `--test` summary groups files in this environment; each test file was also run directly to obtain the individual count.
+- Frozen locked dependency install; production JavaScript syntax checks; build into `dist`; test command; 94 individual Node tests, including tab/layout, dynamic playback-label and mid-transition stillness regressions. Node's `--test` summary groups files in this environment; each test file was also run directly to obtain the individual count.
 - 13 viewport audits: 320×568, 568×320, 844×390, 390×844, 430×932, 834×1194, 1024×1366, 1194×834, 1101×700, 1280×720, 1366×768, 1440×900 and 1728×900. No document/dock/picker overflow, picker/dock overlap or hero/dock overlap.
 - Real Chromium keyboard tabs, rapid selection, presets, output routing, timer countdown/pause/resume, breathing and reduced-motion behavior. Native-mobile CSS refinements were followed by another complete passing run.
 - Ten axe WCAG-tag audits: main, all six pickers, Tune, Sessions and About. **Zero reported violations; eight surfaces retain an incomplete contrast check.** This is not an unconditional WCAG-AA certification. Translucent/scene-backed text needs manual contrast acceptance.
@@ -137,3 +137,22 @@ remain available. Core, Security, E2E and Visual stay automatic with the scoped
 selection and caches described in [CI guidance](../ci.md). Earlier passing GPU
 snapshots and hardware Chrome evidence above are unaffected by this workflow-only
 decision; final PR results distinguish the manual GPU skip from passed checks.
+
+## Late review follow-up — 23 October
+
+Two comments arrived after #19 merged. The session countdown now uses the same
+AudioContext clock as the scheduled fade, preserving audible time across browser
+suspension and system-clock changes. Worker v52 waits for controlled clients to
+close; its active version serves its own cached HTML, and new installations request
+fresh assets instead of reusing stale HTTP responses. This keeps lazy worklet/GPU
+loads and HTML on the same version.
+
+Four additional Node regressions cover frozen audio time, user pause/resume, waiting
+updates and old-shell navigation. Each failure was reproduced before the fix.
+A separate muted Headless Chrome 149 check confirmed explicit AudioContext
+suspension froze the timer, resumption advanced it, and changing an active timer
+used the audio clock. A temporary future-worker fixture confirmed the new worker
+remained installed/waiting with separate caches while existing clients and a new
+controlled navigation retained their old shell. This is local browser coverage,
+not locked-screen/Safari/physical-device proof. All QA sessions and servers closed.
+[Recorded Chrome checks](followup-chrome-qa.json).

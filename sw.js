@@ -1,5 +1,5 @@
 // An atomic, versioned app shell prevents offline HTML / module mismatches.
-const CACHE = 'undertone-v51';
+const CACHE = 'undertone-v52';
 const ASSETS = [
  './','./index.html','./styles.css','./layout.css','./audio.js',
  './audio-worklet.js','./music-library.js','./tracks.js','./orbit-bridge.js','./black-hole-bridge.js','./vendor/energy-orbit.js','./vendor/black-hole.js','./visuals.js','./webmcp.js','./app.js','./manifest.webmanifest',
@@ -7,7 +7,10 @@ const ASSETS = [
  './icons/apple-touch-icon.png','./assets/brand/undertone-wordmark.webp'
 ];
 self.addEventListener('install', event => {
- event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()));
+ event.waitUntil(caches.open(CACHE).then(cache=>{
+  const requests=ASSETS.map(asset=>new Request(new URL(asset,self.location.href),{cache:'reload'}));
+  return cache.addAll(requests);
+ }));
 });
 self.addEventListener('activate', event => {
  event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('undertone-v')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
@@ -20,11 +23,9 @@ self.addEventListener('fetch', event => {
  event.respondWith(caches.open(CACHE).then(async cache=>{
   const request=event.request;
   if(request.mode==='navigate'){
-   try{
-    const fresh=await fetch(request);
-    if(fresh&&fresh.ok&&typeof fresh.clone==='function')await cache.put('./index.html',fresh.clone());
-    return fresh;
-   }catch(_){return await cache.match('./index.html');}
+   // Keep HTML and lazy-loaded assets on this worker's installed version.
+   // A waiting worker fills its own cache and takes over after old clients close.
+   return (await cache.match('./index.html'))||fetch(request);
   }
   return (await cache.match(request))||fetch(request);
  }));
