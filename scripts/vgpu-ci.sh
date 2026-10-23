@@ -54,9 +54,17 @@ done
 if ((${#missing_packages[@]})); then
   echo "==> Install missing headed-browser dependencies: ${missing_packages[*]}"
   apt_timeout_seconds="${VGPU_CI_APT_TIMEOUT_SECONDS:-180}"
-  timeout --kill-after=10s "${apt_timeout_seconds}s" sudo apt-get update -qq
+  apt_network_options=(-o Acquire::Retries=1 -o Acquire::http::Timeout=15 -o Acquire::https::Timeout=15)
+  # Hosted images already include Ubuntu package indexes. Avoid a slow global
+  # refresh (including unrelated third-party repos) unless installation needs it.
   # Pass only absent packages so already-installed Mesa/Vulkan packages are not upgraded.
-  timeout --kill-after=10s "${apt_timeout_seconds}s" sudo apt-get install -y -qq --no-install-recommends "${missing_packages[@]}"
+  if timeout --kill-after=10s "${apt_timeout_seconds}s" sudo apt-get "${apt_network_options[@]}" install -y -qq --no-install-recommends "${missing_packages[@]}"; then
+    echo '==> Missing browser dependencies installed from existing indexes'
+  else
+    echo '==> Initial dependency install failed; refresh package indexes once, then retry' >&2
+    timeout --kill-after=10s "${apt_timeout_seconds}s" sudo apt-get "${apt_network_options[@]}" update -qq
+    timeout --kill-after=10s "${apt_timeout_seconds}s" sudo apt-get "${apt_network_options[@]}" install -y -qq --no-install-recommends "${missing_packages[@]}"
+  fi
 else
   echo '==> Required headed-browser dependencies are already installed'
 fi
