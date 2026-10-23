@@ -3,6 +3,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { init, effect, frame, sampler, target } from 'vgpu/node';
 import { orbitPalette } from '../gpu/palettes.js';
+import { runOrbitSurfaceProbe } from '../tests/orbit-surface-probe.mjs';
 
 const shader = (name) => readFileSync(new URL(`../gpu/${name}`, import.meta.url), 'utf8');
 const width = 720, height = 480, bloomWidth = 480, bloomHeight = 320;
@@ -19,7 +20,7 @@ try {
   ];
   const samp = sampler(gpu, { minFilter: 'linear', magFilter: 'linear' });
   const orbit = effect(gpu, shader('orbit.wgsl'), { set: { params: {
-    viewport: [width, height, width / height, 1], dynamics: [0, 604, 0.8, 0],
+    viewport: [width, height, width / height, 1], dynamics: [0, 604, 0.8, 0], style: [1, 1, 0, 1],
     ...Object.fromEntries(Object.entries(palette).map(([key, color]) => [key, rgba(color)])),
   } } });
   const bright = effect(gpu, shader('orbit-bright.wgsl'), { set: { src: scene, samp } });
@@ -32,7 +33,7 @@ try {
   }));
   const post = effect(gpu, shader('orbit-post.wgsl'), { set: {
     src: scene, bloom: blooms[0], samp,
-    post: { center: [0.5, 0.43], bloomStrength: 0.64, pad: 0 },
+    post: { center: [0.5, 0.43], bloomStrength: 0.36, pad: 0 },
   } });
 
   await Promise.all([
@@ -80,3 +81,5 @@ try {
 } finally {
   gpu.dispose();
 }
+
+console.log(JSON.stringify(await runOrbitSurfaceProbe()));

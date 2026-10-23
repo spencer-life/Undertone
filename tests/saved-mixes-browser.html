@@ -1,0 +1,30 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Undertone saved-mix stress fixtures</title>
+<style>html,body{margin:0;height:100%;background:#151516;color:#eee;font:13px system-ui}body{display:flex;flex-direction:column}iframe{border:0;width:100%;flex:1;min-height:0}.fixture-controls{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;padding:8px;background:#29292c}button{font:inherit;border:1px solid #666;border-radius:6px;padding:8px;background:#333;color:#fff;cursor:pointer}button[aria-pressed=true]{background:#eee;color:#111}#status{padding:5px 10px;text-align:center}</style>
+<iframe id="app" title="Actual Undertone sessions UI" src="../?renderer=canvas"></iframe>
+<div id="status" role="status">Preview-only fixtures. Use a fresh preview port; synthetic mixes replace that origin’s test data.</div>
+<div class="fixture-controls" role="group" aria-label="Saved mix test dataset"><button data-fixture="demo">Demo data</button><button data-fixture="worst">Worst case</button><button data-fixture="empty">Empty</button><button data-fixture="one">One</button><button data-fixture="maximum">12 mixes</button></div>
+<script>
+const frame=document.querySelector('#app'),status=document.querySelector('#status');
+const names={demo:['Evening focus','A quiet morning'],worst:['Alexandria Montgomery-Wiśniewska · evening focus','週末の深い集中と静かな休息 🎧 長い名前の保存ミックス','J','<b>Late-night building</b>'],empty:[],one:['J'],maximum:Array.from({length:12},(_,i)=>'Saved focus session '+(i+1))};
+let original,revision=0;
+async function show(name){
+ const request=++revision,win=frame.contentWindow;
+ if(!win.UNDERTONE_PREVIEW){status.textContent='Use scripts/preview.py on a fresh loopback port. Fixtures are disabled on hosted builds.';return;}
+ if(original===undefined)original=win.localStorage.getItem('undertone.v1');
+ const settings={...win.undertoneDebug.state,master:0};
+ const payload=JSON.stringify({version:1,settings,saved:names[name].map((title,i)=>({id:'fixture-'+i,name:title,settings})),history:[]});
+ document.querySelectorAll('[data-fixture]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.fixture===name)));
+ // Let the real app flush its old state on pagehide before installing fixtures.
+ await new Promise(resolve=>{frame.onload=resolve;frame.src='about:blank';});
+ if(request!==revision)return;
+ localStorage.setItem('undertone.v1',payload);
+ await new Promise(resolve=>{frame.onload=resolve;frame.src='../?renderer=canvas';});
+ if(request!==revision)return;
+ if(frame.contentWindow.undertoneDebug.savedCount!==names[name].length){status.textContent='Fixture load failed';throw Error('Fixture count mismatch');}
+ const doc=frame.contentDocument;doc.querySelector('#dockControls').click();doc.querySelector('#tab-sessions').click();
+ status.textContent=name+': '+names[name].length+' synthetic saved mix(es). Actual app rendering; no production fixture code.';
+}
+document.querySelectorAll('[data-fixture]').forEach(b=>b.onclick=()=>show(b.dataset.fixture));
+// Original test data can be restored by reloading the preview origin after closing this harness.
+window.addEventListener('pagehide',()=>{if(original!==undefined){if(original===null)frame.contentWindow.localStorage.removeItem('undertone.v1');else frame.contentWindow.localStorage.setItem('undertone.v1',original);}});
+</script></html>
