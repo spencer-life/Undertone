@@ -41,9 +41,9 @@ else
 fi
 
 echo '==> Check headed-browser system dependencies'
-# vgpu's software renderer is already provisioned above, and Chrome uses its
-# bundled SwiftShader for the browser smoke. Only the virtual display is needed.
-required_packages=(xvfb xauth)
+# Node vgpu can use its portable Mesa fallback, but Chrome’s WebGPU preset
+# also needs a system Vulkan loader + Mesa ICD, plus the virtual display.
+required_packages=(libvulkan1 mesa-vulkan-drivers xvfb xauth)
 missing_packages=()
 for package in "${required_packages[@]}"; do
   package_status="$(dpkg-query -W -f='${db:Status-Status}' "$package" 2>/dev/null || true)"
@@ -65,6 +65,7 @@ fi
 # Give setup its own budget; normal browser operations retain their short cap.
 timeout --kill-after=3s "${PREFLIGHT_TIMEOUT_SECONDS}s" "$AGENT_BROWSER_BIN" doctor --webgpu --headed >"$OUT/agent-browser-doctor.txt" 2>&1 || {
   status=$?
+  cat "$OUT/agent-browser-doctor.txt" >&2
   echo "Browser stage 'doctor --webgpu --headed' failed or timed out (exit $status); see $OUT/agent-browser-doctor.txt" >&2
   exit "$status"
 }
