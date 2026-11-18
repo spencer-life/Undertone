@@ -5,7 +5,9 @@
   "labels": [
     "dependencies"
   ],
-  "dependencyDashboard": true,
+  "dependencyDashboard": {
+    "enabled": true
+  },
   "packageRules": [
     {
       "description": "Keep routine non-major updates moving after CI passes",
